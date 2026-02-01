@@ -29,16 +29,18 @@ const authClient = axios.create({
  * Login user
  * POST /auth/login
  */
-export async function login(credentials: LoginRequest): Promise<LoginResponseData> {
+export async function login(
+  credentials: LoginRequest,
+): Promise<LoginResponseData> {
   const response = await authClient.post<ApiResponse<LoginResponseData>>(
     '/auth/login',
-    credentials
+    credentials,
   );
-  
+
   // Store tokens
   const { access_token, refresh_token } = response.data.data;
   await tokenStorage.setTokens(access_token, refresh_token);
-  
+
   return response.data.data;
 }
 
@@ -47,17 +49,17 @@ export async function login(credentials: LoginRequest): Promise<LoginResponseDat
  * POST /auth/refresh
  */
 export async function refreshToken(
-  refreshTokenData: RefreshTokenRequest
+  refreshTokenData: RefreshTokenRequest,
 ): Promise<RefreshTokenResponseData> {
   const response = await authClient.post<ApiResponse<RefreshTokenResponseData>>(
     '/auth/refresh',
-    refreshTokenData
+    refreshTokenData,
   );
-  
+
   // Store new tokens
   const { access_token, refresh_token } = response.data.data;
   await tokenStorage.setTokens(access_token, refresh_token);
-  
+
   return response.data.data;
 }
 
@@ -67,11 +69,11 @@ export async function refreshToken(
  * Uses apiClient which automatically includes auth token
  */
 export async function registerUser(
-  userData: RegisterRequest
+  userData: RegisterRequest,
 ): Promise<RegisterResponseData> {
   const response = await apiClient.post<ApiResponse<RegisterResponseData>>(
     '/auth/register',
-    userData
+    userData,
   );
   return response.data.data;
 }

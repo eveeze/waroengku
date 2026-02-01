@@ -62,7 +62,29 @@ export async function getUsers(
     },
   };
 }
+/**
+ * Create new user (Admin Only)
+ * POST /api/v1/admin/users
+ */
+export async function createUser(data: RegisterRequest): Promise<UserInfo> {
+  const response = await fetch(`${API_URL}/api/v1/admin/users`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      // WAJIB sertakan token Admin karena ini route terproteksi
+      Authorization: `Bearer ${adminToken}`,
+    },
+    body: JSON.stringify(data),
+  });
 
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error?.message || 'Failed to create user');
+  }
+
+  const result = await response.json();
+  return result.data; // Mengembalikan data user yang baru dibuat
+}
 /**
  * Get single user by ID
  * GET /api/v1/users/:id (MOCKED)
