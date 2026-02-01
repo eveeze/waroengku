@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import { AuthUser, UserRole } from '@/api/types';
 import { login as apiLogin, logout as apiLogout } from '@/api/endpoints/auth';
 import { tokenStorage, storage } from '@/utils/storage';
@@ -26,20 +27,60 @@ interface AuthState {
   setError: (error: string | null) => void;
   clearError: () => void;
   hydrate: () => Promise<void>;
+  setHydrated: (state: boolean) => void;
 
   // Selectors
   isAdmin: () => boolean;
   hasRole: (role: UserRole) => boolean;
 }
 
+// Check if we're running on web platform
+const isWeb = Platform.OS === 'web';
+
+// Web-compatible storage adapter using localStorage directly
+const webStorage: StateStorage = {
+  getItem: (name: string) => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return window.localStorage.getItem(name);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (name: string, value: string) => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(name, value);
+    } catch (error) {
+      console.error('localStorage setItem error:', error);
+    }
+  },
+  removeItem: (name: string) => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.removeItem(name);
+    } catch (error) {
+      console.error('localStorage removeItem error:', error);
+    }
+  },
+};
+
+// Choose storage based on platform
+const getStorage = () => {
+  if (isWeb) {
+    return webStorage;
+  }
+  return AsyncStorage;
+};
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      // Initial state
+      // Initial state - on web, start as hydrated to avoid loading screen
       user: null,
       isAuthenticated: false,
       isLoading: false,
-      isHydrated: false,
+      isHydrated: isWeb, // KEY FIX: Start hydrated on web!
       error: null,
 
       // Login action
@@ -47,10 +88,10 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const response = await apiLogin({ email, password });
-          
+
           // Save user to storage
           await storage.setObject(config.storage.user, response.user);
-          
+
           set({
             user: response.user,
             isAuthenticated: true,
@@ -58,7 +99,8 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Login gagal';
+          const message =
+            error instanceof Error ? error.message : 'Login gagal';
           set({
             isLoading: false,
             error: message,
@@ -104,13 +146,33 @@ export const useAuthStore = create<AuthState>()(
 
       // Hydrate from storage
       hydrate: async () => {
+        // On web, already hydrated via initial state
+        if (isWeb) {
+          return;
+        }
+
         try {
-          const token = await tokenStorage.getAccessToken();
-          const userJson = await storage.getObject<AuthUser>(config.storage.user);
-          
-          if (token && userJson) {
+          // Timeout race to prevent hanging
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Hydration timeout')), 2500),
+          );
+
+          const loadPromise = async () => {
+            const token = await tokenStorage.getAccessToken();
+            const userJson = await storage.getObject<AuthUser>(
+              config.storage.user,
+            );
+            return { token, userJson };
+          };
+
+          const result = (await Promise.race([
+            loadPromise(),
+            timeoutPromise,
+          ])) as { token: string | null; userJson: AuthUser | null };
+
+          if (result && result.token && result.userJson) {
             set({
-              user: userJson,
+              user: result.userJson,
               isAuthenticated: true,
               isHydrated: true,
             });
@@ -121,13 +183,18 @@ export const useAuthStore = create<AuthState>()(
               isHydrated: true,
             });
           }
-        } catch {
+        } catch (err) {
+          console.warn('[AuthStore] Hydrate fallback:', err);
           set({
             user: null,
             isAuthenticated: false,
             isHydrated: true,
           });
         }
+      },
+
+      setHydrated: (state: boolean) => {
+        set({ isHydrated: state });
       },
 
       // Check if user is admin
@@ -144,11 +211,14 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'warungku-auth-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => getStorage()),
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
-    }
-  )
+      onRehydrateStorage: () => () => {
+        console.log('[AuthStore] Persist rehydrated');
+      },
+    },
+  ),
 );

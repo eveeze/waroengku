@@ -14,22 +14,38 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/components/*": ["./src/components/*"],
-      "@/hooks/*": ["./src/hooks/*"],
-      "@/stores/*": ["./src/stores/*"],
-      "@/api/*": ["./src/api/*"],
-      "@/utils/*": ["./src/utils/*"],
-      "@/constants/*": ["./src/constants/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@/components/*": [
+        "./src/components/*"
+      ],
+      "@/hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@/stores/*": [
+        "./src/stores/*"
+      ],
+      "@/api/*": [
+        "./src/api/*"
+      ],
+      "@/utils/*": [
+        "./src/utils/*"
+      ],
+      "@/constants/*": [
+        "./src/constants/*"
+      ]
     }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
-    "expo-env.d.ts"
+    "expo-env.d.ts",
+    "nativewind-env.d.ts"
   ],
   "exclude": [
     "node_modules"
-  ]
+  ],
+  "extends": "expo/tsconfig.base"
 }
