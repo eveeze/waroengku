@@ -20,45 +20,52 @@ interface InputProps extends RNTextInputProps {
 }
 
 export const Input = forwardRef<RNTextInput, InputProps>(
-  ({ label, error, helperText, leftIcon, rightIcon, className, ...props }, ref) => {
+  (
+    { label, error, helperText, leftIcon, rightIcon, className, ...props },
+    ref,
+  ) => {
     const hasError = !!error;
 
     return (
-      <View className="mb-4">
+      <View className="mb-5">
         {label && (
-          <Text className="text-sm font-medium text-secondary-700 mb-2">
+          <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2">
             {label}
           </Text>
         )}
         <View
           className={`
             flex-row items-center
-            bg-white border rounded-lg px-4
-            ${hasError ? 'border-danger-500' : 'border-secondary-300'}
-            focus-within:border-primary-500
+            bg-secondary-50 border rounded-lg px-4
+            ${hasError ? 'border-danger-500' : 'border-secondary-200'}
+            focus-within:border-primary-900 focus-within:bg-white focus-within:shadow-sm
           `}
         >
           {leftIcon && <View className="mr-3">{leftIcon}</View>}
           <RNTextInput
             ref={ref}
             className={`
-              flex-1 py-3 text-base text-secondary-900
+              flex-1 py-3.5 text-base font-medium text-primary-900
               ${className || ''}
             `}
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor="#a1a1aa"
             {...props}
           />
           {rightIcon && <View className="ml-3">{rightIcon}</View>}
         </View>
         {hasError && (
-          <Text className="text-sm text-danger-500 mt-1">{error}</Text>
+          <Text className="text-xs font-medium text-danger-600 mt-1.5 ml-1">
+            {error}
+          </Text>
         )}
         {!hasError && helperText && (
-          <Text className="text-sm text-secondary-500 mt-1">{helperText}</Text>
+          <Text className="text-xs text-secondary-400 mt-1.5 ml-1">
+            {helperText}
+          </Text>
         )}
       </View>
     );
-  }
+  },
 );
 
 Input.displayName = 'Input';

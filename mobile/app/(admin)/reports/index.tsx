@@ -4,17 +4,17 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { useApi } from '@/hooks/useApi';
 import { getDashboard } from '@/api/endpoints/reports';
-import { Card } from '@/components/ui';
 
 /**
  * Reports Hub Screen
- * Central navigation for all report types
+ * Swiss Minimalist Refactor
  */
 export default function ReportsHubScreen() {
   const insets = useSafeAreaInsets();
@@ -38,156 +38,144 @@ export default function ReportsHubScreen() {
     }).format(amount);
   };
 
-  const reportCards = [
+  const menuItems = [
     {
-      title: 'Laporan Harian',
-      description: 'Penjualan dan transaksi per hari',
-      icon: '📅',
+      title: 'DAILY REPORT',
+      subtitle: 'Sales & Transactions',
       route: '/(admin)/reports/daily',
-      color: 'bg-blue-50',
-      iconBg: 'bg-blue-100',
-      textColor: 'text-blue-700',
+      icon: 'EARNINGS',
     },
     {
-      title: 'Laporan Kasbon',
-      description: 'Piutang dan hutang pelanggan',
-      icon: '💳',
+      title: 'ACCOUNTS RECEIVABLE',
+      subtitle: 'Customer Debts (Kasbon)',
       route: '/(admin)/reports/kasbon',
+      icon: 'DEBT',
       value: dashboard?.total_outstanding_kasbon,
-      color: 'bg-red-50',
-      iconBg: 'bg-red-100',
-      textColor: 'text-red-700',
+      isMoney: true,
     },
     {
-      title: 'Laporan Inventori',
-      description: 'Stok produk dan nilai inventori',
-      icon: '📦',
+      title: 'INVENTORY VALUATION',
+      subtitle: 'Stock Value & Low Stock',
       route: '/(admin)/reports/inventory',
-      badge: dashboard?.low_stock_count
-        ? `${dashboard.low_stock_count} low stock`
-        : undefined,
-      color: 'bg-orange-50',
-      iconBg: 'bg-orange-100',
-      textColor: 'text-orange-700',
+      icon: 'STOCK',
+      alert: dashboard?.low_stock_count
+        ? `${dashboard.low_stock_count} LOW ITEM`
+        : null,
     },
   ];
 
   return (
-    <View className="flex-1 bg-secondary-50">
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+
       {/* Header */}
       <View
-        className="bg-primary-600 px-4 pb-6"
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
         style={{ paddingTop: insets.top + 16 }}
       >
-        <Text className="text-white text-2xl font-bold">Laporan</Text>
-        <Text className="text-primary-200 mt-1">
-          Analisis kinerja warung Anda
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          REPORTS
         </Text>
       </View>
 
       <ScrollView
-        className="flex-1 -mt-4"
+        className="flex-1"
         contentContainerStyle={{
-          padding: 16,
-          paddingBottom: insets.bottom + 16,
+          padding: 24,
+          paddingBottom: insets.bottom + 100,
         }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={fetchDashboard} />
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={fetchDashboard}
+            tintColor="#000"
+          />
         }
       >
-        {/* Today Summary Card */}
-        {dashboard?.today && (
-          <Card className="mb-4 bg-gradient-to-r from-primary-500 to-primary-600">
-            <View className="bg-white rounded-lg p-4">
-              <Text className="text-secondary-500 text-sm">Hari Ini</Text>
-              <Text className="text-2xl font-bold text-primary-600 mt-1">
-                {formatCurrency(dashboard.today.total_sales)}
-              </Text>
-              <View className="flex-row mt-3 pt-3 border-t border-secondary-100">
-                <View className="flex-1">
-                  <Text className="text-secondary-500 text-xs">Transaksi</Text>
-                  <Text className="text-secondary-900 font-semibold">
-                    {dashboard.today.total_transactions}
-                  </Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-secondary-500 text-xs">Keuntungan</Text>
-                  <Text className="text-green-600 font-semibold">
-                    {formatCurrency(dashboard.today.estimated_profit)}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </Card>
-        )}
+        {/* Today Summary */}
+        <View className="mb-8 p-6 bg-black">
+          <Text className="text-secondary-400 text-xs font-bold uppercase tracking-widest mb-2">
+            Today's Performance
+          </Text>
+          <Text className="text-4xl font-black text-white mb-4">
+            {dashboard?.today
+              ? formatCurrency(dashboard.today.total_sales)
+              : 'Rp 0'}
+          </Text>
 
-        {/* Quick Stats */}
-        <View className="flex-row mb-4">
-          <View className="flex-1 mr-2">
-            <Card className="bg-red-50 border-red-100">
-              <Text className="text-red-600 text-xs">Total Piutang</Text>
-              <Text className="text-red-800 text-lg font-bold mt-1">
-                {dashboard?.total_outstanding_kasbon
-                  ? formatCurrency(dashboard.total_outstanding_kasbon)
-                  : '-'}
+          <View className="flex-row border-t border-zinc-800 pt-4">
+            <View className="flex-1">
+              <Text className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                Transactions
               </Text>
-            </Card>
-          </View>
-          <View className="flex-1 ml-2">
-            <Card className="bg-orange-50 border-orange-100">
-              <Text className="text-orange-600 text-xs">Stok Menipis</Text>
-              <Text className="text-orange-800 text-lg font-bold mt-1">
-                {dashboard?.low_stock_count ?? '-'} item
+              <Text className="text-white text-xl font-bold">
+                {dashboard?.today?.total_transactions || 0}
               </Text>
-            </Card>
+            </View>
+            <View className="flex-1">
+              <Text className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+                Est. Profit
+              </Text>
+              <Text className="text-green-400 text-xl font-bold">
+                {dashboard?.today
+                  ? formatCurrency(dashboard.today.estimated_profit)
+                  : 'Rp 0'}
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* Report Navigation Cards */}
-        <Text className="text-lg font-semibold text-secondary-900 mb-3">
-          Jenis Laporan
-        </Text>
-
-        {reportCards.map((report) => (
-          <TouchableOpacity
-            key={report.route}
-            onPress={() => router.push(report.route as any)}
-            className="mb-3"
-          >
-            <Card className={report.color}>
-              <View className="flex-row items-center">
-                <View
-                  className={`w-12 h-12 rounded-xl ${report.iconBg} items-center justify-center mr-4`}
-                >
-                  <Text className="text-2xl">{report.icon}</Text>
+        {/* Menu Grid */}
+        <View>
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-4">
+            Analytics
+          </Text>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => router.push(item.route as any)}
+              className="mb-4 bg-white border border-secondary-200 p-5 active:bg-secondary-50"
+            >
+              <View className="flex-row justify-between items-start mb-2">
+                <View className="bg-secondary-100 px-2 py-1">
+                  <Text className="text-[10px] font-black uppercase tracking-widest text-secondary-900">
+                    {item.icon}
+                  </Text>
                 </View>
-                <View className="flex-1">
+                {/* Right Value or Arrow */}
+                {item.value !== undefined ? (
                   <Text
-                    className={`text-base font-semibold ${report.textColor}`}
+                    className={`font-bold ${item.title === 'ACCOUNTS RECEIVABLE' ? 'text-red-600' : 'text-primary-900'}`}
                   >
-                    {report.title}
+                    {item.isMoney ? formatCurrency(item.value) : item.value}
                   </Text>
-                  <Text className="text-secondary-500 text-sm">
-                    {report.description}
+                ) : (
+                  <Text className="text-secondary-300 font-bold">↗</Text>
+                )}
+              </View>
+
+              <Text className="text-lg font-black text-primary-900 uppercase tracking-tight mb-1">
+                {item.title}
+              </Text>
+              <Text className="text-xs text-secondary-500 font-medium">
+                {item.subtitle}
+              </Text>
+
+              {item.alert && (
+                <View className="mt-3 bg-red-100 self-start px-2 py-1">
+                  <Text className="text-[10px] font-bold text-red-700 uppercase tracking-wide">
+                    ⚠️ {item.alert}
                   </Text>
                 </View>
-                {report.value && (
-                  <Text className={`text-sm font-semibold ${report.textColor}`}>
-                    {formatCurrency(report.value)}
-                  </Text>
-                )}
-                {report.badge && (
-                  <View className="bg-orange-200 px-2 py-1 rounded-full">
-                    <Text className="text-orange-800 text-xs font-medium">
-                      {report.badge}
-                    </Text>
-                  </View>
-                )}
-                <Text className="text-secondary-400 ml-2">→</Text>
-              </View>
-            </Card>
-          </TouchableOpacity>
-        ))}
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
       </ScrollView>
     </View>
   );

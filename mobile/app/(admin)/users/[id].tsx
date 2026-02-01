@@ -197,9 +197,9 @@ export default function UserDetailScreen() {
           {selectedRole !== user.role && (
             <Button
               title="Simpan Perubahan Role"
-              size="small"
+              size="sm"
               onPress={handleUpdateRole}
-              loading={isSubmitting}
+              isLoading={isSubmitting}
               className="mt-3"
             />
           )}

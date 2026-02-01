@@ -5,14 +5,14 @@ import {
   TouchableOpacity,
   Text,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApi } from '@/hooks/useApi';
 import { getTransactions } from '@/api/endpoints';
 import { Transaction, TransactionListParams } from '@/api/types';
-import { Header, EmptyState } from '@/components/shared';
-import { Card, Loading } from '@/components/ui';
+import { Loading } from '@/components/ui';
 
 export default function TransactionsScreen() {
   const router = useRouter();
@@ -52,83 +52,105 @@ export default function TransactionsScreen() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 
-  const getStatusColor = (status: string) => {
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  };
+
+  const getStatusStyle = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'text-green-600 bg-green-50';
+        return 'text-green-600';
       case 'pending':
-        return 'text-orange-600 bg-orange-50';
+        return 'text-orange-600';
       case 'cancelled':
-        return 'text-red-600 bg-red-50';
+        return 'text-red-600';
       default:
-        return 'text-secondary-600 bg-secondary-50';
+        return 'text-secondary-600';
     }
   };
 
   const renderItem = ({ item }: { item: Transaction }) => (
     <TouchableOpacity
       onPress={() => router.push(`/(admin)/transactions/${item.id}`)}
+      className="border-b border-secondary-100 bg-white active:bg-secondary-50"
     >
-      <Card className="mb-3">
-        <View className="flex-row justify-between items-start mb-2">
-          <View>
-            <Text className="font-bold text-secondary-900">
-              {item.invoice_number}
+      <View className="px-6 py-5 flex-row justify-between items-center">
+        <View>
+          <Text className="font-bold text-primary-900 uppercase tracking-tight text-base mb-1">
+            {item.invoice_number}
+          </Text>
+          <View className="flex-row items-center">
+            <Text className="text-xs text-secondary-500 font-bold uppercase tracking-wider mr-2">
+              {formatDate(item.created_at)} • {formatTime(item.created_at)}
             </Text>
-            <Text className="text-secondary-500 text-xs">
-              {formatDate(item.created_at)}
+            <Text className="text-[10px] text-secondary-400 font-bold uppercase tracking-widest">
+              | {item.payment_method}
             </Text>
           </View>
+          <Text className="text-secondary-600 text-xs mt-1 font-medium">
+            {item.customer_name || 'Guest Customer'}
+          </Text>
+        </View>
+
+        <View className="items-end">
+          <Text className="font-black text-primary-900 text-lg tracking-tight">
+            {formatCurrency(item.final_amount)}
+          </Text>
           <Text
-            className={`text-xs px-2 py-1 rounded font-medium capitalize ${getStatusColor(item.status)}`}
+            className={`text-[10px] font-black uppercase tracking-widest mt-1 ${getStatusStyle(item.status)}`}
           >
             {item.status}
           </Text>
         </View>
-        <View className="flex-row justify-between items-center">
-          <View>
-            <Text className="text-secondary-600 text-sm">
-              {item.customer_name || 'Pelanggan Umum'}
-            </Text>
-            <Text className="text-xs text-secondary-400 capitalize">
-              {item.payment_method}
-            </Text>
-          </View>
-          <Text className="font-bold text-primary-700 text-lg">
-            {formatCurrency(item.final_amount)}
-          </Text>
-        </View>
-      </Card>
+      </View>
     </TouchableOpacity>
   );
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Riwayat Transaksi" onBack={() => router.back()} />
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+
+      {/* Header */}
+      <View
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          HISTORY
+        </Text>
+      </View>
 
       <FlatList
         data={transactions}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
-          padding: 16,
           paddingBottom: insets.bottom + 16,
         }}
         ListEmptyComponent={
           !isLoading ? (
-            <EmptyState
-              title="Belum ada transaksi"
-              message="Transaksi penjualan akan muncul di sini"
-            />
+            <View className="items-center py-20 opacity-50">
+              <Text className="text-6xl mb-4">📜</Text>
+              <Text className="text-lg font-bold uppercase tracking-widest text-secondary-900">
+                No Transactions
+              </Text>
+            </View>
           ) : null
         }
         ListFooterComponent={isLoading ? <Loading message="" /> : null}
@@ -142,6 +164,7 @@ export default function TransactionsScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isLoading && page === 1}
+            tintColor="#000"
             onRefresh={() => {
               setPage(1);
               loadTransactions(1, false);

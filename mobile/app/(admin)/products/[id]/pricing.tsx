@@ -289,7 +289,7 @@ export default function PricingTiersScreen() {
               <Button
                 title={editingTier ? 'Simpan' : 'Tambah'}
                 onPress={handleSubmit}
-                loading={isSubmitting}
+                isLoading={isSubmitting}
                 className="flex-1 ml-2"
               />
             </View>

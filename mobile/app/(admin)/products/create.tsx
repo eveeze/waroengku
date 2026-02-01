@@ -13,22 +13,15 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Header, BarcodeScanner } from '@/components/shared';
-import {
-  Button,
-  Card,
-  Input,
-  Loading,
-  ImagePickerInput,
-} from '@/components/ui';
+import { BarcodeScanner } from '@/components/shared';
+import { Button, Card, Input, ImagePickerInput } from '@/components/ui';
 import { productSchema, ProductFormData } from '@/utils/validation';
 import { createProduct, getCategories } from '@/api/endpoints';
 import { Category, CreatePricingTierRequest } from '@/api/types';
 import { useApi, ImageAsset } from '@/hooks';
 
 /**
- * Create Product Screen
- * With Barcode Scanner and Image Picker integration
+ * Create Product Screen (Swiss Design)
  */
 export default function CreateProductScreen() {
   const router = useRouter();
@@ -41,6 +34,8 @@ export default function CreateProductScreen() {
   const [showTierForm, setShowTierForm] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [productImage, setProductImage] = useState<ImageAsset | null>(null);
+
+  // Tier form state
   const [newTier, setNewTier] = useState<CreatePricingTierRequest>({
     name: '',
     min_quantity: 1,
@@ -88,7 +83,7 @@ export default function CreateProductScreen() {
   const handleBarcodeScanned = (barcode: string, type: string) => {
     setValue('barcode', barcode);
     setShowBarcodeScanner(false);
-    Alert.alert('Barcode Terdeteksi', `Kode: ${barcode}`);
+    Alert.alert('Scanned', `Barcode: ${barcode}`);
   };
 
   const handleImageSelected = (image: ImageAsset) => {
@@ -101,14 +96,8 @@ export default function CreateProductScreen() {
 
   const addPricingTier = () => {
     if (!newTier.name || newTier.price <= 0 || newTier.min_quantity < 1) {
-      Alert.alert('Error', 'Lengkapi data pricing tier');
+      Alert.alert('Error', 'Invalid tier data');
       return;
-    }
-    if (newTier.price >= basePrice) {
-      Alert.alert(
-        'Warning',
-        'Harga tier sebaiknya lebih rendah dari harga dasar',
-      );
     }
     setPricingTiers([...pricingTiers, newTier]);
     setNewTier({ name: '', min_quantity: 1, price: 0 });
@@ -123,45 +112,55 @@ export default function CreateProductScreen() {
     try {
       setIsSubmitting(true);
 
-      // TODO: Upload image if productImage exists
-      // For now, we'll just submit without the image URL
-      await createProduct({
-        ...data,
-        pricing_tiers: pricingTiers.length > 0 ? pricingTiers : undefined,
-      });
+      // FIXED: Pass image to createProduct
+      await createProduct(
+        {
+          ...data,
+          pricing_tiers: pricingTiers.length > 0 ? pricingTiers : undefined,
+        },
+        productImage
+          ? {
+              uri: productImage.uri,
+              type: productImage.mimeType || 'image/jpeg',
+              name: productImage.fileName || 'upload.jpg',
+            }
+          : undefined,
+      );
 
-      Alert.alert('Berhasil', 'Produk berhasil ditambahkan', [
+      Alert.alert('Success', 'Product created successfully', [
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error) {
-      Alert.alert(
-        'Gagal',
-        error instanceof Error ? error.message : 'Gagal menambahkan produk',
-      );
+      Alert.alert('Error', 'Failed to create product');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Tambah Produk" onBack={() => router.back()} />
-
+    <View className="flex-1 bg-white">
       {/* Barcode Scanner Modal */}
       <BarcodeScanner
         visible={showBarcodeScanner}
         onClose={() => setShowBarcodeScanner(false)}
         onScan={handleBarcodeScanned}
-        title="Scan Barcode Produk"
+        title="SCAN PRODUCT"
       />
+
+      {/* Header */}
+      <View
+        className="px-6 pb-6 border-b border-secondary-200"
+        style={{ paddingTop: insets.top + 24 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-secondary-500 font-bold uppercase tracking-widest text-xs">
+            ← BACK TO LIST
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-black tracking-tighter text-primary-900">
+          NEW PRODUCT
+        </Text>
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -169,31 +168,38 @@ export default function CreateProductScreen() {
       >
         <ScrollView
           contentContainerStyle={{
-            padding: 16,
+            padding: 24,
             paddingBottom: insets.bottom + 100,
           }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Product Image */}
-          <Card title="Foto Produk" className="mb-4">
+          {/* Section: Image */}
+          <View className="mb-8">
+            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3">
+              PRODUCT IMAGE
+            </Text>
             <ImagePickerInput
               value={productImage?.uri}
               onImageSelected={handleImageSelected}
               onImageCleared={handleImageCleared}
-              placeholder="Tap untuk menambahkan foto produk"
+              placeholder="TAP TO UPLOAD"
               aspectRatio={[4, 3]}
             />
-          </Card>
+          </View>
 
-          {/* Basic Info */}
-          <Card title="Informasi Dasar" className="mb-4">
+          {/* Section: Basic Info */}
+          <View className="mb-8">
+            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3">
+              BASIC INFORMATION
+            </Text>
+
             <Controller
               control={control}
               name="name"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
-                  label="Nama Produk *"
-                  placeholder="Masukkan nama produk"
+                  label="PRODUCT NAME"
+                  placeholder="e.g. Kopi Susu Aren"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -202,203 +208,218 @@ export default function CreateProductScreen() {
               )}
             />
 
-            {/* Barcode with Scanner Button */}
-            <View className="mt-3">
-              <Text className="text-sm font-medium text-secondary-700 mb-1.5">
-                Barcode
-              </Text>
-              <View className="flex-row">
-                <View className="flex-1 mr-2">
-                  <Controller
-                    control={control}
-                    name="barcode"
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <Input
-                        placeholder="Kode barcode"
-                        value={value}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                      />
-                    )}
-                  />
-                </View>
-                <TouchableOpacity
-                  onPress={() => setShowBarcodeScanner(true)}
-                  className="bg-primary-600 px-4 rounded-lg items-center justify-center"
-                >
-                  <Text className="text-white text-lg">📷</Text>
-                  <Text className="text-white text-xs">Scan</Text>
-                </TouchableOpacity>
+            <View className="flex-row items-end gap-3 mt-1">
+              <View className="flex-1">
+                <Controller
+                  control={control}
+                  name="barcode"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <Input
+                      label="BARCODE"
+                      placeholder="Scan or type..."
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                    />
+                  )}
+                />
               </View>
-            </View>
-
-            <View className="mt-3">
-              <Controller
-                control={control}
-                name="sku"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <Input
-                    label="SKU"
-                    placeholder="Kode produk internal"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                  />
-                )}
-              />
+              <TouchableOpacity
+                onPress={() => setShowBarcodeScanner(true)}
+                className="bg-primary-900 h-[52px] w-[52px] rounded-lg items-center justify-center mb-5"
+              >
+                <Text className="text-white text-xl">📷</Text>
+              </TouchableOpacity>
             </View>
 
             <Controller
               control={control}
-              name="description"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <View className="mt-3">
-                  <Text className="text-sm font-medium text-secondary-700 mb-1.5">
-                    Deskripsi
+              name="category_id"
+              render={({ field: { onChange, value } }) => (
+                <View className="mt-2 mb-5">
+                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2">
+                    CATEGORY
                   </Text>
-                  <TextInput
-                    className="border border-secondary-200 rounded-lg px-4 py-3 bg-white text-base"
-                    placeholder="Deskripsi produk (opsional)"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    multiline
-                    numberOfLines={3}
-                  />
-                </View>
-              )}
-            />
-
-            {/* Category */}
-            <View className="mt-3">
-              <Text className="text-sm font-medium text-secondary-700 mb-1.5">
-                Kategori
-              </Text>
-              <Controller
-                control={control}
-                name="category_id"
-                render={({ field: { onChange, value } }) => (
-                  <View className="flex-row flex-wrap">
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    className="flex-row"
+                  >
                     {categories.map((cat) => (
                       <TouchableOpacity
                         key={cat.id}
                         onPress={() => onChange(value === cat.id ? '' : cat.id)}
-                        className={`px-4 py-2 rounded-lg mr-2 mb-2 ${
+                        className={`px-4 py-2 rounded-md mr-2 border ${
                           value === cat.id
-                            ? 'bg-primary-600'
-                            : 'bg-secondary-100'
+                            ? 'bg-primary-900 border-primary-900'
+                            : 'bg-white border-secondary-200'
                         }`}
                       >
                         <Text
-                          className={
-                            value === cat.id
-                              ? 'text-white'
-                              : 'text-secondary-700'
-                          }
+                          className={`text-xs font-bold uppercase tracking-wide ${
+                            value === cat.id ? 'text-white' : 'text-primary-900'
+                          }`}
                         >
                           {cat.name}
                         </Text>
                       </TouchableOpacity>
                     ))}
-                  </View>
-                )}
-              />
-            </View>
-
-            <Controller
-              control={control}
-              name="unit"
-              render={({ field: { onChange, value } }) => (
-                <View className="mt-3">
-                  <Text className="text-sm font-medium text-secondary-700 mb-1.5">
-                    Satuan
-                  </Text>
-                  <View className="flex-row">
-                    {['pcs', 'kg', 'liter', 'pack', 'dus'].map((unit) => (
-                      <TouchableOpacity
-                        key={unit}
-                        onPress={() => onChange(unit)}
-                        className={`px-4 py-2 rounded-lg mr-2 ${
-                          value === unit ? 'bg-primary-600' : 'bg-secondary-100'
-                        }`}
-                      >
-                        <Text
-                          className={
-                            value === unit ? 'text-white' : 'text-secondary-700'
-                          }
-                        >
-                          {unit}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                  </ScrollView>
                 </View>
               )}
             />
-          </Card>
 
-          {/* Pricing */}
-          <Card title="Harga" className="mb-4">
-            <View className="flex-row">
-              <View className="flex-1 mr-2">
+            <Controller
+              control={control}
+              name="description"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View>
+                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2">
+                    DESCRIPTION
+                  </Text>
+                  <TextInput
+                    className="border border-secondary-200 rounded-lg px-4 py-3 bg-secondary-50 text-base min-h-[100px] text-primary-900"
+                    placeholder="Optional description..."
+                    textAlignVertical="top"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    multiline
+                    numberOfLines={4}
+                  />
+                </View>
+              )}
+            />
+          </View>
+
+          {/* Section: Pricing */}
+          <View className="mb-8">
+            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3">
+              PRICING & STOCK
+            </Text>
+
+            <View className="flex-row gap-4 mb-4">
+              <View className="flex-1">
                 <Controller
                   control={control}
                   name="cost_price"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
-                      label="Harga Modal *"
+                      label="COST (HPP)"
                       placeholder="0"
                       value={value > 0 ? String(value) : ''}
                       onChangeText={(text) => onChange(Number(text) || 0)}
                       onBlur={onBlur}
                       keyboardType="numeric"
-                      leftIcon={<Text className="text-secondary-400">Rp</Text>}
                       error={errors.cost_price?.message}
                     />
                   )}
                 />
               </View>
-              <View className="flex-1 ml-2">
+              <View className="flex-1">
                 <Controller
                   control={control}
                   name="base_price"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
-                      label="Harga Jual *"
+                      label="SELLING PRICE"
                       placeholder="0"
                       value={value > 0 ? String(value) : ''}
                       onChangeText={(text) => onChange(Number(text) || 0)}
                       onBlur={onBlur}
                       keyboardType="numeric"
-                      leftIcon={<Text className="text-secondary-400">Rp</Text>}
                       error={errors.base_price?.message}
                     />
                   )}
                 />
               </View>
             </View>
-          </Card>
 
-          {/* Pricing Tiers */}
-          <Card title="Harga Grosir (Opsional)" className="mb-4">
+            <View className="flex-row gap-4">
+              <View className="flex-1">
+                <Controller
+                  control={control}
+                  name="current_stock"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <Input
+                      label="INITIAL STOCK"
+                      placeholder="0"
+                      value={String(value)}
+                      onChangeText={(text) => onChange(Number(text) || 0)}
+                      onBlur={onBlur}
+                      keyboardType="numeric"
+                    />
+                  )}
+                />
+              </View>
+              <View className="flex-1">
+                <Controller
+                  control={control}
+                  name="min_stock_alert"
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <Input
+                      label="ALERT LIMIT"
+                      placeholder="10"
+                      value={String(value)}
+                      onChangeText={(text) => onChange(Number(text) || 0)}
+                      onBlur={onBlur}
+                      keyboardType="numeric"
+                    />
+                  )}
+                />
+              </View>
+            </View>
+
+            <Controller
+              control={control}
+              name="is_stock_active"
+              render={({ field: { onChange, value } }) => (
+                <TouchableOpacity
+                  onPress={() => onChange(!value)}
+                  className="flex-row items-center mt-2 mb-4"
+                >
+                  <View
+                    className={`w-5 h-5 rounded border mr-3 items-center justify-center ${
+                      value
+                        ? 'bg-primary-900 border-primary-900'
+                        : 'bg-white border-secondary-300'
+                    }`}
+                  >
+                    {value && (
+                      <Text className="text-white text-xs font-bold">✓</Text>
+                    )}
+                  </View>
+                  <Text className="text-base font-medium text-primary-900">
+                    Track Stock Inventory
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+
+          {/* Section: Wholesale (Optional) */}
+          <View className="mb-8">
+            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3">
+              WHOLESALE TIERS (OPTIONAL)
+            </Text>
+
             {pricingTiers.length > 0 && (
-              <View className="mb-3">
+              <View className="mb-4">
                 {pricingTiers.map((tier, index) => (
                   <View
                     key={index}
-                    className="flex-row items-center justify-between bg-secondary-50 rounded-lg p-3 mb-2"
+                    className="flex-row items-center justify-between bg-secondary-50 border border-secondary-200 rounded-lg p-3 mb-2"
                   >
                     <View>
-                      <Text className="font-medium text-secondary-900">
+                      <Text className="font-bold text-primary-900">
                         {tier.name}
                       </Text>
-                      <Text className="text-sm text-secondary-500">
-                        Min. {tier.min_quantity} pcs →{' '}
-                        {formatCurrency(tier.price)}
+                      <Text className="text-xs text-secondary-500 font-medium">
+                        Min. {tier.min_quantity} pcs → {tier.price}
                       </Text>
                     </View>
                     <TouchableOpacity onPress={() => removePricingTier(index)}>
-                      <Text className="text-danger-500 text-lg">🗑️</Text>
+                      <Text className="text-danger-500 font-bold">REMOVE</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -406,19 +427,19 @@ export default function CreateProductScreen() {
             )}
 
             {showTierForm ? (
-              <View className="bg-secondary-50 rounded-lg p-3">
+              <View className="bg-secondary-50 border border-secondary-200 rounded-lg p-4 animate-fade-in-down">
                 <Input
-                  label="Nama Tier"
-                  placeholder="cth: Grosir 10+"
+                  label="TIER NAME"
+                  placeholder="e.g. Grosir"
                   value={newTier.name}
                   onChangeText={(text) =>
                     setNewTier({ ...newTier, name: text })
                   }
                 />
-                <View className="flex-row mt-2">
-                  <View className="flex-1 mr-2">
+                <View className="flex-row gap-3">
+                  <View className="flex-1">
                     <Input
-                      label="Min. Qty"
+                      label="MIN QTY"
                       placeholder="10"
                       value={
                         newTier.min_quantity > 0
@@ -434,9 +455,9 @@ export default function CreateProductScreen() {
                       keyboardType="numeric"
                     />
                   </View>
-                  <View className="flex-1 ml-2">
+                  <View className="flex-1">
                     <Input
-                      label="Harga"
+                      label="PRICE"
                       placeholder="0"
                       value={newTier.price > 0 ? String(newTier.price) : ''}
                       onChangeText={(text) =>
@@ -446,127 +467,44 @@ export default function CreateProductScreen() {
                     />
                   </View>
                 </View>
-                <View className="flex-row mt-3">
+                <View className="flex-row gap-3 mt-2">
                   <Button
-                    title="Batal"
-                    variant="outline"
-                    size="small"
+                    title="CANCEL"
+                    variant="ghost"
+                    size="sm"
                     onPress={() => setShowTierForm(false)}
-                    className="flex-1 mr-2"
+                    className="flex-1"
                   />
                   <Button
-                    title="Tambah"
-                    size="small"
+                    title="ADD TIER"
+                    size="sm"
                     onPress={addPricingTier}
-                    className="flex-1 ml-2"
+                    className="flex-1"
                   />
                 </View>
               </View>
             ) : (
               <Button
-                title="+ Tambah Tier Harga"
+                title="+ ADD WHOLESALE TIER"
                 variant="outline"
                 fullWidth
                 onPress={() => setShowTierForm(true)}
               />
             )}
-          </Card>
-
-          {/* Stock */}
-          <Card title="Stok" className="mb-4">
-            <Controller
-              control={control}
-              name="is_stock_active"
-              render={({ field: { onChange, value } }) => (
-                <TouchableOpacity
-                  onPress={() => onChange(!value)}
-                  className="flex-row items-center mb-3"
-                >
-                  <View
-                    className={`w-5 h-5 rounded border mr-2 items-center justify-center ${
-                      value
-                        ? 'bg-primary-600 border-primary-600'
-                        : 'border-secondary-300'
-                    }`}
-                  >
-                    {value && <Text className="text-white text-xs">✓</Text>}
-                  </View>
-                  <Text className="text-secondary-700">Kelola Stok</Text>
-                </TouchableOpacity>
-              )}
-            />
-
-            <View className="flex-row">
-              <View className="flex-1 mr-2">
-                <Controller
-                  control={control}
-                  name="current_stock"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input
-                      label="Stok Awal"
-                      placeholder="0"
-                      value={String(value)}
-                      onChangeText={(text) => onChange(Number(text) || 0)}
-                      onBlur={onBlur}
-                      keyboardType="numeric"
-                    />
-                  )}
-                />
-              </View>
-              <View className="flex-1 ml-2">
-                <Controller
-                  control={control}
-                  name="min_stock_alert"
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <Input
-                      label="Stok Minimum"
-                      placeholder="10"
-                      value={String(value)}
-                      onChangeText={(text) => onChange(Number(text) || 0)}
-                      onBlur={onBlur}
-                      keyboardType="numeric"
-                    />
-                  )}
-                />
-              </View>
-            </View>
-
-            <Controller
-              control={control}
-              name="is_refillable"
-              render={({ field: { onChange, value } }) => (
-                <TouchableOpacity
-                  onPress={() => onChange(!value)}
-                  className="flex-row items-center mt-3"
-                >
-                  <View
-                    className={`w-5 h-5 rounded border mr-2 items-center justify-center ${
-                      value
-                        ? 'bg-primary-600 border-primary-600'
-                        : 'border-secondary-300'
-                    }`}
-                  >
-                    {value && <Text className="text-white text-xs">✓</Text>}
-                  </View>
-                  <Text className="text-secondary-700">
-                    Produk Refillable (Gas/Galon)
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          </Card>
+          </View>
         </ScrollView>
 
-        {/* Submit Button */}
+        {/* Floating Submit Bar */}
         <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-4 py-3"
+          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-6 py-4"
           style={{ paddingBottom: insets.bottom + 12 }}
         >
           <Button
-            title="Simpan Produk"
+            title="SAVE PRODUCT"
             fullWidth
+            size="lg"
             onPress={handleSubmit(onSubmit)}
-            loading={isSubmitting}
+            isLoading={isSubmitting}
           />
         </View>
       </KeyboardAvoidingView>

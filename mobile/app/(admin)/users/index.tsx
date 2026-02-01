@@ -6,22 +6,25 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
+  StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useApi } from '@/hooks/useApi';
 import { getUsers, deleteUser } from '@/api/endpoints/users';
 import { User } from '@/api/types';
-import { Card, Loading } from '@/components/ui';
+import { Loading } from '@/components/ui';
 
-const roleLabels: Record<string, { label: string; color: string; bg: string }> = {
-  admin: { label: 'Admin', color: 'text-purple-700', bg: 'bg-purple-100' },
-  cashier: { label: 'Kasir', color: 'text-blue-700', bg: 'bg-blue-100' },
-  inventory: { label: 'Gudang', color: 'text-green-700', bg: 'bg-green-100' },
+// Minimalist role labels
+const roleConfig: Record<string, string> = {
+  admin: 'ADMINISTRATOR',
+  cashier: 'CASHIER',
+  inventory: 'INVENTORY',
 };
 
 /**
  * Users List Screen
+ * Swiss Minimalist Refactor
  */
 export default function UsersScreen() {
   const insets = useSafeAreaInsets();
@@ -30,8 +33,8 @@ export default function UsersScreen() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  const { isLoading, execute: fetchUsers } = useApi((params?: { page?: number }) =>
-    getUsers(params)
+  const { isLoading, execute: fetchUsers } = useApi(
+    (params?: { page?: number }) => getUsers(params),
   );
 
   useEffect(() => {
@@ -41,7 +44,7 @@ export default function UsersScreen() {
   const loadUsers = async (pageNum = 1, append = false) => {
     try {
       const result = await fetchUsers({ page: pageNum });
-      if (result) {
+      if (result && result.success) {
         if (append) {
           setUsers((prev) => [...prev, ...result.data]);
         } else {
@@ -58,7 +61,7 @@ export default function UsersScreen() {
   };
 
   const handleLoadMore = () => {
-    if (!isLoading && hasMore) {
+    if (!isLoading && hasMore && users.length > 0) {
       const nextPage = page + 1;
       setPage(nextPage);
       loadUsers(nextPage, true);
@@ -66,76 +69,78 @@ export default function UsersScreen() {
   };
 
   const handleDelete = (user: User) => {
-    Alert.alert(
-      'Hapus User',
-      `Yakin ingin menghapus "${user.name}"?`,
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Hapus',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteUser(user.id);
-              Alert.alert('Berhasil', 'User berhasil dihapus');
-              loadUsers();
-            } catch (err) {
-              Alert.alert(
-                'Gagal',
-                err instanceof Error ? err.message : 'Gagal menghapus user'
-              );
-            }
-          },
+    Alert.alert('DELETE USER', `Permanently remove ${user.name}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteUser(user.id);
+          loadUsers();
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const renderUser = ({ item }: { item: User }) => {
-    const roleInfo = roleLabels[item.role] || roleLabels.cashier;
+    const roleLabel = roleConfig[item.role] || item.role.toUpperCase();
+    const isAdmin = item.role === 'admin';
 
     return (
       <TouchableOpacity
         onPress={() => router.push(`/(admin)/users/${item.id}`)}
         onLongPress={() => handleDelete(item)}
-        className="mb-3"
+        className="mb-0 border-b border-secondary-100 bg-white active:bg-secondary-50"
       >
-        <Card>
-          <View className="flex-row items-center">
-            <View className="w-12 h-12 bg-secondary-200 rounded-full items-center justify-center mr-3">
-              <Text className="text-xl">👤</Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-base font-semibold text-secondary-900">
-                {item.name}
-              </Text>
-              <Text className="text-sm text-secondary-500">{item.email}</Text>
-            </View>
-            <View className={`px-3 py-1 rounded-full ${roleInfo.bg}`}>
-              <Text className={`text-xs font-medium ${roleInfo.color}`}>
-                {roleInfo.label}
-              </Text>
-            </View>
+        <View className="px-6 py-5 flex-row items-center justify-between">
+          <View>
+            <Text className="text-lg font-bold text-primary-900 tracking-tight mb-1">
+              {item.name}
+            </Text>
+            <Text className="text-xs font-medium text-secondary-500 uppercase tracking-wider">
+              {item.email}
+            </Text>
           </View>
-        </Card>
+          <View
+            className={`px-2 py-1 border ${isAdmin ? 'border-primary-900' : 'border-secondary-300'}`}
+          >
+            <Text
+              className={`text-[10px] font-bold uppercase tracking-widest ${isAdmin ? 'text-primary-900' : 'text-secondary-500'}`}
+            >
+              {roleLabel}
+            </Text>
+          </View>
+        </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      {/* Header */}
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+      {/* Swiss Header */}
       <View
-        className="bg-primary-600 px-4 pb-4"
-        style={{ paddingTop: insets.top + 16 }}
+        className="px-6 pb-6 border-b border-secondary-200"
+        style={{ paddingTop: insets.top + 24 }}
       >
-        <View className="flex-row items-center justify-between">
-          <Text className="text-white text-xl font-bold">Users</Text>
+        <View className="flex-row items-end justify-between">
+          <View>
+            <TouchableOpacity onPress={() => router.back()} className="mb-4">
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+                ← Back
+              </Text>
+            </TouchableOpacity>
+            <Text className="text-4xl font-black tracking-tighter text-primary-900 uppercase">
+              USERS
+            </Text>
+          </View>
           <TouchableOpacity
             onPress={() => router.push('/(admin)/users/create')}
-            className="bg-white px-4 py-2 rounded-lg"
+            className="bg-black px-5 py-3 items-center justify-center"
           >
-            <Text className="text-primary-600 font-medium">+ Tambah</Text>
+            <Text className="text-white font-bold text-xs uppercase tracking-widest">
+              + NEW USER
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -145,37 +150,39 @@ export default function UsersScreen() {
         data={users}
         renderItem={renderUser}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={
           <RefreshControl
             refreshing={isLoading && page === 1}
             onRefresh={handleRefresh}
+            tintColor="#000"
           />
         }
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.3}
         ListEmptyComponent={
           !isLoading ? (
-            <View className="items-center py-8">
-              <Text className="text-4xl mb-4">👥</Text>
-              <Text className="text-secondary-500">Tidak ada user</Text>
-              <Text className="text-secondary-400 mt-1">
-                Tap "Tambah" untuk menambah user baru
+            <View className="items-center py-20 px-10">
+              <Text className="text-secondary-300 font-black text-6xl mb-4">
+                👥
+              </Text>
+              <Text className="text-secondary-900 font-bold text-lg text-center uppercase tracking-wide mb-2">
+                No Users Found
+              </Text>
+              <Text className="text-secondary-500 text-center text-sm">
+                Create users to manage your store.
               </Text>
             </View>
           ) : null
         }
         ListFooterComponent={
-          <>
-            {isLoading && users.length > 0 && (
-              <View className="py-4">
-                <Loading message="Memuat..." />
-              </View>
-            )}
-            <Text className="text-center text-secondary-400 text-xs mt-4">
-              Tekan lama untuk menghapus user
-            </Text>
-          </>
+          users.length > 0 ? (
+            <View className="py-6 items-center border-t border-secondary-50 mt-4">
+              <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest">
+                Long press to delete user
+              </Text>
+            </View>
+          ) : null
         }
       />
     </View>

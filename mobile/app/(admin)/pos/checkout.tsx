@@ -8,14 +8,14 @@ import {
   Alert,
   Modal,
   FlatList,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCartStore } from '@/stores/cartStore';
 import { createTransaction, getCustomers } from '@/api/endpoints';
 import { Customer, CreateTransactionRequest } from '@/api/types';
-import { Header } from '@/components/shared';
-import { Button, Card, Input, Loading } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
 import { useApi } from '@/hooks/useApi';
 
 export default function CheckoutScreen() {
@@ -26,12 +26,11 @@ export default function CheckoutScreen() {
     customer,
     getTotal,
     updateQuantity,
-    removeItem,
     setCustomer,
     clearCart,
     validateCart,
-    validationResult,
     isValidating,
+    validationResult,
   } = useCartStore();
 
   const [paymentMethod, setPaymentMethod] = useState<
@@ -46,8 +45,7 @@ export default function CheckoutScreen() {
   // API Hooks
   const { execute: submitTransaction, isLoading: isSubmitting } =
     useApi(createTransaction);
-  const { execute: fetchCustomers, isLoading: isLoadingCustomers } =
-    useApi(getCustomers);
+  const { execute: fetchCustomers } = useApi(getCustomers);
 
   // Validate cart on mount to get latest prices/discounts
   useEffect(() => {
@@ -58,18 +56,19 @@ export default function CheckoutScreen() {
   const totalAmount = getTotal();
   const paid = parseFloat(amountPaid) || 0;
   const change = Math.max(0, paid - totalAmount);
+  // Allow exact payment or more.
   const isInsufficient = paymentMethod === 'cash' && paid < totalAmount;
 
   const handleProcessPayment = async () => {
     if (items.length === 0) return;
 
     if (paymentMethod === 'cash' && paid < totalAmount) {
-      Alert.alert('Error', 'Pembayaran kurang');
+      Alert.alert('Error', 'Insufficient payment');
       return;
     }
 
     if (paymentMethod === 'kasbon' && !customer) {
-      Alert.alert('Error', 'Pilih pelanggan untuk pembayaran Kasbon');
+      Alert.alert('Error', 'Please select a customer for Kasbon');
       return;
     }
 
@@ -81,7 +80,7 @@ export default function CheckoutScreen() {
       })),
       customer_id: customer?.id,
       payment_method: paymentMethod,
-      amount_paid: paid,
+      amount_paid: paymentMethod === 'cash' ? paid : totalAmount,
       notes: notes,
     };
 
@@ -89,8 +88,10 @@ export default function CheckoutScreen() {
       const result = await submitTransaction(payload);
       if (result) {
         Alert.alert(
-          'Transaksi Berhasil',
-          `Kembalian: ${formatCurrency(result.change_amount)}`,
+          'SUCCESS',
+          paymentMethod === 'cash'
+            ? `Change: ${formatCurrency(result.change_amount)}`
+            : 'Transaction completed.',
           [
             {
               text: 'OK',
@@ -103,14 +104,14 @@ export default function CheckoutScreen() {
         );
       }
     } catch (err) {
-      Alert.alert('Gagal', (err as Error).message);
+      Alert.alert('Failed', (err as Error).message);
     }
   };
 
   const loadCustomers = async () => {
     const result = await fetchCustomers({
       search: customerSearch,
-      per_page: 10,
+      per_page: 20,
     });
     if (result) {
       setCustomerList(result.data);
@@ -132,271 +133,277 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Checkout" onBack={() => router.back()} />
-
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {/* Customer Section */}
-        <Card className="mb-4">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1">
-              <Text className="text-secondary-500 text-xs font-semibold uppercase">
-                Pelanggan
-              </Text>
-              <Text className="text-lg font-medium text-secondary-900 mt-1">
-                {customer ? customer.name : 'Umum (Non-Member)'}
-              </Text>
-              {customer && (
-                <Text className="text-secondary-500 text-sm">
-                  {customer.phone}
-                </Text>
-              )}
-            </View>
-            <Button
-              title={customer ? 'Ganti' : 'Pilih'}
-              size="small"
-              variant="outline"
-              onPress={() => setShowCustomerModal(true)}
-            />
-          </View>
-        </Card>
-
-        {/* Cart Items */}
-        <Card title={`Daftar Belanja (${items.length})`} className="mb-4">
-          {isValidating && (
-            <Text className="text-xs text-primary-600 mb-2">
-              Memeriksa harga terbaru...
+    <View className="flex-1 bg-white">
+      {/* Scrollable Content */}
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+        {/* Header Area */}
+        <View
+          className="px-6 pb-6 bg-white border-b border-secondary-100"
+          style={{ paddingTop: insets.top + 24 }}
+        >
+          <TouchableOpacity onPress={() => router.back()} className="mb-6">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+              ← Back to POS
             </Text>
-          )}
-          {items.map((item) => (
-            <View
-              key={item.product.id}
-              className="flex-row py-3 border-b border-secondary-100 last:border-0"
-            >
-              <View className="flex-1">
-                <Text className="font-medium text-secondary-900">
-                  {item.product.name}
-                </Text>
-                <Text className="text-xs text-secondary-500">
-                  {formatCurrency(item.serverPrice || item.product.base_price)}{' '}
-                  x {item.quantity}
-                </Text>
-                {item.tierName && (
-                  <Text className="text-[10px] text-green-600 bg-green-50 self-start px-1 rounded mt-1">
-                    {item.tierName}
-                  </Text>
-                )}
-              </View>
+          </TouchableOpacity>
 
-              {/* Qty Controls */}
-              <View className="flex-row items-center mr-3">
+          <Text className="text-secondary-500 font-bold uppercase tracking-widest text-xs mb-2">
+            Total Amount
+          </Text>
+          <Text className="text-5xl font-black tracking-tighter text-primary-900 leading-tight">
+            {formatCurrency(totalAmount)}
+          </Text>
+
+          {validationResult?.total_discount ? (
+            <Text className="text-green-600 font-bold mt-2">
+              Discount Applied: -
+              {formatCurrency(validationResult.total_discount)}
+            </Text>
+          ) : null}
+        </View>
+
+        <View className="p-6">
+          {/* Customer Section */}
+          <TouchableOpacity
+            onPress={() => setShowCustomerModal(true)}
+            className="flex-row items-center justify-between py-4 border-b border-secondary-100 mb-8"
+          >
+            <View>
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-1">
+                Customer
+              </Text>
+              <Text className="text-xl font-bold text-primary-900">
+                {customer ? customer.name : 'Walk-In Customer'}
+              </Text>
+            </View>
+            <Text className="text-2xl text-secondary-300">→</Text>
+          </TouchableOpacity>
+
+          {/* Payment Method */}
+          <View className="mb-8">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-3">
+              Payment Method
+            </Text>
+            <View className="flex-row gap-3">
+              {['cash', 'qris'].map((method) => (
                 <TouchableOpacity
-                  onPress={() =>
-                    updateQuantity(item.product.id, item.quantity - 1)
-                  }
-                  className="w-8 h-8 rounded-full bg-secondary-100 items-center justify-center"
-                >
-                  <Text className="text-lg">-</Text>
-                </TouchableOpacity>
-                <Text className="mx-3 font-medium text-lg">
-                  {item.quantity}
-                </Text>
-                <TouchableOpacity
-                  onPress={() =>
-                    updateQuantity(item.product.id, item.quantity + 1)
-                  }
-                  className="w-8 h-8 rounded-full bg-primary-100 items-center justify-center"
-                >
-                  <Text className="text-lg text-primary-700">+</Text>
-                </TouchableOpacity>
-              </View>
-
-              <Text className="font-bold text-secondary-900 min-w-[80px] text-right">
-                {formatCurrency(
-                  item.subtotal || item.product.base_price * item.quantity,
-                )}
-              </Text>
-            </View>
-          ))}
-
-          {/* Total Section */}
-          <View className="mt-4 pt-4 border-t border-secondary-200">
-            <View className="flex-row justify-between items-center mb-2">
-              <Text className="text-secondary-600">Subtotal</Text>
-              <Text className="font-semibold text-secondary-900">
-                {formatCurrency(getTotal())}
-              </Text>
-            </View>
-            {validationResult?.total_discount ? (
-              <View className="flex-row justify-between items-center mb-2">
-                <Text className="text-green-600">Total Diskon</Text>
-                <Text className="font-semibold text-green-600">
-                  -{formatCurrency(validationResult.total_discount)}
-                </Text>
-              </View>
-            ) : null}
-            <View className="flex-row justify-between items-center mt-2">
-              <Text className="text-lg font-bold text-secondary-900">
-                Total Bayar
-              </Text>
-              <Text className="text-2xl font-bold text-primary-700">
-                {formatCurrency(getTotal())}
-              </Text>
-            </View>
-          </View>
-        </Card>
-
-        {/* Payment Method */}
-        <Card title="Metode Pembayaran" className="mb-4">
-          <View className="flex-row flex-wrap">
-            {['cash', 'kasbon', 'transfer', 'qris'].map((method) => (
-              <TouchableOpacity
-                key={method}
-                onPress={() => setPaymentMethod(method as any)}
-                className={`mr-2 mb-2 px-4 py-2 rounded-lg border ${
-                  paymentMethod === method
-                    ? 'bg-primary-50 border-primary-500'
-                    : 'bg-white border-secondary-200'
-                }`}
-              >
-                <Text
-                  className={`capitalize ${
+                  key={method}
+                  onPress={() => setPaymentMethod(method as any)}
+                  className={`flex-1 items-center justify-center py-4 rounded-lg border-2 ${
                     paymentMethod === method
-                      ? 'text-primary-700 font-bold'
-                      : 'text-secondary-600'
+                      ? 'bg-black border-black'
+                      : 'bg-white border-secondary-200'
                   }`}
                 >
-                  {method}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    className={`font-black uppercase tracking-wider ${
+                      paymentMethod === method
+                        ? 'text-white'
+                        : 'text-secondary-400'
+                    }`}
+                  >
+                    {method}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View className="flex-row gap-3 mt-3">
+              {['transfer', 'kasbon'].map((method) => (
+                <TouchableOpacity
+                  key={method}
+                  onPress={() => setPaymentMethod(method as any)}
+                  className={`flex-1 items-center justify-center py-4 rounded-lg border-2 ${
+                    paymentMethod === method
+                      ? 'bg-black border-black'
+                      : 'bg-white border-secondary-200'
+                  }`}
+                >
+                  <Text
+                    className={`font-black uppercase tracking-wider ${
+                      paymentMethod === method
+                        ? 'text-white'
+                        : 'text-secondary-400'
+                    }`}
+                  >
+                    {method}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
-          {/* Cash Input */}
+          {/* Cash specific input */}
           {paymentMethod === 'cash' && (
-            <View className="mt-4">
+            <View className="mb-8 animate-fade-in-down">
               <Input
-                label="Jumlah Uang Diterima"
+                label="CASH RECEIVED"
                 placeholder="0"
                 keyboardType="numeric"
                 value={amountPaid}
                 onChangeText={setAmountPaid}
-                leftIcon={<Text className="text-secondary-500">Rp</Text>}
+                className="text-2xl font-bold h-16"
               />
 
-              <View className="flex-row justify-between mt-2 bg-secondary-50 p-3 rounded-lg">
-                <Text className="text-secondary-600">Kembalian</Text>
-                <Text
-                  className={`font-bold text-lg ${change < 0 ? 'text-danger-600' : 'text-green-600'}`}
-                >
-                  {formatCurrency(change)}
-                </Text>
-              </View>
-
-              {/* Quick Money Buttons */}
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                className="mt-3"
+                className="mt-4"
               >
                 {[10000, 20000, 50000, 100000].map((amt) => (
                   <TouchableOpacity
                     key={amt}
                     onPress={() => setAmountPaid(String(amt))}
-                    className="bg-secondary-200 px-3 py-1.5 rounded-full mr-2"
+                    className="bg-secondary-100 px-4 py-2 rounded-full mr-2 border border-secondary-200"
                   >
-                    <Text className="text-secondary-700 text-xs">
+                    <Text className="text-primary-900 font-bold text-xs">
                       {formatCurrency(amt)}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+
+              {paid > 0 && (
+                <View className="mt-4 p-4 bg-secondary-50 rounded-lg border border-secondary-100 flex-row justify-between items-center">
+                  <Text className="text-secondary-600 font-bold uppercase text-xs tracking-wider">
+                    Change Due
+                  </Text>
+                  <Text
+                    className={`text-xl font-black ${change < 0 ? 'text-danger-600' : 'text-primary-900'}`}
+                  >
+                    {formatCurrency(change)}
+                  </Text>
+                </View>
+              )}
             </View>
           )}
 
-          {/* Notes */}
-          <View className="mt-4">
-            <Text className="text-sm font-medium text-secondary-700 mb-1.5">
-              Catatan
+          {/* Order Summary */}
+          <View>
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-3">
+              Order Items ({items.length})
+            </Text>
+            {items.map((item) => (
+              <View
+                key={item.product.id}
+                className="flex-row justify-between py-3 border-b border-secondary-100"
+              >
+                <View className="flex-row items-center gap-3">
+                  <View className="bg-secondary-100 h-8 w-8 rounded items-center justify-center">
+                    <Text className="font-bold text-secondary-600">
+                      {item.quantity}x
+                    </Text>
+                  </View>
+                  <View>
+                    <Text className="font-bold text-primary-900 text-sm">
+                      {item.product.name}
+                    </Text>
+                    {item.tierName && (
+                      <Text className="text-[10px] text-green-600 font-bold uppercase">
+                        {item.tierName}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                <Text className="font-bold text-secondary-900">
+                  {formatCurrency(
+                    item.subtotal || item.product.base_price * item.quantity,
+                  )}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <View className="mt-8">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+              NOTES
             </Text>
             <TextInput
-              className="border border-secondary-200 rounded-lg px-4 py-2 bg-white"
-              placeholder="Catatan transaksi (opsional)"
+              className="border border-secondary-200 rounded-lg px-4 py-3 bg-secondary-50 text-base font-medium"
+              placeholder="Add transaction notes..."
               value={notes}
               onChangeText={setNotes}
             />
           </View>
-        </Card>
+        </View>
       </ScrollView>
 
-      {/* Footer Actions */}
+      {/* Floating Action Button */}
       <View
-        className="bg-white border-t border-secondary-200 p-4"
+        className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-6 py-4"
         style={{ paddingBottom: insets.bottom + 12 }}
       >
         <Button
-          title={`Bayar ${formatCurrency(getTotal())}`}
+          title={`PAY ${formatCurrency(totalAmount)}`}
           fullWidth
           size="lg"
           onPress={handleProcessPayment}
-          loading={isSubmitting}
+          isLoading={isSubmitting}
           disabled={isInsufficient}
         />
       </View>
 
-      {/* Customer Selection Modal */}
+      {/* Customer Modal */}
       <Modal
         visible={showCustomerModal}
         animationType="slide"
         presentationStyle="pageSheet"
       >
         <View className="flex-1 bg-white">
-          <View className="bg-white border-b border-secondary-200 px-4 py-4 flex-row justify-between items-center">
-            <Text className="text-lg font-bold">Pilih Pelanggan</Text>
+          <View className="px-6 py-4 border-b border-secondary-100 flex-row justify-between items-center">
+            <Text className="text-xl font-black tracking-tight text-primary-900">
+              SELECT CUSTOMER
+            </Text>
             <TouchableOpacity onPress={() => setShowCustomerModal(false)}>
-              <Text className="text-primary-600 font-medium">Tutup</Text>
+              <Text className="font-bold text-danger-600">CLOSE</Text>
             </TouchableOpacity>
           </View>
+
           <View className="p-4 border-b border-secondary-100">
-            <TextInput
-              className="bg-secondary-100 rounded-lg px-4 py-2"
-              placeholder="Cari nama / no hp..."
+            <Input
+              placeholder="Search name or phone..."
               value={customerSearch}
               onChangeText={setCustomerSearch}
             />
           </View>
+
           <FlatList
             data={customerList}
             keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingBottom: 50 }}
             renderItem={({ item }) => (
               <TouchableOpacity
-                className="px-4 py-4 border-b border-secondary-100"
+                className="px-6 py-4 border-b border-secondary-100 active:bg-secondary-50"
                 onPress={() => {
                   setCustomer(item);
                   setShowCustomerModal(false);
                 }}
               >
-                <Text className="font-semibold text-secondary-900">
+                <Text className="font-bold text-lg text-primary-900">
                   {item.name}
                 </Text>
-                <Text className="text-secondary-500 text-sm">{item.phone}</Text>
+                <Text className="text-secondary-500 font-medium">
+                  {item.phone}
+                </Text>
                 {item.current_balance > 0 && (
-                  <Text className="text-danger-600 text-xs mt-1">
-                    Hutang: {formatCurrency(item.current_balance)}
+                  <Text className="text-danger-600 text-xs font-bold mt-1">
+                    DEBT: {formatCurrency(item.current_balance)}
                   </Text>
                 )}
               </TouchableOpacity>
             )}
             ListHeaderComponent={
               <TouchableOpacity
-                className="px-4 py-4 border-b border-secondary-100 bg-secondary-50"
+                className="px-6 py-5 border-b border-secondary-100 bg-secondary-50"
                 onPress={() => {
                   setCustomer(null);
                   setShowCustomerModal(false);
                 }}
               >
-                <Text className="font-semibold text-primary-600">
-                  Umum (Non-Member)
+                <Text className="font-bold text-primary-900 text-lg">
+                  Walk-In Customer (Non-Member)
+                </Text>
+                <Text className="text-secondary-500 text-sm">
+                  General Transaction
                 </Text>
               </TouchableOpacity>
             }

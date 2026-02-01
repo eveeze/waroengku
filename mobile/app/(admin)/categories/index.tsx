@@ -1,14 +1,23 @@
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, RefreshControl, TouchableOpacity, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  RefreshControl,
+  TouchableOpacity,
+  Alert,
+  StatusBar,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useApi } from '@/hooks/useApi';
 import { getCategories, deleteCategory } from '@/api/endpoints/categories';
 import { Category } from '@/api/types';
-import { Card, Loading, Button } from '@/components/ui';
+import { Button } from '@/components/ui';
 
 /**
  * Categories List Screen
+ * Swiss Minimalist Refactor
  */
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
@@ -31,34 +40,36 @@ export default function CategoriesScreen() {
   const handleDelete = (category: Category) => {
     if (category.product_count && category.product_count > 0) {
       Alert.alert(
-        'Tidak Bisa Menghapus',
-        `Kategori "${category.name}" masih memiliki ${category.product_count} produk. Hapus atau pindahkan produk terlebih dahulu.`
+        'CANNOT DELETE',
+        `Category "${category.name}" has ${category.product_count} products. Please remove or move products first.`,
       );
       return;
     }
 
     Alert.alert(
-      'Hapus Kategori',
-      `Yakin ingin menghapus "${category.name}"?`,
+      'DELETE CATEGORY',
+      `Are you sure you want to delete "${category.name}"?`,
       [
-        { text: 'Batal', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Hapus',
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             try {
               await deleteCategory(category.id);
-              Alert.alert('Berhasil', 'Kategori berhasil dihapus');
+              Alert.alert('SUCCESS', 'Category deleted successfully');
               loadCategories();
             } catch (err) {
               Alert.alert(
-                'Gagal',
-                err instanceof Error ? err.message : 'Gagal menghapus kategori'
+                'FAILED',
+                err instanceof Error
+                  ? err.message
+                  : 'Failed to delete category',
               );
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -66,49 +77,69 @@ export default function CategoriesScreen() {
     <TouchableOpacity
       onPress={() => router.push(`/(admin)/categories/${item.id}`)}
       onLongPress={() => handleDelete(item)}
-      className="mb-3"
+      className="mb-0 border-b border-secondary-100 bg-white active:bg-secondary-50"
     >
-      <Card>
-        <View className="flex-row items-center">
-          <View className="w-10 h-10 bg-primary-100 rounded-lg items-center justify-center mr-3">
-            <Text className="text-lg">🏷️</Text>
+      <View className="px-6 py-5 flex-row items-center justify-between">
+        <View className="flex-row items-center flex-1">
+          <View className="w-8 h-8 bg-black items-center justify-center mr-4">
+            <Text className="text-secondary-400 text-xs">#</Text>
           </View>
           <View className="flex-1">
-            <Text className="text-base font-semibold text-secondary-900">
+            <Text className="text-base font-bold text-primary-900 uppercase tracking-wide">
               {item.name}
             </Text>
             {item.description && (
-              <Text className="text-sm text-secondary-500 mt-0.5" numberOfLines={1}>
+              <Text
+                className="text-xs text-secondary-500 mt-1"
+                numberOfLines={1}
+              >
                 {item.description}
               </Text>
             )}
           </View>
-          {item.product_count !== undefined && (
-            <View className="bg-secondary-100 px-3 py-1 rounded-full">
-              <Text className="text-xs text-secondary-600">
-                {item.product_count} produk
-              </Text>
-            </View>
-          )}
         </View>
-      </Card>
+
+        {item.product_count !== undefined && (
+          <View className="items-end ml-4">
+            <Text className="text-lg font-black text-primary-900">
+              {item.product_count}
+            </Text>
+            <Text className="text-[9px] font-bold text-secondary-400 uppercase tracking-wider">
+              Products
+            </Text>
+          </View>
+        )}
+      </View>
     </TouchableOpacity>
   );
 
   return (
-    <View className="flex-1 bg-secondary-50">
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+
       {/* Header */}
       <View
-        className="bg-primary-600 px-4 pb-4"
+        className="bg-white border-b border-secondary-100 px-6 pb-6"
         style={{ paddingTop: insets.top + 16 }}
       >
-        <View className="flex-row items-center justify-between">
-          <Text className="text-white text-xl font-bold">Kategori</Text>
+        <View className="flex-row items-end justify-between">
+          <View>
+            <TouchableOpacity onPress={() => router.back()} className="mb-4">
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+                ← Back
+              </Text>
+            </TouchableOpacity>
+            <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+              CATEGORIES
+            </Text>
+          </View>
           <TouchableOpacity
             onPress={() => router.push('/(admin)/categories/create')}
-            className="bg-white px-4 py-2 rounded-lg"
+            className="bg-black px-5 py-3 items-center justify-center"
           >
-            <Text className="text-primary-600 font-medium">+ Tambah</Text>
+            <Text className="text-white font-bold text-xs uppercase tracking-widest">
+              + NEW
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -118,25 +149,33 @@ export default function CategoriesScreen() {
         data={categories}
         renderItem={renderCategory}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={loadCategories} />
         }
         ListEmptyComponent={
           !isLoading ? (
-            <View className="items-center py-8">
-              <Text className="text-4xl mb-4">🏷️</Text>
-              <Text className="text-secondary-500">Tidak ada kategori</Text>
-              <Text className="text-secondary-400 mt-1">
-                Tap "Tambah" untuk menambah kategori baru
+            <View className="items-center py-20 px-10">
+              <Text className="text-secondary-300 font-black text-6xl mb-4">
+                🏷️
+              </Text>
+              <Text className="text-secondary-900 font-bold text-lg text-center uppercase tracking-wide mb-2">
+                No Categories
+              </Text>
+              <Text className="text-secondary-500 text-center text-sm">
+                Create categories to organize your products.
               </Text>
             </View>
           ) : null
         }
         ListFooterComponent={
-          <Text className="text-center text-secondary-400 text-xs mt-4">
-            Tekan lama untuk menghapus kategori
-          </Text>
+          categories.length > 0 ? (
+            <View className="py-6 items-center border-t border-secondary-50 mt-4">
+              <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest">
+                Long press to delete category
+              </Text>
+            </View>
+          ) : null
         }
       />
     </View>

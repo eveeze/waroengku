@@ -166,7 +166,7 @@ export default function KasbonHistoryScreen() {
             {summary.current_balance > 0 && (
               <Button
                 title="Catat Pembayaran"
-                size="small"
+                size="sm"
                 fullWidth
                 onPress={() => router.push(`/(admin)/customers/${id}/payment`)}
               />

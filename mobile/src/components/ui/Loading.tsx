@@ -13,15 +13,20 @@ interface LoadingProps {
 }
 
 export function Loading({
-  message = 'Memuat...',
+  message,
   fullScreen = false,
   overlay = false,
 }: LoadingProps) {
   const content = (
     <View className="items-center justify-center">
-      <ActivityIndicator size="large" color="#3b82f6" />
+      <ActivityIndicator
+        size={fullScreen || overlay ? 'large' : 'small'}
+        color="#18181b"
+      />
       {message && (
-        <Text className="text-secondary-600 mt-3 text-base">{message}</Text>
+        <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mt-4">
+          {message}
+        </Text>
       )}
     </View>
   );
@@ -29,10 +34,8 @@ export function Loading({
   if (overlay) {
     return (
       <Modal transparent visible animationType="fade">
-        <View className="flex-1 bg-black/50 items-center justify-center">
-          <View className="bg-white rounded-xl px-8 py-6 items-center">
-            {content}
-          </View>
+        <View className="flex-1 bg-white/90 items-center justify-center">
+          {content}
         </View>
       </Modal>
     );
@@ -40,11 +43,11 @@ export function Loading({
 
   if (fullScreen) {
     return (
-      <View className="flex-1 bg-secondary-50 items-center justify-center">
+      <View className="flex-1 bg-white items-center justify-center">
         {content}
       </View>
     );
   }
 
-  return <View className="py-8">{content}</View>;
+  return <View className="py-6">{content}</View>;
 }

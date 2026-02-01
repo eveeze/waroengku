@@ -1,4 +1,3 @@
-import apiClient, { apiCall } from '../client';
 import {
   UserInfo,
   UserListParams,
@@ -8,44 +7,95 @@ import {
 
 /**
  * Users API Endpoints (Admin Only)
+ * MOCK IMPLEMENTATION - Backend endpoint does not exist yet.
  */
+
+// Dummy data for mocking
+const MOCK_USERS: UserInfo[] = [
+  {
+    id: '1',
+    name: 'Super Admin',
+    email: 'admin@warung.com',
+    role: 'admin',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    name: 'Budi Kasir',
+    email: 'budi@warung.com',
+    role: 'cashier',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: '3',
+    name: 'Siti Gudang',
+    email: 'siti@warung.com',
+    role: 'inventory',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
 
 /**
  * Get all users with pagination
- * GET /api/v1/users
+ * GET /api/v1/users (MOCKED)
  */
 export async function getUsers(
-  params?: UserListParams
+  params?: UserListParams,
 ): Promise<PaginatedResponse<UserInfo>> {
-  const response = await apiClient.get<PaginatedResponse<UserInfo>>('/users', {
-    params,
-  });
-  return response.data;
+  // Simulate network delay
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  return {
+    success: true,
+    data: MOCK_USERS,
+    meta: {
+      page: params?.page || 1,
+      per_page: params?.per_page || 10,
+      total_items: MOCK_USERS.length,
+      total_pages: 1,
+    },
+  };
 }
 
 /**
  * Get single user by ID
- * GET /api/v1/users/:id
+ * GET /api/v1/users/:id (MOCKED)
  */
 export async function getUserById(id: string): Promise<UserInfo> {
-  return apiCall<UserInfo>('get', `/users/${id}`);
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const user = MOCK_USERS.find((u) => u.id === id);
+  if (!user) throw new Error('User not found');
+  return user;
 }
 
 /**
  * Update user
- * PUT /api/v1/users/:id
+ * PUT /api/v1/users/:id (MOCKED)
  */
 export async function updateUser(
   id: string,
-  data: UpdateUserRequest
+  data: UpdateUserRequest,
 ): Promise<UserInfo> {
-  return apiCall<UserInfo>('put', `/users/${id}`, data);
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  // In a real mock we would update the array, but for simple display this is enough
+  return {
+    ...MOCK_USERS[0],
+    id,
+    ...data,
+  };
 }
 
 /**
  * Delete/deactivate user
- * DELETE /api/v1/users/:id
+ * DELETE /api/v1/users/:id (MOCKED)
  */
 export async function deleteUser(id: string): Promise<void> {
-  await apiClient.delete(`/users/${id}`);
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  // Mock success
 }

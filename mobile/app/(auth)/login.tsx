@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
@@ -18,7 +19,7 @@ import { Button, Input } from '@/components/ui';
 
 /**
  * Login Screen
- * Admin login with email and password
+ * Swiss Minimalist Design Refactor
  */
 export default function LoginScreen() {
   const router = useRouter();
@@ -46,8 +47,8 @@ export default function LoginScreen() {
     } catch (err) {
       // Error is handled by the store
       Alert.alert(
-        'Login Gagal',
-        err instanceof Error ? err.message : 'Terjadi kesalahan'
+        'LOGIN FAILED',
+        err instanceof Error ? err.message : 'An error occurred',
       );
     }
   };
@@ -55,109 +56,127 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-primary-600"
+      className="flex-1 bg-white"
     >
+      <StatusBar barStyle="dark-content" />
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
+          paddingTop: insets.top + 40,
+          paddingBottom: insets.bottom + 20,
+          paddingHorizontal: 32,
         }}
         keyboardShouldPersistTaps="handled"
+        className="flex-1"
       >
-        {/* Header */}
-        <View className="items-center pt-12 pb-8">
-          <View className="w-20 h-20 bg-white rounded-full items-center justify-center mb-4">
-            <Text className="text-4xl">🏪</Text>
+        {/* Header / Logo */}
+        <View className="mb-16 mt-8">
+          <View className="w-16 h-16 bg-black mb-6 items-center justify-center">
+            <Text className="text-4xl">⚓</Text>
           </View>
-          <Text className="text-white text-3xl font-bold">Warungku</Text>
-          <Text className="text-primary-200 text-base mt-2">
-            Admin Dashboard
+          <Text className="text-5xl font-black text-black tracking-tighter uppercase mb-2">
+            WARUNGKU
+          </Text>
+          <Text className="text-lg font-bold text-secondary-400 tracking-widest uppercase">
+            Management System
           </Text>
         </View>
 
         {/* Login Form */}
-        <View className="flex-1 bg-white rounded-t-3xl px-6 pt-8">
-          <Text className="text-2xl font-bold text-secondary-900 mb-2">
-            Selamat Datang!
-          </Text>
-          <Text className="text-secondary-500 mb-8">
-            Masuk untuk mengelola warung Anda
-          </Text>
-
+        <View className="flex-1">
           {/* Error Message */}
           {error && (
-            <View className="bg-danger-50 border border-danger-200 rounded-lg px-4 py-3 mb-4">
-              <Text className="text-danger-700">{error}</Text>
+            <View className="bg-red-50 border border-red-100 p-4 mb-8">
+              <Text className="text-red-600 font-bold uppercase tracking-wider text-xs mb-1">
+                Error
+              </Text>
+              <Text className="text-red-800 font-medium">{error}</Text>
             </View>
           )}
 
           {/* Email Input */}
-          <Controller
-            control={control}
-            name="email"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Email"
-                placeholder="admin@warung.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                error={errors.email?.message}
-              />
-            )}
-          />
+          <View className="mb-6">
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="EMAIL ADDRESS"
+                  placeholder="admin@warung.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  error={errors.email?.message}
+                />
+              )}
+            />
+          </View>
 
           {/* Password Input */}
-          <Controller
-            control={control}
-            name="password"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Password"
-                placeholder="Masukkan password"
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-                autoComplete="password"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                error={errors.password?.message}
-                rightIcon={
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                  >
-                    <Text className="text-secondary-500">
-                      {showPassword ? '👁️' : '👁️‍🗨️'}
-                    </Text>
-                  </TouchableOpacity>
-                }
-              />
-            )}
-          />
+          <View className="mb-10">
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="PASSWORD"
+                  placeholder="Enter your password"
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoComplete="password"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  error={errors.password?.message}
+                  rightIcon={
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                    >
+                      <Text className="text-secondary-500 font-bold text-xs uppercase tracking-wider">
+                        {showPassword ? 'HIDE' : 'SHOW'}
+                      </Text>
+                    </TouchableOpacity>
+                  }
+                />
+              )}
+            />
+          </View>
 
           {/* Login Button */}
           <Button
-            title="Masuk"
+            title="AUTHENTICATE"
             onPress={handleSubmit(onSubmit)}
             isLoading={isLoading}
             fullWidth
             size="lg"
-            className="mt-4"
           />
 
           {/* Dev Credentials Hint */}
-          <View className="mt-8 p-4 bg-secondary-50 rounded-lg">
-            <Text className="text-xs text-secondary-500 text-center">
-              💡 Test Credentials (Development)
+          <View className="mt-12 pt-8 border-t border-secondary-100">
+            <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest text-center mb-2">
+              Development Access
             </Text>
-            <Text className="text-xs text-secondary-400 text-center mt-1">
-              Email: admin@warung.com | Password: password
-            </Text>
+            <TouchableOpacity
+              className="bg-secondary-50 p-3 items-center justify-center border border-secondary-200"
+              onPress={() => {
+                // Optional: fast fill helper could go here
+              }}
+            >
+              <Text className="font-mono text-xs text-secondary-600">
+                admin@warung.com / password
+              </Text>
+            </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Footer */}
+        <View className="mt-8 items-center opacity-50">
+          <Text className="text-[10px] font-black uppercase tracking-[0.2em] text-secondary-400">
+            POWERED BY EVEEZE
+          </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

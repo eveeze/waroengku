@@ -187,7 +187,7 @@ export default function EditCustomerScreen() {
             title="Simpan Perubahan"
             fullWidth
             onPress={handleSubmit}
-            loading={isSubmitting}
+            isLoading={isSubmitting}
           />
         </View>
       </KeyboardAvoidingView>

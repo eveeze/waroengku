@@ -15,7 +15,7 @@ interface CardProps extends ViewProps {
   title?: string;
   subtitle?: string;
   action?: React.ReactNode;
-  actions?: CardAction[];  // Array of action buttons
+  actions?: CardAction[]; // Array of action buttons
 }
 
 export function Card({
@@ -30,22 +30,22 @@ export function Card({
   return (
     <View
       className={`
-        bg-white rounded-xl shadow-sm
-        border border-secondary-100
+        bg-white rounded-xl
+        border border-secondary-200
         ${className || ''}
       `}
       {...props}
     >
       {(title || subtitle || action || actions) && (
-        <View className="flex-row items-center justify-between px-4 py-3 border-b border-secondary-100">
+        <View className="flex-row items-center justify-between px-5 py-4 border-b border-secondary-100">
           <View className="flex-1">
             {title && (
-              <Text className="text-lg font-semibold text-secondary-900">
+              <Text className="text-xl font-bold tracking-tight text-primary-900">
                 {title}
               </Text>
             )}
             {subtitle && (
-              <Text className="text-sm text-secondary-500 mt-0.5">
+              <Text className="text-sm font-medium text-secondary-500 mt-1">
                 {subtitle}
               </Text>
             )}
@@ -55,16 +55,18 @@ export function Card({
               <TouchableOpacity
                 key={index}
                 onPress={item.onPress}
-                className="ml-2"
+                className="ml-3 px-3 py-1.5 bg-secondary-50 rounded-md border border-secondary-200"
               >
-                <Text className="text-primary-600 font-medium">{item.title}</Text>
+                <Text className="text-xs font-bold text-primary-900 uppercase tracking-wide">
+                  {item.title}
+                </Text>
               </TouchableOpacity>
             ))}
             {action}
           </View>
         </View>
       )}
-      <View className="p-4">{children}</View>
+      <View className="p-5">{children}</View>
     </View>
   );
 }

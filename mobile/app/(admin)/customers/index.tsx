@@ -6,17 +6,15 @@ import {
   RefreshControl,
   TouchableOpacity,
   TextInput,
+  StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useApi } from '@/hooks/useApi';
 import { getCustomers } from '@/api/endpoints/customers';
 import { Customer, CustomerListParams } from '@/api/types';
-import { Card, Loading } from '@/components/ui';
+import { Loading } from '@/components/ui';
 
-/**
- * Customers List Screen
- */
 export default function CustomersScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -28,7 +26,7 @@ export default function CustomersScreen() {
   const [showDebtOnly, setShowDebtOnly] = useState(false);
 
   const { isLoading, execute: fetchCustomers } = useApi(
-    (params: CustomerListParams) => getCustomers(params)
+    (params: CustomerListParams) => getCustomers(params),
   );
 
   useEffect(() => {
@@ -56,7 +54,7 @@ export default function CustomersScreen() {
         }
       } catch {}
     },
-    [search, showDebtOnly]
+    [search, showDebtOnly],
   );
 
   const handleSearch = () => {
@@ -97,83 +95,95 @@ export default function CustomersScreen() {
     return (
       <TouchableOpacity
         onPress={() => router.push(`/(admin)/customers/${item.id}`)}
-        className="mb-3"
+        className="mb-0 border-b border-secondary-100 bg-white active:bg-secondary-50"
       >
-        <Card>
-          <View className="flex-row items-center">
-            <View className="w-12 h-12 bg-primary-100 rounded-full items-center justify-center mr-3">
-              <Text className="text-xl">👤</Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-base font-semibold text-secondary-900">
-                {item.name}
-              </Text>
-              {item.phone && (
-                <Text className="text-sm text-secondary-500">{item.phone}</Text>
-              )}
-            </View>
-            <View className="items-end">
-              {hasDebt ? (
-                <>
-                  <Text className="text-base font-bold text-danger-600">
-                    {formatCurrency(item.current_balance)}
-                  </Text>
-                  <Text className="text-xs text-danger-500">Hutang</Text>
-                </>
-              ) : (
-                <View className="bg-green-100 px-2 py-1 rounded-full">
-                  <Text className="text-xs text-green-700">Lunas</Text>
-                </View>
-              )}
-            </View>
+        <View className="px-6 py-4 flex-row items-center justify-between">
+          <View className="flex-1 mr-4">
+            <Text className="text-sm font-bold text-primary-900 mb-1">
+              {item.name}
+            </Text>
+            <Text className="text-secondary-500 text-xs">
+              {item.phone || 'No phone'}
+            </Text>
           </View>
-        </Card>
+
+          <View className="items-end">
+            {hasDebt ? (
+              <View className="items-end">
+                <Text className="font-black text-danger-600 text-sm">
+                  {formatCurrency(item.current_balance)}
+                </Text>
+                <Text className="text-[10px] font-bold text-danger-500 uppercase tracking-wide">
+                  Debt
+                </Text>
+              </View>
+            ) : (
+              <Text className="text-[10px] font-bold text-secondary-300 uppercase tracking-widest">
+                No Debt
+              </Text>
+            )}
+          </View>
+
+          <Text className="text-secondary-300 ml-4 text-lg">→</Text>
+        </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <View className="flex-1 bg-secondary-50">
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
       {/* Header */}
       <View
-        className="bg-primary-600 px-4 pb-4"
+        className="bg-white border-b border-secondary-100 px-6 pb-6 sticky"
         style={{ paddingTop: insets.top + 16 }}
       >
-        <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-white text-xl font-bold">Pelanggan</Text>
+        <View className="flex-row items-end justify-between mb-6">
+          <View>
+            <TouchableOpacity onPress={() => router.back()} className="mb-4">
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+                ← Back
+              </Text>
+            </TouchableOpacity>
+            <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+              MEMBERS
+            </Text>
+          </View>
           <TouchableOpacity
             onPress={() => router.push('/(admin)/customers/create')}
-            className="bg-white px-4 py-2 rounded-lg"
+            className="bg-black px-5 py-3 rounded-none items-center justify-center"
           >
-            <Text className="text-primary-600 font-medium">+ Tambah</Text>
+            <Text className="text-white font-bold text-xs uppercase tracking-widest">
+              + NEW MEMBER
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Search */}
-        <View className="flex-row items-center bg-white rounded-lg px-4">
-          <Text className="mr-2">🔍</Text>
-          <TextInput
-            className="flex-1 py-3 text-base"
-            placeholder="Cari pelanggan..."
-            value={search}
-            onChangeText={setSearch}
-            onSubmitEditing={handleSearch}
-            returnKeyType="search"
-          />
-        </View>
-
-        {/* Filter */}
-        <View className="flex-row mt-3">
+        {/* Search & Filter */}
+        <View className="flex-row gap-3">
+          <View className="flex-1 bg-secondary-50 border border-secondary-200 px-4 h-12 justify-center">
+            <TextInput
+              className="flex-1 text-base font-medium text-primary-900"
+              placeholder="Search members..."
+              value={search}
+              onChangeText={setSearch}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
+              placeholderTextColor="#A1A1AA"
+            />
+          </View>
           <TouchableOpacity
             onPress={toggleDebtFilter}
-            className={`px-4 py-2 rounded-full mr-2 ${
-              showDebtOnly ? 'bg-white' : 'bg-primary-500'
+            className={`px-4 justify-center border ${
+              showDebtOnly
+                ? 'bg-black border-black'
+                : 'bg-white border-secondary-200'
             }`}
           >
             <Text
-              className={showDebtOnly ? 'text-primary-600' : 'text-white'}
+              className={`font-bold text-xs uppercase tracking-wide ${showDebtOnly ? 'text-white' : 'text-secondary-500'}`}
             >
-              {showDebtOnly ? '✓ Punya Hutang' : 'Punya Hutang'}
+              {showDebtOnly ? 'Has Debt' : 'Filter Debt'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -184,7 +194,7 @@ export default function CustomersScreen() {
         data={customers}
         renderItem={renderCustomer}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={
           <RefreshControl
             refreshing={isLoading && page === 1}
@@ -192,24 +202,26 @@ export default function CustomersScreen() {
           />
         }
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.3}
+        onEndReachedThreshold={0.5}
         ListEmptyComponent={
           !isLoading ? (
-            <View className="items-center py-12">
-              <Text className="text-5xl mb-4">👥</Text>
-              <Text className="text-secondary-500 text-lg">
-                Tidak ada pelanggan
+            <View className="items-center py-20 px-10">
+              <Text className="text-secondary-300 font-black text-6xl mb-4">
+                👥
               </Text>
-              <Text className="text-secondary-400 mt-1">
-                Tap "Tambah" untuk menambah pelanggan baru
+              <Text className="text-secondary-900 font-bold text-lg text-center uppercase tracking-wide mb-2">
+                No Members Found
+              </Text>
+              <Text className="text-secondary-500 text-center text-sm">
+                Start by adding a new member to the system.
               </Text>
             </View>
           ) : null
         }
         ListFooterComponent={
           isLoading && customers.length > 0 ? (
-            <View className="py-4">
-              <Loading message="Memuat..." />
+            <View className="py-6">
+              <Loading message="" />
             </View>
           ) : null
         }

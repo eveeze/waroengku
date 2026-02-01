@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Text, Alert } from 'react-native';
+import {
+  View,
+  ScrollView,
+  Text,
+  Alert,
+  TouchableOpacity,
+  StatusBar,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApi } from '@/hooks/useApi';
 import { getTransaction, cancelTransaction } from '@/api/endpoints';
 import { Transaction } from '@/api/types';
-import { Header } from '@/components/shared';
-import { Card, Button, Loading } from '@/components/ui';
+import { Button, Loading } from '@/components/ui';
 
 export default function TransactionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -30,29 +36,32 @@ export default function TransactionDetailScreen() {
   }, [id]);
 
   const handleCancel = () => {
-    Alert.alert('Batalkan Transaksi', 'Stok akan dikembalikan. Lanjutkan?', [
-      { text: 'Tidak', style: 'cancel' },
-      {
-        text: 'Ya, Batalkan',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await doCancel();
-            Alert.alert('Sukses', 'Transaksi dibatalkan');
-            router.back();
-          } catch (err) {
-            Alert.alert('Gagal', (err as Error).message);
-          }
+    Alert.alert(
+      'VOID TRANSACTION',
+      'This will return items to stock. Proceed?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Confirm Void',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await doCancel();
+              Alert.alert('SUCCESS', 'Transaction cancelled.');
+              router.back();
+            } catch (err) {
+              Alert.alert('FAILED', (err as Error).message);
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   if (isLoading || !transaction) {
     return (
-      <View className="flex-1 bg-secondary-50">
-        <Header title="Detail Transaksi" onBack={() => router.back()} />
-        <Loading message="Memuat detail..." />
+      <View className="flex-1 bg-white items-center justify-center">
+        <Loading message="Fetching Receipt..." />
       </View>
     );
   }
@@ -66,138 +75,175 @@ export default function TransactionDetailScreen() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('id-ID');
+    return new Date(dateString).toLocaleString('en-US', {
+      dateStyle: 'medium',
+      timeStyle: 'medium',
+    });
   };
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Detail Transaksi" onBack={() => router.back()} />
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
 
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
-        {/* Status Card */}
-        <Card className="mb-4">
-          <View className="items-center mb-2">
-            <Text className="text-secondary-500 font-medium">Invoice</Text>
-            <Text className="text-xl font-bold text-secondary-900">
-              {transaction.invoice_number}
+      {/* Header */}
+      <View
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          RECEIPT
+        </Text>
+        <Text className="text-secondary-400 font-bold uppercase tracking-widest text-xs mt-1">
+          #{transaction.invoice_number}
+        </Text>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={{
+          padding: 24,
+          paddingBottom: insets.bottom + 100,
+        }}
+      >
+        {/* Status Badge */}
+        <View className="flex-row justify-between items-center mb-8 border-b border-black pb-4">
+          <View>
+            <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500 mb-1">
+              Date
+            </Text>
+            <Text className="text-sm font-bold text-primary-900">
+              {formatDate(transaction.created_at)}
             </Text>
           </View>
-          <View className="bg-secondary-100 p-3 rounded-lg flex-row justify-between items-center">
-            <Text className="text-secondary-600">Status</Text>
+          <View
+            className={`px-3 py-1 border ${
+              transaction.status === 'completed'
+                ? 'bg-black border-black'
+                : transaction.status === 'cancelled'
+                  ? 'bg-white border-red-600'
+                  : 'bg-white border-orange-500'
+            }`}
+          >
             <Text
-              className={`font-bold capitalize ${
+              className={`text-xs font-black uppercase tracking-widest ${
                 transaction.status === 'completed'
-                  ? 'text-green-600'
+                  ? 'text-white'
                   : transaction.status === 'cancelled'
                     ? 'text-red-600'
-                    : 'text-orange-600'
+                    : 'text-orange-500'
               }`}
             >
               {transaction.status}
             </Text>
           </View>
-          <View className="flex-row justify-between mt-2 px-1">
-            <Text className="text-secondary-500 text-xs">Tanggal</Text>
-            <Text className="text-secondary-700 text-xs">
-              {formatDate(transaction.created_at)}
-            </Text>
-          </View>
-          <View className="flex-row justify-between mt-1 px-1">
-            <Text className="text-secondary-500 text-xs">Kasir</Text>
-            <Text className="text-secondary-700 text-xs">
-              {transaction.cashier_name || '-'}
-            </Text>
-          </View>
-        </Card>
+        </View>
 
-        {/* Items */}
-        <Card title="Daftar Item" className="mb-4">
+        {/* Items Table */}
+        <View className="mb-8">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-900 mb-4">
+            Purchased Items
+          </Text>
+
           {transaction.items.map((item, index) => (
             <View
               key={index}
-              className="flex-row justify-between py-2 border-b border-secondary-100 last:border-0"
+              className="flex-row justify-between py-3 border-b border-secondary-100 last:border-0"
             >
-              <View className="flex-1">
-                <Text className="font-medium text-secondary-900">
+              <View className="flex-1 pr-4">
+                <Text className="font-bold text-primary-900 text-sm uppercase mb-1">
                   {item.product_name}
                 </Text>
-                <Text className="text-xs text-secondary-500 text-right">
+                <Text className="text-xs text-secondary-500 font-medium">
                   {item.quantity} {item.unit} x{' '}
                   {formatCurrency(item.unit_price || 0)}
                 </Text>
               </View>
-              <Text className="font-bold text-secondary-900 ml-4">
+              <Text className="font-bold text-primary-900 text-sm">
                 {formatCurrency(item.subtotal || 0)}
               </Text>
             </View>
           ))}
-        </Card>
+        </View>
 
-        {/* Payment Details */}
-        <Card title="Rincian Pembayaran" className="mb-4">
-          <View className="flex-row justify-between mb-1">
-            <Text className="text-secondary-600">Subtotal</Text>
-            <Text className="text-secondary-900 font-medium">
+        {/* Totals Section */}
+        <View className="bg-secondary-50 p-6 mb-8">
+          <View className="flex-row justify-between mb-2">
+            <Text className="text-secondary-500 text-xs font-bold uppercase tracking-wider">
+              Subtotal
+            </Text>
+            <Text className="text-primary-900 font-bold text-sm">
               {formatCurrency(transaction.total_amount)}
             </Text>
           </View>
+
           {transaction.discount_amount > 0 && (
-            <View className="flex-row justify-between mb-1">
-              <Text className="text-green-600">Diskon</Text>
-              <Text className="text-green-600 font-medium">
+            <View className="flex-row justify-between mb-2">
+              <Text className="text-secondary-500 text-xs font-bold uppercase tracking-wider">
+                Discount
+              </Text>
+              <Text className="text-primary-900 font-bold text-sm">
                 -{formatCurrency(transaction.discount_amount)}
               </Text>
             </View>
           )}
+
           {transaction.tax_amount > 0 && (
-            <View className="flex-row justify-between mb-1">
-              <Text className="text-secondary-600">Pajak</Text>
-              <Text className="text-secondary-900 font-medium">
+            <View className="flex-row justify-between mb-2">
+              <Text className="text-secondary-500 text-xs font-bold uppercase tracking-wider">
+                Tax
+              </Text>
+              <Text className="text-primary-900 font-bold text-sm">
                 {formatCurrency(transaction.tax_amount)}
               </Text>
             </View>
           )}
-          <View className="border-t border-secondary-200 my-2 pt-2 flex-row justify-between">
-            <Text className="text-lg font-bold text-secondary-900">Total</Text>
-            <Text className="text-lg font-bold text-primary-700">
+
+          <View className="border-t border-secondary-200 my-4 pt-4 flex-row justify-between items-center">
+            <Text className="text-lg font-black text-primary-900 uppercase tracking-tighter">
+              Total
+            </Text>
+            <Text className="text-2xl font-black text-black">
               {formatCurrency(transaction.final_amount)}
             </Text>
           </View>
 
-          <View className="bg-secondary-50 p-3 rounded mt-2">
-            <View className="flex-row justify-between mb-1">
-              <Text className="text-secondary-500 text-xs">
-                Metode Pembayaran
-              </Text>
-              <Text className="text-secondary-900 font-medium capitalize">
-                {transaction.payment_method}
-              </Text>
-            </View>
-            <View className="flex-row justify-between">
-              <Text className="text-secondary-500 text-xs">Uang Diterima</Text>
-              <Text className="text-secondary-900 font-medium">
-                {formatCurrency(transaction.amount_paid)}
-              </Text>
-            </View>
-            <View className="flex-row justify-between mt-1">
-              <Text className="text-secondary-500 text-xs">Kembalian</Text>
-              <Text className="text-secondary-900 font-medium">
-                {formatCurrency(transaction.change_amount)}
-              </Text>
-            </View>
+          <View className="flex-row justify-between mt-2">
+            <Text className="text-secondary-500 text-xs font-bold uppercase tracking-wider">
+              Payment Method
+            </Text>
+            <Text className="text-primary-900 font-bold text-xs uppercase">
+              {transaction.payment_method}
+            </Text>
           </View>
-        </Card>
+          <View className="flex-row justify-between mt-2">
+            <Text className="text-secondary-500 text-xs font-bold uppercase tracking-wider">
+              Cashier
+            </Text>
+            <Text className="text-primary-900 font-bold text-xs uppercase">
+              {transaction.cashier_name || 'System'}
+            </Text>
+          </View>
+        </View>
 
         {/* Actions */}
         {transaction.status === 'completed' && (
-          <Button
-            title="Batalkan Transaksi"
-            variant="outline"
-            className="border-danger-200"
-            textClassName="text-danger-500"
-            onPress={handleCancel}
-            loading={isCancelling}
-          />
+          <View className="mt-4">
+            <Button
+              title="VOID TRANSACTION"
+              variant="outline"
+              className="border-red-600"
+              textClassName="text-red-600"
+              onPress={handleCancel}
+              isLoading={isCancelling}
+            />
+            <Text className="text-center text-[10px] text-secondary-400 mt-3 font-bold uppercase tracking-widest">
+              Authentication Required for Voiding
+            </Text>
+          </View>
         )}
       </ScrollView>
     </View>

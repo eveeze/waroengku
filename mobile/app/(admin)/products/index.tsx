@@ -21,8 +21,7 @@ import { Card, Loading, Button } from '@/components/ui';
 import { BarcodeScanner } from '@/components/shared';
 
 /**
- * Products List Screen
- * Full featured with search, filters, sorting, and barcode scanner
+ * Products List Screen (Swiss Design)
  */
 export default function ProductsScreen() {
   const insets = useSafeAreaInsets();
@@ -81,7 +80,8 @@ export default function ProductsScreen() {
 
       try {
         const result = await fetchProducts(params);
-        if (result) {
+        if (result && result.success) {
+          // Align with PaginatedResponse
           if (append) {
             setProducts((prev) => [...prev, ...result.data]);
           } else {
@@ -96,34 +96,26 @@ export default function ProductsScreen() {
 
   const handleBarcodeScanned = async (barcode: string, type: string) => {
     setShowBarcodeScanner(false);
-
     try {
       const product = await searchByBarcode(barcode);
       if (product && product.id) {
-        // Navigate to product detail
         router.push(`/(admin)/products/${product.id}`);
       } else {
-        // Product not found
-        Alert.alert(
-          'Produk Tidak Ditemukan',
-          `Barcode ${barcode} tidak terdaftar. Ingin menambahkan produk baru?`,
-          [
-            { text: 'Batal', style: 'cancel' },
-            {
-              text: 'Tambah Baru',
-              onPress: () => {
-                router.push({
-                  pathname: '/(admin)/products/create',
-                  params: { barcode },
-                });
-              },
+        Alert.alert('Not Found', `Barcode ${barcode} not found. Create new?`, [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Create',
+            onPress: () => {
+              router.push({
+                pathname: '/(admin)/products/create',
+                params: { barcode },
+              });
             },
-          ],
-        );
+          },
+        ]);
       }
-    } catch (err) {
-      // API error - treat as not found
-      Alert.alert('Error', 'Gagal mencari produk. Periksa koneksi internet.');
+    } catch {
+      Alert.alert('Error', 'Failed to search product.');
     }
   };
 
@@ -165,64 +157,57 @@ export default function ProductsScreen() {
     return (
       <TouchableOpacity
         onPress={() => router.push(`/(admin)/products/${item.id}`)}
-        className="mb-3"
+        className="mb-4"
+        activeOpacity={0.7}
       >
-        <Card>
-          <View className="flex-row items-center">
+        <Card className="rounded-none border-x-0 border-t-0 border-b border-secondary-200 shadow-none bg-transparent px-0 py-2">
+          <View className="flex-row">
             {/* Image placeholder */}
-            <View className="w-14 h-14 bg-secondary-100 rounded-lg items-center justify-center mr-3">
+            <View className="w-16 h-16 bg-secondary-50 border border-secondary-200 rounded-md items-center justify-center mr-4">
               {item.image_url ? (
-                <Text className="text-2xl">📷</Text>
+                <Text className="text-xl">📷</Text>
               ) : (
-                <Text className="text-2xl">📦</Text>
+                <Text className="text-xl text-secondary-300">#</Text>
               )}
             </View>
 
             {/* Product info */}
-            <View className="flex-1">
-              <Text
-                className="text-base font-semibold text-secondary-900"
-                numberOfLines={1}
-              >
-                {item.name}
-              </Text>
-              <Text className="text-sm text-secondary-500">
-                {item.category_name || 'Tanpa Kategori'}
-              </Text>
-              {item.barcode && (
-                <Text className="text-xs text-secondary-400 font-mono">
-                  {item.barcode}
-                </Text>
-              )}
-            </View>
-
-            {/* Price and stock */}
-            <View className="items-end">
-              <Text className="text-base font-bold text-primary-600">
-                {formatCurrency(item.base_price)}
-              </Text>
-              <View
-                className={`flex-row items-center mt-1 ${
-                  isLowStock ? 'bg-danger-50 px-2 py-0.5 rounded' : ''
-                }`}
-              >
-                {isLowStock && <Text className="mr-1">⚠️</Text>}
-                <Text
-                  className={`text-xs ${
-                    isLowStock
-                      ? 'text-danger-600 font-medium'
-                      : 'text-secondary-500'
-                  }`}
-                >
-                  Stok: {item.current_stock}
+            <View className="flex-1 justify-center">
+              <View className="flex-row justify-between items-start">
+                <View className="flex-1 pr-2">
+                  <Text
+                    className="text-lg font-bold text-primary-900 tracking-tight leading-6"
+                    numberOfLines={2}
+                  >
+                    {item.name}
+                  </Text>
+                  {item.category_name && (
+                    <Text className="text-xs font-bold text-secondary-500 uppercase tracking-wider mt-1">
+                      {item.category_name}
+                    </Text>
+                  )}
+                </View>
+                <Text className="text-lg font-bold text-primary-900">
+                  {formatCurrency(item.base_price)}
                 </Text>
               </View>
-              {/* Pricing tier indicator */}
-              {item.pricing_tiers && item.pricing_tiers.length > 0 && (
-                <Text className="text-xs text-primary-500 mt-0.5">
-                  🏷️ {item.pricing_tiers.length} tier
-                </Text>
-              )}
+
+              <View className="flex-row items-center mt-2">
+                <View
+                  className={`px-2 py-0.5 rounded mr-2 border ${isLowStock ? 'bg-danger-50 border-danger-200' : 'bg-secondary-50 border-secondary-200'}`}
+                >
+                  <Text
+                    className={`text-xs font-bold ${isLowStock ? 'text-danger-700' : 'text-primary-900'}`}
+                  >
+                    STOCK: {item.current_stock}
+                  </Text>
+                </View>
+                {item.pricing_tiers && item.pricing_tiers.length > 0 && (
+                  <Text className="text-xs text-secondary-400 font-medium">
+                    +{item.pricing_tiers.length} TIERS
+                  </Text>
+                )}
+              </View>
             </View>
           </View>
         </Card>
@@ -231,45 +216,50 @@ export default function ProductsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      {/* Barcode Scanner Modal */}
+    <View className="flex-1 bg-white">
       <BarcodeScanner
         visible={showBarcodeScanner}
         onClose={() => setShowBarcodeScanner(false)}
         onScan={handleBarcodeScanned}
-        title="Cari Produk"
+        title="SCAN PRODUCT"
       />
 
       {/* Header */}
       <View
-        className="bg-primary-600 px-4 pb-4"
-        style={{ paddingTop: insets.top + 16 }}
+        className="px-6 pb-6 border-b border-secondary-200"
+        style={{ paddingTop: insets.top + 24 }}
       >
-        <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-white text-xl font-bold">Produk</Text>
-          <View className="flex-row">
-            <TouchableOpacity
-              onPress={() => setShowBarcodeScanner(true)}
-              className="bg-primary-500 px-3 py-2 rounded-lg mr-2"
-            >
-              <Text className="text-white">📷 Scan</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push('/(admin)/products/create')}
-              className="bg-white px-4 py-2 rounded-lg"
-            >
-              <Text className="text-primary-600 font-medium">+ Tambah</Text>
-            </TouchableOpacity>
+        <View className="mb-6">
+          <Text className="text-sm font-bold tracking-widest text-secondary-500 mb-1">
+            INVENTORY
+          </Text>
+          <View className="flex-row items-end justify-between">
+            <Text className="text-4xl font-black tracking-tighter text-primary-900">
+              PRODUCTS
+            </Text>
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                onPress={() => setShowBarcodeScanner(true)}
+                className="w-10 h-10 items-center justify-center bg-secondary-50 border border-secondary-200 rounded-lg"
+              >
+                <Text className="text-lg">📷</Text>
+              </TouchableOpacity>
+              <Button
+                title="NEW"
+                size="sm"
+                onPress={() => router.push('/(admin)/products/create')}
+              />
+            </View>
           </View>
         </View>
 
         {/* Search */}
-        <View className="flex-row items-center">
-          <View className="flex-1 flex-row items-center bg-white rounded-lg px-4 mr-2">
-            <Text className="mr-2">🔍</Text>
+        <View className="flex-row gap-3">
+          <View className="flex-1 bg-secondary-50 border border-secondary-200 rounded-lg px-4 flex-row items-center h-12">
             <TextInput
-              className="flex-1 py-3 text-base"
-              placeholder="Cari produk..."
+              className="flex-1 text-base font-medium text-primary-900 h-full"
+              placeholder="Search products..."
+              placeholderTextColor="#a1a1aa"
               value={search}
               onChangeText={setSearch}
               onSubmitEditing={handleSearch}
@@ -278,145 +268,93 @@ export default function ProductsScreen() {
           </View>
           <TouchableOpacity
             onPress={() => setShowFilters(!showFilters)}
-            className={`p-3 rounded-lg ${showFilters ? 'bg-white' : 'bg-primary-500'}`}
+            className={`w-12 h-12 rounded-lg items-center justify-center border ${
+              showFilters
+                ? 'bg-primary-900 border-primary-900'
+                : 'bg-white border-secondary-200'
+            }`}
           >
-            <Text className={showFilters ? 'text-primary-600' : 'text-white'}>
-              🔧
+            <Text className={showFilters ? 'text-white' : 'text-primary-900'}>
+              F
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Filters Panel */}
+        {/* Filters */}
         {showFilters && (
-          <View className="mt-3 bg-white rounded-lg p-3">
-            {/* Low Stock Toggle */}
-            <TouchableOpacity
-              onPress={() => setShowLowStock(!showLowStock)}
-              className="flex-row items-center mb-3"
-            >
-              <View
-                className={`w-5 h-5 rounded border mr-2 items-center justify-center ${
-                  showLowStock
-                    ? 'bg-primary-600 border-primary-600'
-                    : 'border-secondary-300'
-                }`}
-              >
-                {showLowStock && <Text className="text-white text-xs">✓</Text>}
-              </View>
-              <Text className="text-secondary-700">Stok Rendah Saja</Text>
-            </TouchableOpacity>
-
+          <View className="mt-4 pt-4 border-t border-secondary-100 animate-fade-in-down">
             {/* Category Filter */}
-            <Text className="text-xs text-secondary-500 mb-2">Kategori</Text>
-            <View className="flex-row flex-wrap mb-3">
+            <View className="flex-row flex-wrap mb-4 gap-2">
               <TouchableOpacity
                 onPress={() => setSelectedCategory(undefined)}
-                className={`px-3 py-1.5 rounded-full mr-2 mb-2 ${
-                  !selectedCategory ? 'bg-primary-600' : 'bg-secondary-100'
+                className={`px-4 py-2 rounded-md border ${
+                  !selectedCategory
+                    ? 'bg-primary-900 border-primary-900'
+                    : 'bg-white border-secondary-200'
                 }`}
               >
                 <Text
-                  className={
-                    !selectedCategory ? 'text-white' : 'text-secondary-700'
-                  }
+                  className={`text-xs font-bold uppercase tracking-wide ${!selectedCategory ? 'text-white' : 'text-primary-900'}`}
                 >
-                  Semua
+                  ALL
                 </Text>
               </TouchableOpacity>
               {categories.map((cat) => (
                 <TouchableOpacity
                   key={cat.id}
                   onPress={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-full mr-2 mb-2 ${
+                  className={`px-4 py-2 rounded-md border ${
                     selectedCategory === cat.id
-                      ? 'bg-primary-600'
-                      : 'bg-secondary-100'
+                      ? 'bg-primary-900 border-primary-900'
+                      : 'bg-white border-secondary-200'
                   }`}
                 >
                   <Text
-                    className={
-                      selectedCategory === cat.id
-                        ? 'text-white'
-                        : 'text-secondary-700'
-                    }
+                    className={`text-xs font-bold uppercase tracking-wide ${selectedCategory === cat.id ? 'text-white' : 'text-primary-900'}`}
                   >
                     {cat.name}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
-
-            {/* Sort By */}
-            <Text className="text-xs text-secondary-500 mb-2">Urutkan</Text>
-            <View className="flex-row">
-              {[
-                { key: 'name', label: 'Nama' },
-                { key: 'base_price', label: 'Harga' },
-                { key: 'created_at', label: 'Terbaru' },
-              ].map((sort) => (
-                <TouchableOpacity
-                  key={sort.key}
-                  onPress={() =>
-                    setSortBy(sort.key as 'name' | 'base_price' | 'created_at')
-                  }
-                  className={`px-3 py-1.5 rounded-full mr-2 ${
-                    sortBy === sort.key ? 'bg-primary-600' : 'bg-secondary-100'
-                  }`}
-                >
-                  <Text
-                    className={
-                      sortBy === sort.key ? 'text-white' : 'text-secondary-700'
-                    }
-                  >
-                    {sort.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Apply Button */}
             <Button
-              title="Terapkan Filter"
-              size="small"
+              title="APPLY FILTERS"
               fullWidth
               onPress={applyFilters}
-              className="mt-3"
+              size="sm"
+              variant="outline"
             />
           </View>
         )}
       </View>
 
-      {/* Products List */}
       <FlatList
         data={products}
         renderItem={renderProduct}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ padding: 24 }}
         refreshControl={
           <RefreshControl
             refreshing={isLoading && page === 1}
             onRefresh={handleRefresh}
+            tintColor="#000"
           />
         }
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.3}
         ListEmptyComponent={
           !isLoading ? (
-            <View className="items-center py-12">
-              <Text className="text-5xl mb-4">📦</Text>
-              <Text className="text-secondary-500 text-lg">
-                Tidak ada produk
-              </Text>
-              <Text className="text-secondary-400 mt-1">
-                Tap "Tambah" untuk menambah produk baru
+            <View className="items-center py-20 opacity-50">
+              <Text className="text-lg font-medium text-primary-900">
+                NO PRODUCTS
               </Text>
             </View>
           ) : null
         }
         ListFooterComponent={
           isLoading && products.length > 0 ? (
-            <View className="py-4">
-              <Loading message="Memuat..." />
+            <View className="py-8">
+              <Loading />
             </View>
           ) : null
         }

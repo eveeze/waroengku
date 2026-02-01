@@ -1,74 +1,82 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
-  TouchableOpacity,
   Text,
   ActivityIndicator,
-  TouchableOpacityProps,
   View,
+  Pressable,
+  Animated,
+  PressableProps,
 } from 'react-native';
 
 /**
- * Button Component
- * Reusable button with variants and loading state
+ * Button Component (Minimalist Futuristic)
+ * High precision, tactile feedback, solid typography.
  */
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
-type ButtonSize = 'sm' | 'md' | 'lg' | 'small'; // Added 'small' alias
+type ButtonSize = 'sm' | 'md' | 'lg';
 
-interface ButtonProps extends TouchableOpacityProps {
+interface ButtonProps extends Omit<PressableProps, 'style'> {
   title: string;
   variant?: ButtonVariant;
   size?: ButtonSize;
   isLoading?: boolean;
-  loading?: boolean; // Alias for isLoading
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
+  className?: string; // Container class override
   textClassName?: string;
 }
 
 const variantStyles: Record<
   ButtonVariant,
-  { container: string; text: string }
+  { container: string; text: string; loader: string }
 > = {
   primary: {
-    container: 'bg-primary-600 active:bg-primary-700',
-    text: 'text-white',
+    container: 'bg-primary-900 border border-primary-900 shadow-sm',
+    text: 'text-primary-50',
+    loader: '#fafafa',
   },
   secondary: {
-    container: 'bg-secondary-200 active:bg-secondary-300',
-    text: 'text-secondary-800',
+    container: 'bg-white border border-secondary-200',
+    text: 'text-primary-900',
+    loader: '#18181b', // primary-900
   },
   outline: {
-    container:
-      'bg-transparent border-2 border-primary-600 active:bg-primary-50',
-    text: 'text-primary-600',
+    container: 'bg-transparent border border-secondary-300',
+    text: 'text-primary-900',
+    loader: '#18181b',
   },
   danger: {
-    container: 'bg-danger-500 active:bg-danger-600',
+    container: 'bg-danger-600 border border-danger-600',
     text: 'text-white',
+    loader: '#fff',
   },
   ghost: {
-    container: 'bg-transparent active:bg-secondary-100',
+    container: 'bg-transparent border-transparent',
     text: 'text-primary-600',
+    loader: '#18181b',
   },
 };
 
 const sizeStyles: Record<
-  'sm' | 'md' | 'lg',
-  { container: string; text: string }
+  ButtonSize,
+  { container: string; text: string; icon: string }
 > = {
   sm: {
-    container: 'px-3 py-2 rounded-md',
-    text: 'text-sm',
+    container: 'px-4 py-2 rounded-md',
+    text: 'text-sm font-medium tracking-tight',
+    icon: 'mr-1.5',
   },
   md: {
-    container: 'px-4 py-3 rounded-lg',
-    text: 'text-base',
+    container: 'px-5 py-3 rounded-lg',
+    text: 'text-base font-semibold tracking-tight',
+    icon: 'mr-2',
   },
   lg: {
-    container: 'px-6 py-4 rounded-xl',
-    text: 'text-lg',
+    container: 'px-8 py-4 rounded-xl',
+    text: 'text-lg font-bold tracking-tight',
+    icon: 'mr-3',
   },
 };
 
@@ -77,7 +85,6 @@ export function Button({
   variant = 'primary',
   size = 'md',
   isLoading = false,
-  loading, // Alias
   leftIcon,
   rightIcon,
   fullWidth = false,
@@ -86,51 +93,73 @@ export function Button({
   textClassName,
   ...props
 }: ButtonProps) {
-  const variantStyle = variantStyles[variant];
-  // Map 'small' to 'sm' for backwards compatibility
-  const mappedSize = size === 'small' ? 'sm' : size;
-  const sizeStyle = sizeStyles[mappedSize];
+  const scale = useRef(new Animated.Value(1)).current;
 
-  // Support both isLoading and loading props
-  const showLoading = isLoading || loading;
-  const isDisabled = disabled || showLoading;
+  const variantStyle = variantStyles[variant];
+  const sizeStyle = sizeStyles[size];
+  const isDisabled = disabled || isLoading;
+
+  const handlePressIn = () => {
+    if (isDisabled) return;
+    Animated.spring(scale, {
+      toValue: 0.96,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 0,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    if (isDisabled) return;
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 6,
+    }).start();
+  };
 
   return (
-    <TouchableOpacity
-      className={`
-        flex-row items-center justify-center
-        ${sizeStyle.container}
-        ${variantStyle.container}
-        ${fullWidth ? 'w-full' : ''}
-        ${isDisabled ? 'opacity-50' : ''}
-        ${className || ''}
-      `}
+    <Pressable
       disabled={isDisabled}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       {...props}
+      style={{ width: fullWidth ? '100%' : 'auto' }}
     >
-      {showLoading ? (
-        <ActivityIndicator
-          size="small"
-          color={
-            variant === 'primary' || variant === 'danger' ? '#fff' : '#3b82f6'
-          }
-        />
-      ) : (
-        <>
-          {leftIcon && <View className="mr-2">{leftIcon}</View>}
-          <Text
-            className={`
-              font-semibold
-              ${sizeStyle.text}
-              ${variantStyle.text}
-              ${textClassName || ''}
-            `}
-          >
-            {title}
-          </Text>
-          {rightIcon && <View className="ml-2">{rightIcon}</View>}
-        </>
-      )}
-    </TouchableOpacity>
+      <Animated.View
+        className={`
+          flex-row items-center justify-center
+          transform
+          ${sizeStyle.container}
+          ${variantStyle.container}
+          ${isDisabled ? 'opacity-50' : ''}
+          ${className || ''}
+        `}
+        style={{ transform: [{ scale }] }}
+      >
+        {isLoading ? (
+          <ActivityIndicator size="small" color={variantStyle.loader} />
+        ) : (
+          <>
+            {leftIcon && <View className={sizeStyle.icon}>{leftIcon}</View>}
+
+            <Text
+              className={`
+                ${sizeStyle.text}
+                ${variantStyle.text}
+                ${textClassName || ''}
+              `}
+            >
+              {title}
+            </Text>
+
+            {rightIcon && (
+              <View className={`${sizeStyle.icon} ml-2 mr-0`}>{rightIcon}</View>
+            )}
+          </>
+        )}
+      </Animated.View>
+    </Pressable>
   );
 }

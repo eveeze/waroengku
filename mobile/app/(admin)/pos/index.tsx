@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -18,14 +19,16 @@ import {
   searchProductByBarcode,
 } from '@/api/endpoints';
 import { Product, Category, ProductListParams } from '@/api/types';
-import { Card, Loading, Button } from '@/components/ui';
+import { Loading } from '@/components/ui';
 import { BarcodeScanner } from '@/components/shared';
 import { useCartStore } from '@/stores/cartStore';
 
 // Screen Dimensions
 const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 2;
-const ITEM_WIDTH = (width - 48) / COLUMN_COUNT; // 16px padding * 3 gaps
+const GAP = 12;
+const PADDING = 20;
+const ITEM_WIDTH = (width - PADDING * 2 - GAP) / COLUMN_COUNT;
 
 export default function POSScreen() {
   const insets = useSafeAreaInsets();
@@ -98,14 +101,11 @@ export default function POSScreen() {
   const handleCategorySelect = (id?: string) => {
     setSelectedCategory(id);
     setPage(1);
-    // Use timeout to allow state to settle
     setTimeout(() => {
-      // We need to pass the new category directly as state update is async
       loadProductsWithCategory(id);
     }, 0);
   };
 
-  // Helper to load with explicit category since state might lag
   const loadProductsWithCategory = async (catId?: string) => {
     const params: ProductListParams = {
       page: 1,
@@ -130,15 +130,12 @@ export default function POSScreen() {
       const product = await searchByBarcode(barcode);
       if (product && product.id) {
         addItem(product);
-        Alert.alert('Produk Ditambahkan', `${product.name} +1`);
+        Alert.alert('Added', `${product.name} +1`);
       } else {
-        Alert.alert(
-          'Produk Tidak Ditemukan',
-          `Barcode ${barcode} tidak terdaftar.`,
-        );
+        Alert.alert('Not Found', `Barcode ${barcode} not registered.`);
       }
     } catch {
-      Alert.alert('Error', 'Gagal memproses barcode.');
+      Alert.alert('Error', 'Failed to process barcode.');
     }
   };
 
@@ -160,13 +157,14 @@ export default function POSScreen() {
         }}
         disabled={!hasStock}
         style={{ width: ITEM_WIDTH }}
-        className="mb-4 mx-2"
+        className="mb-4"
+        activeOpacity={0.7}
       >
         <View
-          className={`bg-white rounded-xl shadow-sm border border-secondary-100 overflow-hidden ${!hasStock ? 'opacity-60' : ''}`}
+          className={`bg-white rounded-none border border-secondary-200 overflow-hidden ${!hasStock ? 'opacity-50' : ''}`}
         >
           {/* Image Area */}
-          <View className="h-32 bg-secondary-50 items-center justify-center">
+          <View className="h-32 bg-secondary-50 items-center justify-center border-b border-secondary-100 relative">
             {item.image_url ? (
               <Image
                 source={{ uri: item.image_url }}
@@ -174,13 +172,21 @@ export default function POSScreen() {
                 resizeMode="cover"
               />
             ) : (
-              <Text className="text-4xl">📦</Text>
+              <Text className="text-3xl">📦</Text>
             )}
+
             {!hasStock && (
-              <View className="absolute inset-0 bg-white/60 items-center justify-center">
-                <Text className="text-danger-600 font-bold bg-danger-50 px-2 py-1 rounded">
-                  Habis
+              <View className="absolute inset-0 bg-white/80 items-center justify-center">
+                <Text className="text-black font-black text-xs uppercase tracking-widest border border-black px-2 py-1">
+                  SOLD OUT
                 </Text>
+              </View>
+            )}
+
+            {/* Add Badge Overlay */}
+            {hasStock && (
+              <View className="absolute bottom-2 right-2 bg-black h-8 w-8 items-center justify-center rounded-full opacity-0 group-active:opacity-100">
+                <Text className="text-white font-bold text-xs">+</Text>
               </View>
             )}
           </View>
@@ -188,24 +194,22 @@ export default function POSScreen() {
           {/* Content */}
           <View className="p-3">
             <Text
-              className="font-semibold text-secondary-900 text-sm h-10"
+              className="font-medium text-secondary-900 text-xs mb-1 h-8 leading-4"
               numberOfLines={2}
             >
               {item.name}
             </Text>
-            <View className="flex-row items-center justify-between mt-2">
-              <Text className="text-primary-600 font-bold text-sm">
-                {formatCurrency(item.base_price)}
-              </Text>
-              {/* Stock Badge if low */}
-              {item.is_stock_active &&
-                item.current_stock <= item.min_stock_alert &&
-                item.current_stock > 0 && (
-                  <Text className="text-[10px] text-orange-600 bg-orange-50 px-1 rounded">
-                    Sisa {item.current_stock}
-                  </Text>
-                )}
-            </View>
+            <Text className="text-black font-black text-sm tracking-tight">
+              {formatCurrency(item.base_price)}
+            </Text>
+
+            {item.is_stock_active &&
+              item.current_stock <= item.min_stock_alert &&
+              item.current_stock > 0 && (
+                <Text className="text-[10px] text-danger-600 font-bold mt-1 uppercase tracking-wider">
+                  Only {item.current_stock} left
+                </Text>
+              )}
           </View>
         </View>
       </TouchableOpacity>
@@ -213,66 +217,70 @@ export default function POSScreen() {
   };
 
   return (
-    <View className="flex-1 bg-secondary-50">
+    <View className="flex-1 bg-white">
       <BarcodeScanner
         visible={showBarcodeScanner}
         onClose={() => setShowBarcodeScanner(false)}
         onScan={handleBarcodeScanned}
-        title="Scan Barcode ke Keranjang"
+        title="SCAN ITEM"
       />
 
       {/* Top Bar */}
       <View
-        className="bg-white border-b border-secondary-200 px-4 py-3 z-10"
-        style={{ paddingTop: insets.top + 8 }}
+        className="bg-white border-b border-secondary-100 px-5 pb-4 z-10"
+        style={{ paddingTop: insets.top + 12 }}
       >
-        <View className="flex-row items-center mb-4">
+        <View className="flex-row items-center mb-4 gap-3">
           <TouchableOpacity
             onPress={() => router.replace('/(admin)')}
-            className="mr-3"
+            className="w-10 h-10 items-center justify-center bg-secondary-50 rounded-full"
           >
-            <Text className="text-2xl">🔙</Text>
+            <Text className="text-lg">←</Text>
           </TouchableOpacity>
-          <View className="flex-1 flex-row items-center bg-secondary-100 rounded-lg px-3 mr-2 h-11">
-            <Text className="mr-2">🔍</Text>
+
+          <View className="flex-1 flex-row items-center bg-secondary-50 border border-secondary-200 rounded-lg px-4 h-12">
+            <Text className="mr-3 opacity-50">🔍</Text>
             <TextInput
-              className="flex-1 text-base h-full"
-              placeholder="Cari produk..."
+              className="flex-1 text-base font-medium text-primary-900 h-full"
+              placeholder="Search items..."
+              placeholderTextColor="#A1A1AA"
               value={search}
               onChangeText={setSearch}
               onSubmitEditing={handleSearch}
               returnKeyType="search"
             />
           </View>
+
           <TouchableOpacity
             onPress={() => setShowBarcodeScanner(true)}
-            className="bg-primary-600 w-11 h-11 rounded-lg items-center justify-center"
+            className="bg-black w-12 h-12 rounded-lg items-center justify-center"
           >
             <Text className="text-white text-xl">📷</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Categories Horizontal Scroll */}
+        {/* Categories */}
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
-          data={[{ id: undefined, name: 'Semua' }, ...categories] as any[]}
+          data={[{ id: undefined, name: 'ALL ITEMS' }, ...categories] as any[]}
           keyExtractor={(item) => item.id || 'all'}
+          contentContainerStyle={{ paddingRight: 20 }}
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => handleCategorySelect(item.id)}
-              className={`px-4 py-2 rounded-full mr-2 ${
+              className={`px-4 py-2 rounded-md mr-2 border ${
                 selectedCategory === item.id
-                  ? 'bg-primary-600'
-                  : 'bg-secondary-100'
+                  ? 'bg-black border-black'
+                  : 'bg-white border-secondary-200'
               }`}
             >
               <Text
-                className={
+                className={`text-xs font-bold uppercase tracking-wider ${
                   selectedCategory === item.id
-                    ? 'text-white font-medium'
-                    : 'text-secondary-600'
-                }
+                    ? 'text-white'
+                    : 'text-secondary-500'
+                }`}
               >
                 {item.name}
               </Text>
@@ -287,36 +295,61 @@ export default function POSScreen() {
         renderItem={renderProduct}
         keyExtractor={(item) => item.id}
         numColumns={COLUMN_COUNT}
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        contentContainerStyle={{
+          padding: PADDING,
+          paddingBottom: 120,
+        }}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
         onEndReached={() => {
           if (!isLoading && hasMore) loadProducts(search, page + 1, true);
         }}
         onEndReachedThreshold={0.5}
-        ListFooterComponent={isLoading ? <Loading message="" /> : null}
-      />
-
-      {/* Bottom Cart Summary */}
-      {getItemCount() > 0 && (
-        <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 p-4 shadow-lg"
-          style={{ paddingBottom: insets.bottom + 16 }}
-        >
-          <View className="flex-row items-center justify-between mb-3">
-            <View>
-              <Text className="text-secondary-600 text-xs">
-                Total {getItemCount()} Barang
-              </Text>
-              <Text className="text-primary-700 font-bold text-xl">
-                {formatCurrency(getTotal())}
+        ListFooterComponent={
+          isLoading ? <Loading message="" /> : <View className="h-10" />
+        }
+        ListEmptyComponent={
+          !isLoading ? (
+            <View className="items-center justify-center py-20">
+              <Text className="text-secondary-400 font-bold uppercase tracking-widest">
+                No Items Found
               </Text>
             </View>
-            <Button
-              title="Lihat Keranjang & Bayar"
-              onPress={() => router.push('/(admin)/pos/checkout')}
-              className="px-6"
-            />
-          </View>
+          ) : null
+        }
+      />
+
+      {/* Bottom Cart Summary (Floating) */}
+      {getItemCount() > 0 && (
+        <View
+          className="absolute bottom-6 left-5 right-5"
+          style={{ marginBottom: insets.bottom }}
+        >
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => router.push('/(admin)/pos/checkout')}
+            className="bg-black rounded-xl shadow-xl p-4 flex-row items-center justify-between border border-secondary-800"
+          >
+            <View className="flex-row items-center gap-3">
+              <View className="bg-white/20 px-3 py-1 rounded-md">
+                <Text className="text-white font-bold">{getItemCount()}</Text>
+              </View>
+              <View>
+                <Text className="text-white/60 text-[10px] font-bold uppercase tracking-widest">
+                  Total
+                </Text>
+                <Text className="text-white font-black text-lg tracking-tight">
+                  {formatCurrency(getTotal())}
+                </Text>
+              </View>
+            </View>
+
+            <View className="flex-row items-center">
+              <Text className="text-white font-bold mr-2 uppercase text-xs tracking-wider">
+                Checkout
+              </Text>
+              <Text className="text-white">→</Text>
+            </View>
+          </TouchableOpacity>
         </View>
       )}
     </View>

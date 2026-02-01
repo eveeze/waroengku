@@ -6,17 +6,19 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
 import { useApi } from '@/hooks/useApi';
 import { getDashboard } from '@/api/endpoints/reports';
-import { Card, Loading } from '@/components/ui';
+import { Loading } from '@/components/ui';
 
 /**
  * Admin Dashboard Screen
- * Shows overview of warung metrics
+ * Swiss Minimalist Design Refactor
  */
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -35,10 +37,10 @@ export default function DashboardScreen() {
   }, []);
 
   const handleLogout = async () => {
-    Alert.alert('Logout', 'Yakin ingin keluar?', [
-      { text: 'Batal', style: 'cancel' },
+    Alert.alert('LOGOUT', 'Are you sure you want to exit?', [
+      { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Keluar',
+        text: 'Logout',
         style: 'destructive',
         onPress: async () => {
           await logout();
@@ -60,242 +62,224 @@ export default function DashboardScreen() {
   const todaySales = dashboard?.today?.total_sales ?? 0;
   const todayTransactions = dashboard?.today?.total_transactions ?? 0;
   const todayProfit = dashboard?.today?.estimated_profit ?? 0;
-  const outstandingKasbon = dashboard?.total_outstanding_kasbon ?? 0;
+
+  // Alert counts
   const lowStockCount = dashboard?.low_stock_count ?? 0;
   const outOfStockCount = dashboard?.out_of_stock_count ?? 0;
+  const outstandingKasbon = dashboard?.total_outstanding_kasbon ?? 0;
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      {/* Header */}
-      <View
-        className="bg-primary-600 px-4 pb-6"
-        style={{ paddingTop: insets.top + 16 }}
-      >
-        <View className="flex-row items-center justify-between">
-          <View>
-            <Text className="text-primary-200 text-sm">Selamat datang 👋</Text>
-            <Text className="text-white text-xl font-bold">{userName}</Text>
-          </View>
-          <TouchableOpacity
-            onPress={handleLogout}
-            className="bg-primary-500 px-4 py-2 rounded-full"
-          >
-            <Text className="text-white text-sm">Logout</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
 
-      {/* Content */}
+      {/* Scrollable Content */}
       <ScrollView
-        className="flex-1 -mt-4"
+        className="flex-1"
         contentContainerStyle={{
-          padding: 16,
-          paddingBottom: insets.bottom + 16,
+          paddingBottom: insets.bottom + 20,
         }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={fetchDashboard} />
         }
       >
-        {/* Error State */}
-        {error && (
-          <View className="bg-danger-50 border border-danger-200 rounded-lg px-4 py-3 mb-4">
-            <Text className="text-danger-700">Gagal memuat data: {error}</Text>
-            <TouchableOpacity onPress={fetchDashboard} className="mt-2">
-              <Text className="text-primary-600 font-medium">Coba Lagi</Text>
+        {/* Header Section */}
+        <View
+          className="px-6 pb-6 border-b border-secondary-100 bg-white"
+          style={{ paddingTop: insets.top + 20 }}
+        >
+          <View className="flex-row justify-between items-start mb-6">
+            <View>
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-1">
+                Welcome back,
+              </Text>
+              <Text className="text-2xl font-black uppercase tracking-tight text-primary-900">
+                {userName}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={handleLogout}
+              className="w-10 h-10 items-center justify-center rounded-full bg-secondary-50"
+            >
+              <Text className="text-lg">➜</Text>
             </TouchableOpacity>
           </View>
-        )}
 
-        {/* Today's Summary Card */}
-        <Card className="mb-4 bg-white">
-          <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-lg font-semibold text-secondary-900">
-              📊 Hari Ini
+          {/* Error Message */}
+          {error && (
+            <View className="bg-red-50 p-4 mb-4 rounded-lg">
+              <Text className="text-red-600 font-bold mb-2">
+                FAILED TO LOAD DATA
+              </Text>
+              <Text className="text-red-800 text-xs mb-3">{error}</Text>
+              <TouchableOpacity onPress={fetchDashboard}>
+                <Text className="font-bold underline text-red-900">RETRY</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Hero Metric: Today's Sales */}
+          <View className="py-2">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+              Today's Revenue
             </Text>
-            {dashboard?.today?.date && (
-              <Text className="text-sm text-secondary-500">
-                {new Date(dashboard.today.date).toLocaleDateString('id-ID', {
-                  day: 'numeric',
-                  month: 'short',
-                })}
+            <Text className="text-5xl font-black tracking-tighter text-black leading-tight">
+              {formatCurrency(todaySales)}
+            </Text>
+            <View className="flex-row items-center gap-4 mt-2">
+              <Text className="text-sm font-bold text-green-600 bg-green-50 px-2 py-1 uppercase tracking-wide">
+                +{todayTransactions} Transactions
               </Text>
-            )}
-          </View>
-
-          <View className="flex-row">
-            <View className="flex-1 bg-green-50 rounded-lg p-3 mr-2">
-              <Text className="text-green-600 text-xs">Penjualan</Text>
-              <Text className="text-green-800 text-lg font-bold mt-1">
-                {formatCurrency(todaySales)}
-              </Text>
-            </View>
-            <View className="flex-1 bg-blue-50 rounded-lg p-3 ml-2">
-              <Text className="text-blue-600 text-xs">Transaksi</Text>
-              <Text className="text-blue-800 text-lg font-bold mt-1">
-                {todayTransactions} trx
+              <Text className="text-sm font-bold text-secondary-500 uppercase tracking-wide">
+                Profit: {formatCurrency(todayProfit)}
               </Text>
             </View>
           </View>
-
-          <View className="flex-row mt-3">
-            <View className="flex-1 bg-purple-50 rounded-lg p-3 mr-2">
-              <Text className="text-purple-600 text-xs">Keuntungan</Text>
-              <Text className="text-purple-800 text-lg font-bold mt-1">
-                {formatCurrency(todayProfit)}
-              </Text>
-            </View>
-            <View className="flex-1 bg-orange-50 rounded-lg p-3 ml-2">
-              <Text className="text-orange-600 text-xs">Stok Menipis</Text>
-              <Text className="text-orange-800 text-lg font-bold mt-1">
-                {lowStockCount} item
-              </Text>
-            </View>
-          </View>
-        </Card>
-
-        {/* Alerts Row */}
-        <View className="flex-row mb-4">
-          {/* Outstanding Kasbon */}
-          <TouchableOpacity
-            className="flex-1 mr-2"
-            onPress={() => router.push('/(admin)/reports/kasbon')}
-          >
-            <Card className="bg-red-50 border-red-100">
-              <View className="flex-row items-center">
-                <Text className="text-lg mr-2">💳</Text>
-                <View className="flex-1">
-                  <Text className="text-red-600 text-xs">Piutang</Text>
-                  <Text className="text-red-800 text-sm font-bold">
-                    {formatCurrency(outstandingKasbon)}
-                  </Text>
-                </View>
-                <Text className="text-red-400">→</Text>
-              </View>
-            </Card>
-          </TouchableOpacity>
-
-          {/* Out of Stock */}
-          <TouchableOpacity
-            className="flex-1 ml-2"
-            onPress={() => router.push('/(admin)/reports/inventory')}
-          >
-            <Card
-              className={`${outOfStockCount > 0 ? 'bg-red-50 border-red-100' : 'bg-secondary-50'}`}
-            >
-              <View className="flex-row items-center">
-                <Text className="text-lg mr-2">📦</Text>
-                <View className="flex-1">
-                  <Text
-                    className={`text-xs ${outOfStockCount > 0 ? 'text-red-600' : 'text-secondary-500'}`}
-                  >
-                    Stok Habis
-                  </Text>
-                  <Text
-                    className={`text-sm font-bold ${outOfStockCount > 0 ? 'text-red-800' : 'text-secondary-900'}`}
-                  >
-                    {outOfStockCount} item
-                  </Text>
-                </View>
-                <Text className="text-secondary-400">→</Text>
-              </View>
-            </Card>
-          </TouchableOpacity>
         </View>
 
-        {/* Quick Actions */}
-        <Text className="text-lg font-semibold text-secondary-900 mb-3">
-          Menu Cepat
-        </Text>
+        {/* Alerts Ticker */}
+        {(outOfStockCount > 0 ||
+          lowStockCount > 0 ||
+          outstandingKasbon > 0) && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: 24,
+              paddingVertical: 16,
+            }}
+            className="bg-secondary-50 border-b border-secondary-100"
+          >
+            {outOfStockCount > 0 && (
+              <TouchableOpacity
+                onPress={() => router.push('/(admin)/reports/inventory')}
+                className="flex-row items-center bg-white border border-secondary-200 px-3 py-2 rounded-md mr-3"
+              >
+                <View className="w-2 h-2 rounded-full bg-red-500 mr-2" />
+                <Text className="text-xs font-bold text-red-600 uppercase tracking-wide">
+                  Out of Stock ({outOfStockCount})
+                </Text>
+              </TouchableOpacity>
+            )}
+            {lowStockCount > 0 && (
+              <TouchableOpacity
+                onPress={() => router.push('/(admin)/reports/inventory')}
+                className="flex-row items-center bg-white border border-secondary-200 px-3 py-2 rounded-md mr-3"
+              >
+                <View className="w-2 h-2 rounded-full bg-orange-500 mr-2" />
+                <Text className="text-xs font-bold text-orange-600 uppercase tracking-wide">
+                  Low Stock ({lowStockCount})
+                </Text>
+              </TouchableOpacity>
+            )}
+            {outstandingKasbon > 0 && (
+              <TouchableOpacity
+                onPress={() => router.push('/(admin)/reports/kasbon')}
+                className="flex-row items-center bg-white border border-secondary-200 px-3 py-2 rounded-md mr-3"
+              >
+                <View className="w-2 h-2 rounded-full bg-blue-500 mr-2" />
+                <Text className="text-xs font-bold text-blue-600 uppercase tracking-wide">
+                  Debt: {formatCurrency(outstandingKasbon)}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </ScrollView>
+        )}
 
-        <TouchableOpacity
-          className="mb-4"
-          onPress={() => router.push('/(admin)/pos')}
-        >
-          <Card className="bg-primary-600 border-primary-600 flex-row items-center justify-between">
+        {/* Main Navigation Grid */}
+        <View className="p-6">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-4">
+            Quick Actions
+          </Text>
+
+          {/* POS Primary Action */}
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => router.push('/(admin)/pos')}
+            className="mb-6 bg-black p-6 rounded-none relative overflow-hidden h-40 justify-between group"
+          >
+            <View className="absolute right-[-20] top-[-20] w-32 h-32 bg-white/10 rounded-full" />
+
             <View>
-              <Text className="text-white text-lg font-bold">
-                Buka Kasir (POS)
+              <Text className="text-white/60 font-bold uppercase tracking-widest text-xs mb-1">
+                Point of Sale
               </Text>
-              <Text className="text-primary-100 text-sm">
-                Buat transaksi baru
+              <Text className="text-white font-black text-3xl tracking-tight">
+                OPEN CASHIER
               </Text>
             </View>
-            <Text className="text-4xl">🛒</Text>
-          </Card>
-        </TouchableOpacity>
-
-        <View className="flex-row flex-wrap -mx-1.5">
-          <TouchableOpacity
-            className="w-1/3 px-1.5 mb-3"
-            onPress={() => router.push('/(admin)/products')}
-          >
-            <Card className="items-center py-4">
-              <Text className="text-2xl mb-2">📦</Text>
-              <Text className="text-xs text-secondary-600 text-center">
-                Kelola Produk
+            <View className="flex-row items-center">
+              <Text className="text-white font-bold mr-2 uppercase tracking-widest text-xs">
+                Start Selling
               </Text>
-            </Card>
+              <Text className="text-white text-lg">→</Text>
+            </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            className="w-1/3 px-1.5 mb-3"
-            onPress={() => router.push('/(admin)/customers')}
-          >
-            <Card className="items-center py-4">
-              <Text className="text-2xl mb-2">👤</Text>
-              <Text className="text-xs text-secondary-600 text-center">
-                Pelanggan
-              </Text>
-            </Card>
-          </TouchableOpacity>
+          <View className="flex-row flex-wrap gap-4">
+            {/* Products */}
+            <TouchableOpacity
+              onPress={() => router.push('/(admin)/products')}
+              className="flex-1 min-w-[140px] bg-white border border-secondary-200 p-5 aspect-square justify-between"
+            >
+              <Text className="text-3xl">📦</Text>
+              <View>
+                <Text className="font-black text-lg text-primary-900">
+                  PRODUCTS
+                </Text>
+                <Text className="text-xs text-secondary-500 font-medium">
+                  Manage Inventory
+                </Text>
+              </View>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            className="w-1/3 px-1.5 mb-3"
-            onPress={() => router.push('/(admin)/categories')}
-          >
-            <Card className="items-center py-4">
-              <Text className="text-2xl mb-2">🏷️</Text>
-              <Text className="text-xs text-secondary-600 text-center">
-                Kategori
-              </Text>
-            </Card>
-          </TouchableOpacity>
+            {/* Customers */}
+            <TouchableOpacity
+              onPress={() => router.push('/(admin)/customers')}
+              className="flex-1 min-w-[140px] bg-white border border-secondary-200 p-5 aspect-square justify-between"
+            >
+              <Text className="text-3xl">👥</Text>
+              <View>
+                <Text className="font-black text-lg text-primary-900">
+                  CUSTOMERS
+                </Text>
+                <Text className="text-xs text-secondary-500 font-medium">
+                  Manage Members
+                </Text>
+              </View>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            className="w-1/3 px-1.5 mb-3"
-            onPress={() => router.push('/(admin)/users')}
-          >
-            <Card className="items-center py-4">
-              <Text className="text-2xl mb-2">👥</Text>
-              <Text className="text-xs text-secondary-600 text-center">
-                Kelola User
-              </Text>
-            </Card>
-          </TouchableOpacity>
+            {/* Reports */}
+            <TouchableOpacity
+              onPress={() => router.push('/(admin)/reports')}
+              className="flex-1 min-w-[140px] bg-white border border-secondary-200 p-5 aspect-square justify-between"
+            >
+              <Text className="text-3xl">📈</Text>
+              <View>
+                <Text className="font-black text-lg text-primary-900">
+                  REPORTS
+                </Text>
+                <Text className="text-xs text-secondary-500 font-medium">
+                  View Analytics
+                </Text>
+              </View>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            className="w-1/3 px-1.5 mb-3"
-            onPress={() => router.push('/(admin)/reports')}
-          >
-            <Card className="items-center py-4">
-              <Text className="text-2xl mb-2">📈</Text>
-              <Text className="text-xs text-secondary-600 text-center">
-                Laporan
-              </Text>
-            </Card>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="w-1/3 px-1.5 mb-3"
-            onPress={() => router.push('/(admin)/reports/daily')}
-          >
-            <Card className="items-center py-4">
-              <Text className="text-2xl mb-2">📅</Text>
-              <Text className="text-xs text-secondary-600 text-center">
-                Lap. Harian
-              </Text>
-            </Card>
-          </TouchableOpacity>
+            {/* Settings/Users */}
+            <TouchableOpacity
+              onPress={() => router.push('/(admin)/users')}
+              className="flex-1 min-w-[140px] bg-white border border-secondary-200 p-5 aspect-square justify-between"
+            >
+              <Text className="text-3xl">⚙️</Text>
+              <View>
+                <Text className="font-black text-lg text-primary-900">
+                  SETTINGS
+                </Text>
+                <Text className="text-xs text-secondary-500 font-medium">
+                  App & Users
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </View>

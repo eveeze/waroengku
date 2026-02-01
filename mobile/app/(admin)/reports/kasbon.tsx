@@ -4,20 +4,18 @@ import {
   Text,
   ScrollView,
   RefreshControl,
-  FlatList,
   TouchableOpacity,
+  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApi } from '@/hooks/useApi';
 import { getKasbonReport } from '@/api/endpoints/reports';
-import { Header } from '@/components/shared';
-import { Card, Loading } from '@/components/ui';
 import { KasbonCustomerSummary } from '@/api/types';
 
 /**
  * Kasbon Report Screen
- * Shows customer debt summary
+ * Swiss Minimalist Refactor
  */
 export default function KasbonReportScreen() {
   const insets = useSafeAreaInsets();
@@ -53,55 +51,61 @@ export default function KasbonReportScreen() {
   const renderCustomer = ({ item }: { item: KasbonCustomerSummary }) => (
     <TouchableOpacity
       onPress={() => router.push(`/(admin)/customers/${item.customer_id}`)}
-      className="mb-3"
+      className="mb-0 border-b border-secondary-100 bg-white active:bg-secondary-50"
     >
-      <Card>
-        <View className="flex-row items-center">
-          <View className="w-10 h-10 bg-red-100 rounded-full items-center justify-center mr-3">
-            <Text className="text-lg">👤</Text>
-          </View>
-          <View className="flex-1">
-            <Text className="font-semibold text-secondary-900">
-              {item.customer_name}
-            </Text>
-            {item.phone && (
-              <Text className="text-sm text-secondary-500">{item.phone}</Text>
-            )}
-            <Text className="text-xs text-secondary-400 mt-0.5">
-              Terakhir: {formatDate(item.last_transaction_date)}
-            </Text>
-          </View>
-          <View className="items-end">
-            <Text className="text-lg font-bold text-red-600">
-              {formatCurrency(item.total_debt)}
-            </Text>
-          </View>
+      <View className="flex-row items-center p-4">
+        <View className="flex-1">
+          <Text className="text-base font-bold text-primary-900 uppercase tracking-tight">
+            {item.customer_name}
+          </Text>
+          <Text className="text-[10px] text-secondary-500 font-bold uppercase tracking-wider mt-1">
+            Last Tx: {formatDate(item.last_transaction_date)}
+          </Text>
         </View>
-      </Card>
+        <View className="items-end">
+          <Text className="text-lg font-black text-red-600">
+            {formatCurrency(item.total_debt)}
+          </Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 
-  if (isLoading && !report) {
-    return <Loading fullScreen message="Memuat laporan..." />;
-  }
-
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Laporan Kasbon" onBack={() => router.back()} />
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+
+      {/* Header */}
+      <View
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          RECEIVABLES
+        </Text>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
-          padding: 16,
-          paddingBottom: insets.bottom + 16,
+          paddingBottom: insets.bottom + 100,
         }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={fetchReport} />
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={fetchReport}
+            tintColor="#000"
+          />
         }
       >
         {error && (
-          <View className="bg-danger-50 border border-danger-200 rounded-lg px-4 py-3 mb-4">
-            <Text className="text-danger-700">
-              Gagal memuat laporan: {error}
+          <View className="bg-black p-4 mb-6 mx-6 mt-6">
+            <Text className="text-white font-bold uppercase tracking-wide text-xs">
+              Error: {error}
             </Text>
           </View>
         )}
@@ -109,46 +113,40 @@ export default function KasbonReportScreen() {
         {report && (
           <>
             {/* Summary Stats */}
-            <Card className="mb-4 bg-red-50 border-red-100">
-              <View className="items-center py-2">
-                <Text className="text-red-600 text-sm">Total Piutang</Text>
-                <Text className="text-3xl font-bold text-red-800 mt-1">
-                  {formatCurrency(report.total_outstanding)}
-                </Text>
-              </View>
-            </Card>
+            <View className="p-6 bg-secondary-50 border-b border-secondary-100">
+              <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500 mb-2">
+                Total Outstanding Debt
+              </Text>
+              <Text className="text-4xl font-black text-red-600 mb-6">
+                {formatCurrency(report.total_outstanding)}
+              </Text>
 
-            <View className="flex-row mb-4">
-              <View className="flex-1 mr-2">
-                <Card>
-                  <View className="items-center">
-                    <Text className="text-secondary-500 text-sm">
-                      Total Pelanggan
-                    </Text>
-                    <Text className="text-2xl font-bold text-secondary-900 mt-1">
-                      {report.total_customers}
-                    </Text>
-                  </View>
-                </Card>
-              </View>
-              <View className="flex-1 ml-2">
-                <Card className="bg-orange-50 border-orange-100">
-                  <View className="items-center">
-                    <Text className="text-orange-600 text-sm">
-                      Dengan Hutang
-                    </Text>
-                    <Text className="text-2xl font-bold text-orange-800 mt-1">
-                      {report.customers_with_debt}
-                    </Text>
-                  </View>
-                </Card>
+              <View className="flex-row items-center space-x-8">
+                <View>
+                  <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500">
+                    Total Customers
+                  </Text>
+                  <Text className="text-xl font-bold text-primary-900">
+                    {report.total_customers}
+                  </Text>
+                </View>
+                <View className="ml-8">
+                  <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500">
+                    With Debt
+                  </Text>
+                  <Text className="text-xl font-bold text-red-600">
+                    {report.customers_with_debt}
+                  </Text>
+                </View>
               </View>
             </View>
 
-            {/* Customer List */}
-            <Text className="text-lg font-semibold text-secondary-900 mb-3">
-              Pelanggan dengan Hutang
-            </Text>
+            {/* Customer List Header */}
+            <View className="px-6 py-4 bg-white border-b border-secondary-100 mt-2">
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-900">
+                Debtor List
+              </Text>
+            </View>
 
             {report.summaries && report.summaries.length > 0 ? (
               report.summaries
@@ -159,13 +157,15 @@ export default function KasbonReportScreen() {
                   </View>
                 ))
             ) : (
-              <View className="items-center py-12">
-                <Text className="text-6xl mb-4">🎉</Text>
-                <Text className="text-secondary-500 text-lg">
-                  Semua pelanggan lunas!
+              <View className="items-center py-20 px-10">
+                <Text className="text-secondary-300 font-black text-6xl mb-4">
+                  🎉
                 </Text>
-                <Text className="text-secondary-400 mt-1">
-                  Tidak ada piutang yang belum dibayar
+                <Text className="text-secondary-900 font-bold text-lg text-center uppercase tracking-wide mb-2">
+                  All Clear!
+                </Text>
+                <Text className="text-secondary-500 text-center text-sm">
+                  No outstanding debts from customers.
                 </Text>
               </View>
             )}

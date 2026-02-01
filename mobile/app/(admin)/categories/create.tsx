@@ -7,19 +7,16 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Header } from '@/components/shared';
-import { Button, Card, Input } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
 import { categorySchema, CategoryFormData } from '@/utils/validation';
 import { createCategory } from '@/api/endpoints/categories';
 
-/**
- * Create Category Screen
- */
 export default function CreateCategoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -46,13 +43,14 @@ export default function CreateCategoryScreen() {
         description: data.description || undefined,
       });
 
-      Alert.alert('Berhasil', 'Kategori berhasil ditambahkan', [
+      // Show success alert
+      Alert.alert('SUCCESS', 'Category has been created.', [
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error) {
       Alert.alert(
-        'Gagal',
-        error instanceof Error ? error.message : 'Gagal menambahkan kategori'
+        'FAILED',
+        error instanceof Error ? error.message : 'Could not create category',
       );
     } finally {
       setIsSubmitting(false);
@@ -60,66 +58,87 @@ export default function CreateCategoryScreen() {
   };
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Tambah Kategori" onBack={() => router.back()} />
+    <View className="flex-1 bg-white">
+      {/* Header */}
+      <View
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          NEW CATEGORY
+        </Text>
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }}
+          contentContainerStyle={{
+            padding: 24,
+            paddingBottom: insets.bottom + 100,
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          <Card className="mb-4">
-            <Controller
-              control={control}
-              name="name"
-              render={({ field: { onChange, onBlur, value } }) => (
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-6">
+            Category Details
+          </Text>
+
+          <Controller
+            control={control}
+            name="name"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <View className="mb-6">
                 <Input
-                  label="Nama Kategori *"
-                  placeholder="Masukkan nama kategori"
+                  label="CATEGORY NAME *"
+                  placeholder="E.g. Beverages, Snacks"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
                   error={errors.name?.message}
                 />
-              )}
-            />
+              </View>
+            )}
+          />
 
-            <Controller
-              control={control}
-              name="description"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <View>
-                  <Text className="text-sm font-medium text-secondary-700 mb-1.5">
-                    Deskripsi
-                  </Text>
-                  <TextInput
-                    className="border border-secondary-200 rounded-lg px-4 py-3 bg-white text-base"
-                    placeholder="Deskripsi kategori (opsional)"
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    multiline
-                    numberOfLines={3}
-                  />
-                </View>
-              )}
-            />
-          </Card>
+          <Controller
+            control={control}
+            name="description"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <View className="mb-6">
+                <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+                  Description
+                </Text>
+                <TextInput
+                  className="border border-secondary-200 rounded-none px-4 py-3 bg-secondary-50 text-base font-medium min-h-[100px]"
+                  placeholder="What is this category for?"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
+            )}
+          />
         </ScrollView>
 
         {/* Submit Button */}
         <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-4 py-3"
+          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-6 py-4"
           style={{ paddingBottom: insets.bottom + 12 }}
         >
           <Button
-            title="Simpan Kategori"
+            title="CREATE CATEGORY"
             fullWidth
+            size="lg"
             onPress={handleSubmit(onSubmit)}
-            loading={isSubmitting}
+            isLoading={isSubmitting}
           />
         </View>
       </KeyboardAvoidingView>

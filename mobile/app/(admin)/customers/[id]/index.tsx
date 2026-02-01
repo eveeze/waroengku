@@ -189,14 +189,14 @@ export default function CustomerDetailScreen() {
                 <Button
                   title="Riwayat"
                   variant="outline"
-                  size="small"
+                  size="sm"
                   onPress={() => router.push(`/(admin)/customers/${id}/kasbon`)}
                   className="flex-1 mr-2"
                 />
                 {hasDebt && (
                   <Button
                     title="Bayar"
-                    size="small"
+                    size="sm"
                     onPress={() => router.push(`/(admin)/customers/${id}/payment`)}
                     className="flex-1 ml-2"
                   />

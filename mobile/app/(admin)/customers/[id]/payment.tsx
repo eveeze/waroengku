@@ -174,7 +174,7 @@ export default function RecordPaymentScreen() {
                 </View>
                 <Button
                   title="Lunas"
-                  size="small"
+                  size="sm"
                   variant="outline"
                   onPress={setFullPayment}
                 />
@@ -237,7 +237,7 @@ export default function RecordPaymentScreen() {
             title="Simpan Pembayaran"
             fullWidth
             onPress={handleSubmit}
-            loading={isSubmitting}
+            isLoading={isSubmitting}
             disabled={!amount || Number(amount) <= 0}
           />
         </View>

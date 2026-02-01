@@ -12,19 +12,19 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Header } from '@/components/shared';
-import { Button, Card, Input } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
 import { registerUserSchema, RegisterUserFormData } from '@/utils/validation';
 import { registerUser } from '@/api/endpoints/auth';
 
 const roles = [
-  { value: 'admin', label: 'Admin', description: 'Akses penuh ke semua fitur', icon: '👑' },
-  { value: 'cashier', label: 'Kasir', description: 'Akses POS dan transaksi', icon: '💵' },
-  { value: 'inventory', label: 'Gudang', description: 'Akses stok dan inventori', icon: '📦' },
+  { value: 'admin', label: 'Admin', description: 'Full access + Management' },
+  { value: 'cashier', label: 'Cashier', description: 'POS & Transactions' },
+  { value: 'inventory', label: 'Inventory', description: 'Stock & Products' },
 ];
 
 /**
  * Create User Screen
+ * Swiss Minimalist Refactor
  */
 export default function CreateUserScreen() {
   const router = useRouter();
@@ -59,13 +59,14 @@ export default function CreateUserScreen() {
         role: data.role,
       });
 
-      Alert.alert('Berhasil', 'User berhasil ditambahkan', [
+      // Simple success alert
+      Alert.alert('SUCCESS', 'User account created.', [
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error) {
       Alert.alert(
-        'Gagal',
-        error instanceof Error ? error.message : 'Gagal menambahkan user'
+        'FAILED',
+        error instanceof Error ? error.message : 'Could not create user',
       );
     } finally {
       setIsSubmitting(false);
@@ -73,31 +74,53 @@ export default function CreateUserScreen() {
   };
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Tambah User" onBack={() => router.back()} />
+    <View className="flex-1 bg-white">
+      {/* Header */}
+      <View
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          NEW USER
+        </Text>
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }}
+          contentContainerStyle={{
+            padding: 24,
+            paddingBottom: insets.bottom + 100,
+          }}
           keyboardShouldPersistTaps="handled"
         >
           {/* User Info */}
-          <Card title="Informasi User" className="mb-4">
+          <View className="mb-8">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-6">
+              Account Details
+            </Text>
+
             <Controller
               control={control}
               name="name"
               render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Nama Lengkap *"
-                  placeholder="Masukkan nama lengkap"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={errors.name?.message}
-                />
+                <View className="mb-4">
+                  <Input
+                    label="FULL NAME *"
+                    placeholder="Enter full name"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    error={errors.name?.message}
+                  />
+                </View>
               )}
             />
 
@@ -105,16 +128,18 @@ export default function CreateUserScreen() {
               control={control}
               name="email"
               render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Email *"
-                  placeholder="contoh@email.com"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  error={errors.email?.message}
-                />
+                <View className="mb-4">
+                  <Input
+                    label="EMAIL ADDRESS *"
+                    placeholder="user@example.com"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    error={errors.email?.message}
+                  />
+                </View>
               )}
             />
 
@@ -122,21 +147,26 @@ export default function CreateUserScreen() {
               control={control}
               name="password"
               render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Password *"
-                  placeholder="Minimal 6 karakter"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  secureTextEntry
-                  error={errors.password?.message}
-                />
+                <View className="mb-4">
+                  <Input
+                    label="PASSWORD *"
+                    placeholder="Min 6 characters"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    secureTextEntry
+                    error={errors.password?.message}
+                  />
+                </View>
               )}
             />
-          </Card>
+          </View>
 
           {/* Role Selection */}
-          <Card title="Pilih Role" className="mb-4">
+          <View className="mb-8">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-6">
+              Select Role
+            </Text>
             <Controller
               control={control}
               name="role"
@@ -145,56 +175,64 @@ export default function CreateUserScreen() {
                   {roles.map((role) => (
                     <TouchableOpacity
                       key={role.value}
-                      onPress={() => onChange(role.value as 'admin' | 'cashier' | 'inventory')}
-                      className={`flex-row items-center p-4 rounded-lg mb-2 border-2 ${
+                      onPress={() =>
+                        onChange(
+                          role.value as 'admin' | 'cashier' | 'inventory',
+                        )
+                      }
+                      className={`flex-row items-center p-4 mb-3 border ${
                         value === role.value
-                          ? 'border-primary-600 bg-primary-50'
+                          ? 'border-black bg-black'
                           : 'border-secondary-200 bg-white'
                       }`}
                     >
-                      <Text className="text-2xl mr-3">{role.icon}</Text>
                       <View className="flex-1">
                         <Text
-                          className={`font-semibold ${
+                          className={`font-bold uppercase tracking-wide text-sm ${
                             value === role.value
-                              ? 'text-primary-700'
-                              : 'text-secondary-900'
+                              ? 'text-white'
+                              : 'text-primary-900'
                           }`}
                         >
                           {role.label}
                         </Text>
-                        <Text className="text-sm text-secondary-500">
+                        <Text
+                          className={`text-xs mt-1 ${
+                            value === role.value
+                              ? 'text-secondary-400'
+                              : 'text-secondary-500'
+                          }`}
+                        >
                           {role.description}
                         </Text>
                       </View>
                       {value === role.value && (
-                        <View className="w-6 h-6 bg-primary-600 rounded-full items-center justify-center">
-                          <Text className="text-white text-xs">✓</Text>
-                        </View>
+                        <Text className="text-white text-lg font-bold">✓</Text>
                       )}
                     </TouchableOpacity>
                   ))}
                   {errors.role && (
-                    <Text className="text-danger-500 text-sm mt-1">
+                    <Text className="text-red-600 text-xs font-bold mt-2 uppercase tracking-wide">
                       {errors.role.message}
                     </Text>
                   )}
                 </View>
               )}
             />
-          </Card>
+          </View>
         </ScrollView>
 
         {/* Submit Button */}
         <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-4 py-3"
+          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-6 py-4"
           style={{ paddingBottom: insets.bottom + 12 }}
         >
           <Button
-            title="Simpan User"
+            title="CREATE USER ACCOUNT"
             fullWidth
+            size="lg"
             onPress={handleSubmit(onSubmit)}
-            loading={isSubmitting}
+            isLoading={isSubmitting}
           />
         </View>
       </KeyboardAvoidingView>

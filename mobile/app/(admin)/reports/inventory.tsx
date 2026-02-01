@@ -5,18 +5,17 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
+  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApi } from '@/hooks/useApi';
 import { getInventoryReport } from '@/api/endpoints/reports';
-import { Header } from '@/components/shared';
-import { Card, Loading, Button } from '@/components/ui';
 import { LowStockItem, OutOfStockItem, StockByCategory } from '@/api/types';
 
 /**
  * Inventory Report Screen
- * Shows stock and inventory summary
+ * Swiss Minimalist Refactor
  */
 export default function InventoryReportScreen() {
   const insets = useSafeAreaInsets();
@@ -48,11 +47,11 @@ export default function InventoryReportScreen() {
     { key: 'overview' as const, label: 'Overview' },
     {
       key: 'lowstock' as const,
-      label: `Stok Rendah (${report?.low_stock_products?.length || 0})`,
+      label: `Low Stock (${report?.low_stock_products?.length || 0})`,
     },
     {
       key: 'outofstock' as const,
-      label: `Habis (${report?.out_of_stock_products?.length || 0})`,
+      label: `Out (${report?.out_of_stock_products?.length || 0})`,
     },
   ];
 
@@ -60,29 +59,26 @@ export default function InventoryReportScreen() {
     <TouchableOpacity
       key={item.product_id}
       onPress={() => router.push(`/(admin)/products/${item.product_id}`)}
-      className="mb-3"
+      className="mb-0 border-b border-secondary-100 bg-white active:bg-secondary-50"
     >
-      <Card className="bg-orange-50 border-orange-100">
-        <View className="flex-row items-center">
-          <View className="w-10 h-10 bg-orange-100 rounded-lg items-center justify-center mr-3">
-            <Text className="text-lg">⚠️</Text>
-          </View>
-          <View className="flex-1">
-            <Text className="font-semibold text-secondary-900">
-              {item.product_name}
-            </Text>
-            <Text className="text-sm text-orange-600">
-              Min: {item.min_stock_alert} {item.unit}
-            </Text>
-          </View>
-          <View className="items-end">
-            <Text className="text-xl font-bold text-orange-600">
-              {item.current_stock}
-            </Text>
-            <Text className="text-xs text-secondary-500">{item.unit}</Text>
-          </View>
+      <View className="p-4 flex-row justify-between items-center">
+        <View className="flex-1">
+          <Text className="text-base font-bold text-primary-900 uppercase tracking-tight">
+            {item.product_name}
+          </Text>
+          <Text className="text-[10px] text-orange-600 font-bold uppercase tracking-wider mt-1">
+            Minimum: {item.min_stock_alert} {item.unit}
+          </Text>
         </View>
-      </Card>
+        <View className="items-end">
+          <Text className="text-xl font-black text-orange-600">
+            {item.current_stock}
+          </Text>
+          <Text className="text-[10px] text-secondary-500 font-bold uppercase">
+            {item.unit}
+          </Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 
@@ -90,80 +86,87 @@ export default function InventoryReportScreen() {
     <TouchableOpacity
       key={item.product_id}
       onPress={() => router.push(`/(admin)/products/${item.product_id}`)}
-      className="mb-3"
+      className="mb-0 border-b border-secondary-100 bg-white active:bg-secondary-50"
     >
-      <Card className="bg-red-50 border-red-100">
-        <View className="flex-row items-center">
-          <View className="w-10 h-10 bg-red-100 rounded-lg items-center justify-center mr-3">
-            <Text className="text-lg">❌</Text>
-          </View>
-          <View className="flex-1">
-            <Text className="font-semibold text-secondary-900">
-              {item.product_name}
+      <View className="p-4 flex-row justify-between items-center">
+        <View className="flex-1">
+          <Text className="text-base font-bold text-primary-900 uppercase tracking-tight">
+            {item.product_name}
+          </Text>
+          {item.last_sale_date && (
+            <Text className="text-[10px] text-secondary-500 font-bold uppercase tracking-wider mt-1">
+              Last Sale:{' '}
+              {new Date(item.last_sale_date).toLocaleDateString('en-GB')}
             </Text>
-            {item.last_sale_date && (
-              <Text className="text-sm text-secondary-500">
-                Terakhir terjual:{' '}
-                {new Date(item.last_sale_date).toLocaleDateString('id-ID')}
-              </Text>
-            )}
-          </View>
-          <View className="bg-red-200 px-3 py-1 rounded-full">
-            <Text className="text-red-800 text-sm font-medium">HABIS</Text>
-          </View>
+          )}
         </View>
-      </Card>
+        <View className="bg-red-600 px-3 py-1">
+          <Text className="text-white text-[10px] font-black uppercase tracking-widest">
+            EMPTY
+          </Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
 
   const renderCategoryStock = (item: StockByCategory) => (
     <View
       key={item.category_id}
-      className="flex-row items-center py-3 border-b border-secondary-100"
+      className="flex-row items-center py-4 border-b border-secondary-100"
     >
-      <View className="w-8 h-8 bg-primary-100 rounded-lg items-center justify-center mr-3">
-        <Text>🏷️</Text>
-      </View>
       <View className="flex-1">
-        <Text className="font-medium text-secondary-900">
+        <Text className="font-bold text-primary-900 uppercase tracking-wide text-sm">
           {item.category_name}
         </Text>
-        <Text className="text-sm text-secondary-500">
-          {item.product_count} produk
+        <Text className="text-[10px] text-secondary-500 font-bold uppercase tracking-wider mt-1">
+          {item.product_count} items
         </Text>
       </View>
-      <Text className="text-base font-semibold text-secondary-700">
+      <Text className="text-sm font-black text-primary-900">
         {formatCurrency(item.total_stock_value)}
       </Text>
     </View>
   );
 
-  if (isLoading && !report) {
-    return <Loading fullScreen message="Memuat laporan..." />;
-  }
-
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Laporan Inventori" onBack={() => router.back()} />
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+
+      {/* Header */}
+      <View
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          INVENTORY
+        </Text>
+      </View>
 
       {/* Tabs */}
-      <View className="bg-white px-4 py-2 border-b border-secondary-100">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <View className="bg-white border-b border-secondary-100">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 24 }}
+        >
           <View className="flex-row">
             {tabs.map((tab) => (
               <TouchableOpacity
                 key={tab.key}
                 onPress={() => setActiveTab(tab.key)}
-                className={`px-4 py-2 rounded-full mr-2 ${
-                  activeTab === tab.key ? 'bg-primary-600' : 'bg-secondary-100'
+                className={`py-4 mr-6 border-b-2 ${
+                  activeTab === tab.key ? 'border-black' : 'border-transparent'
                 }`}
               >
                 <Text
-                  className={
-                    activeTab === tab.key
-                      ? 'text-white font-medium'
-                      : 'text-secondary-700'
-                  }
+                  className={`text-xs font-black uppercase tracking-widest ${
+                    activeTab === tab.key ? 'text-black' : 'text-secondary-400'
+                  }`}
                 >
                   {tab.label}
                 </Text>
@@ -175,124 +178,119 @@ export default function InventoryReportScreen() {
 
       <ScrollView
         contentContainerStyle={{
-          padding: 16,
-          paddingBottom: insets.bottom + 16,
+          paddingBottom: insets.bottom + 100,
         }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={fetchReport} />
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={fetchReport}
+            tintColor="#000"
+          />
         }
       >
         {error && (
-          <View className="bg-danger-50 border border-danger-200 rounded-lg px-4 py-3 mb-4">
-            <Text className="text-danger-700">
-              Gagal memuat laporan: {error}
+          <View className="bg-black p-4 mb-6 mx-6 mt-6">
+            <Text className="text-white font-bold uppercase tracking-wide text-xs">
+              Error: {error}
             </Text>
           </View>
         )}
 
         {report && activeTab === 'overview' && (
-          <>
+          <View className="p-6">
             {/* Summary Stats */}
-            <View className="flex-row mb-4">
-              <View className="flex-1 mr-2">
-                <Card className="bg-blue-50 border-blue-100">
-                  <View className="items-center">
-                    <Text className="text-blue-600 text-sm">Total Produk</Text>
-                    <Text className="text-2xl font-bold text-blue-800 mt-1">
-                      {report.total_products}
-                    </Text>
-                  </View>
-                </Card>
+            <View className="flex-row mb-8">
+              <View className="flex-1 mr-4 border border-secondary-200 p-4">
+                <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500 mb-2">
+                  Total Products
+                </Text>
+                <Text className="text-2xl font-black text-primary-900">
+                  {report.total_products}
+                </Text>
               </View>
-              <View className="flex-1 ml-2">
-                <Card className="bg-green-50 border-green-100">
-                  <View className="items-center">
-                    <Text className="text-green-600 text-sm">Nilai Stok</Text>
-                    <Text className="text-lg font-bold text-green-800 mt-1">
-                      {formatCurrency(report.total_stock_value)}
-                    </Text>
-                  </View>
-                </Card>
+              <View className="flex-1 border border-secondary-200 p-4">
+                <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500 mb-2">
+                  Total Value
+                </Text>
+                <Text className="text-lg font-black text-primary-900">
+                  {formatCurrency(report.total_stock_value)}
+                </Text>
               </View>
             </View>
 
-            {/* Status Summary */}
-            <Card title="Status Stok" className="mb-4">
-              <View className="flex-row justify-around py-4">
-                <TouchableOpacity
-                  onPress={() => setActiveTab('lowstock')}
-                  className="items-center"
-                >
-                  <View className="w-16 h-16 bg-orange-100 rounded-full items-center justify-center">
-                    <Text className="text-2xl font-bold text-orange-600">
-                      {report.low_stock_products?.length || 0}
-                    </Text>
-                  </View>
-                  <Text className="text-sm text-secondary-500 mt-2">
-                    Stok Rendah
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => setActiveTab('outofstock')}
-                  className="items-center"
-                >
-                  <View className="w-16 h-16 bg-red-100 rounded-full items-center justify-center">
-                    <Text className="text-2xl font-bold text-red-600">
-                      {report.out_of_stock_products?.length || 0}
-                    </Text>
-                  </View>
-                  <Text className="text-sm text-secondary-500 mt-2">Habis</Text>
-                </TouchableOpacity>
-              </View>
-            </Card>
+            {/* Status Summary Buttons */}
+            <View className="flex-row mb-8 space-x-4">
+              <TouchableOpacity
+                onPress={() => setActiveTab('lowstock')}
+                className="flex-1 bg-orange-50 p-4 border border-orange-100 items-center justify-center"
+              >
+                <Text className="text-4xl font-black text-orange-600 mb-1">
+                  {report.low_stock_products?.length || 0}
+                </Text>
+                <Text className="text-[10px] font-bold uppercase tracking-widest text-orange-800">
+                  Low Stock
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setActiveTab('outofstock')}
+                className="flex-1 bg-red-50 p-4 border border-red-100 items-center justify-center"
+              >
+                <Text className="text-4xl font-black text-red-600 mb-1">
+                  {report.out_of_stock_products?.length || 0}
+                </Text>
+                <Text className="text-[10px] font-bold uppercase tracking-widest text-red-800">
+                  Out of Stock
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {/* Stock by Category */}
             {report.stock_by_category &&
               report.stock_by_category.length > 0 && (
-                <Card title="Stok per Kategori" className="mb-4">
+                <View>
+                  <Text className="text-xs font-bold uppercase tracking-widest text-secondary-900 mb-2 border-b border-black pb-2">
+                    Valuation by Category
+                  </Text>
                   {report.stock_by_category.map(renderCategoryStock)}
-                </Card>
+                </View>
               )}
-          </>
+          </View>
         )}
 
         {report && activeTab === 'lowstock' && (
-          <>
+          <View>
             {report.low_stock_products &&
             report.low_stock_products.length > 0 ? (
               report.low_stock_products.map(renderLowStockItem)
             ) : (
-              <View className="items-center py-12">
-                <Text className="text-6xl mb-4">✅</Text>
-                <Text className="text-secondary-500 text-lg">
-                  Semua stok aman!
+              <View className="items-center py-20 px-10">
+                <Text className="text-secondary-300 font-black text-6xl mb-4">
+                  ✅
                 </Text>
-                <Text className="text-secondary-400 mt-1">
-                  Tidak ada produk dengan stok rendah
+                <Text className="text-secondary-900 font-bold text-lg text-center uppercase tracking-wide mb-2">
+                  Stocks Healthy
                 </Text>
               </View>
             )}
-          </>
+          </View>
         )}
 
         {report && activeTab === 'outofstock' && (
-          <>
+          <View>
             {report.out_of_stock_products &&
             report.out_of_stock_products.length > 0 ? (
               report.out_of_stock_products.map(renderOutOfStockItem)
             ) : (
-              <View className="items-center py-12">
-                <Text className="text-6xl mb-4">🎉</Text>
-                <Text className="text-secondary-500 text-lg">
-                  Tidak ada produk habis!
+              <View className="items-center py-20 px-10">
+                <Text className="text-secondary-300 font-black text-6xl mb-4">
+                  🎉
                 </Text>
-                <Text className="text-secondary-400 mt-1">
-                  Semua produk masih tersedia
+                <Text className="text-secondary-900 font-bold text-lg text-center uppercase tracking-wide mb-2">
+                  Fully Stocked
                 </Text>
               </View>
             )}
-          </>
+          </View>
         )}
       </ScrollView>
     </View>

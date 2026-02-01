@@ -7,19 +7,16 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Header } from '@/components/shared';
-import { Button, Card, Input } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
 import { customerSchema, CustomerFormData } from '@/utils/validation';
 import { createCustomer } from '@/api/endpoints/customers';
 
-/**
- * Create Customer Screen
- */
 export default function CreateCustomerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -52,13 +49,13 @@ export default function CreateCustomerScreen() {
         credit_limit: data.credit_limit || 0,
       });
 
-      Alert.alert('Berhasil', 'Pelanggan berhasil ditambahkan', [
+      Alert.alert('SUCCESS', 'Customer added successfully', [
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error) {
       Alert.alert(
-        'Gagal',
-        error instanceof Error ? error.message : 'Gagal menambahkan pelanggan'
+        'FAILED',
+        error instanceof Error ? error.message : 'Could not add customer',
       );
     } finally {
       setIsSubmitting(false);
@@ -66,30 +63,52 @@ export default function CreateCustomerScreen() {
   };
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Tambah Pelanggan" onBack={() => router.back()} />
+    <View className="flex-1 bg-white">
+      {/* Header */}
+      <View
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          ADD MEMBER
+        </Text>
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }}
+          contentContainerStyle={{
+            padding: 24,
+            paddingBottom: insets.bottom + 100,
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          <Card title="Informasi Pelanggan" className="mb-4">
+          <View className="mb-8">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-6">
+              Basic Info
+            </Text>
+
             <Controller
               control={control}
               name="name"
               render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Nama Pelanggan *"
-                  placeholder="Masukkan nama pelanggan"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={errors.name?.message}
-                />
+                <View className="mb-4">
+                  <Input
+                    label="FULL NAME *"
+                    placeholder="Enter customer name"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    error={errors.name?.message}
+                  />
+                </View>
               )}
             />
 
@@ -97,14 +116,16 @@ export default function CreateCustomerScreen() {
               control={control}
               name="phone"
               render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="No. Telepon"
-                  placeholder="08xxxxxxxxxx"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  keyboardType="phone-pad"
-                />
+                <View className="mb-4">
+                  <Input
+                    label="PHONE NUMBER"
+                    placeholder="08xxxxxxxxxx"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    keyboardType="phone-pad"
+                  />
+                </View>
               )}
             />
 
@@ -112,51 +133,59 @@ export default function CreateCustomerScreen() {
               control={control}
               name="address"
               render={({ field: { onChange, onBlur, value } }) => (
-                <View>
-                  <Text className="text-sm font-medium text-secondary-700 mb-1.5">
-                    Alamat
+                <View className="mb-4">
+                  <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+                    Address
                   </Text>
                   <TextInput
-                    className="border border-secondary-200 rounded-lg px-4 py-3 bg-white text-base"
-                    placeholder="Alamat pelanggan (opsional)"
+                    className="border border-secondary-200 rounded-none px-4 py-3 bg-secondary-50 text-base font-medium min-h-[80px]"
+                    placeholder="Customer address (optional)"
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
                     multiline
-                    numberOfLines={2}
+                    numberOfLines={3}
                   />
                 </View>
               )}
             />
-          </Card>
+          </View>
 
-          <Card title="Pengaturan Kredit" className="mb-4">
+          <View className="mb-8">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-6">
+              Financial Limits
+            </Text>
             <Controller
               control={control}
               name="credit_limit"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
-                  label="Limit Kredit (Kasbon)"
+                  label="CREDIT LIMIT (KASBON)"
                   placeholder="0"
                   value={value > 0 ? String(value) : ''}
                   onChangeText={(text) => onChange(Number(text) || 0)}
                   onBlur={onBlur}
                   keyboardType="numeric"
-                  leftIcon={<Text className="text-secondary-400">Rp</Text>}
-                  helperText="Batas maksimal hutang pelanggan"
+                  leftIcon={
+                    <Text className="text-secondary-400 font-bold">Rp</Text>
+                  }
+                  helperText="Maximum debt allowed for this customer"
                 />
               )}
             />
-          </Card>
+          </View>
 
-          <Card title="Catatan" className="mb-4">
+          <View className="mb-4">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-6">
+              Notes
+            </Text>
             <Controller
               control={control}
               name="notes"
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  className="border border-secondary-200 rounded-lg px-4 py-3 bg-white text-base"
-                  placeholder="Catatan tambahan (opsional)"
+                  className="border border-secondary-200 rounded-none px-4 py-3 bg-secondary-50 text-base font-medium min-h-[80px]"
+                  placeholder="Additional notes..."
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -165,19 +194,20 @@ export default function CreateCustomerScreen() {
                 />
               )}
             />
-          </Card>
+          </View>
         </ScrollView>
 
         {/* Submit Button */}
         <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-4 py-3"
+          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-6 py-4"
           style={{ paddingBottom: insets.bottom + 12 }}
         >
           <Button
-            title="Simpan Pelanggan"
+            title="SAVE MEMBER"
             fullWidth
+            size="lg"
             onPress={handleSubmit(onSubmit)}
-            loading={isSubmitting}
+            isLoading={isSubmitting}
           />
         </View>
       </KeyboardAvoidingView>
