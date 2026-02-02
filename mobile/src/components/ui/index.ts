@@ -3,4 +3,3 @@ export { Input } from './Input';
 export { Card } from './Card';
 export { Loading } from './Loading';
 export { ImagePickerInput } from './ImagePickerInput';
-export { BarcodeScanner } from './BarcodeScanner';

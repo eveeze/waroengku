@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ToastAndroid,
   Platform,
+  Image,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 const { setStringAsync } = Clipboard;
@@ -22,6 +23,7 @@ import {
 import { Header } from '@/components/shared';
 import { Card, Button, Loading } from '@/components/ui';
 import { Product, PricingTier } from '@/api/types';
+import { getCleanImageUrl } from '@/utils/image';
 
 /**
  * Product Detail Screen
@@ -188,9 +190,34 @@ export default function ProductDetailScreen() {
         }}
       >
         {/* Product Image Placeholder */}
-        <View className="bg-secondary-50 rounded-xl items-center justify-center py-12 mb-8 border border-secondary-200">
+        <View
+          className="bg-secondary-50 rounded-xl items-center justify-center mb-8 border border-secondary-200 overflow-hidden"
+          style={{ height: 300 }} // Explicit height
+        >
           {product.image_url ? (
-            <Text className="text-6xl">📷</Text>
+            <View className="w-full h-full relative">
+              <Image
+                source={{ uri: getCleanImageUrl(product.image_url) }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: '#f0f0f0',
+                }}
+                resizeMode="contain"
+                onError={(e) => {
+                  Alert.alert(
+                    'Load Error',
+                    `Native Image Failed:\n${getCleanImageUrl(product.image_url)}\n\nError: ${e.nativeEvent.error}`,
+                  );
+                }}
+              />
+              {/* DEBUG INFO */}
+              <View className="absolute bottom-0 left-0 right-0 bg-black/70 p-2">
+                <Text className="text-white text-[10px] font-mono">
+                  Src: {getCleanImageUrl(product.image_url)}
+                </Text>
+              </View>
+            </View>
           ) : (
             <View className="items-center">
               <Text className="text-6xl mb-2 opacity-20">📦</Text>

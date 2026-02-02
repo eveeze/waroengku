@@ -7,7 +7,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  ToastAndroid,
 } from 'react-native';
+import { useProductStore } from '@/stores/productStore';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApi } from '@/hooks/useApi';
@@ -62,23 +64,52 @@ export default function RestockScreen() {
     }
   };
 
+  /* OPTIMISTIC UI IMPLEMENTATION */
+  const { optimisticUpdateStock, rollbackStock, products, setProducts } =
+    useProductStore();
+
   const handleSubmit = async () => {
     if (!product || !quantity) return;
 
+    const oldStock = product.current_stock;
+    const addedQty = Number(quantity);
+    const newStock = oldStock + addedQty;
+
+    // 1. OPTIMISTIC UPDATE
+    if (products.length === 0) {
+      // If store is empty, initializing it with current product is a bit weak but better than nothing
+      // Ideally ProductList populates this.
+      // For now we just update:
+      setProducts([product]);
+    }
+    optimisticUpdateStock(product.id, newStock);
+
+    // Immediate feedback
+    if (Platform.OS === 'android') {
+      import('react-native').then(({ ToastAndroid }) =>
+        ToastAndroid.show(
+          `Restocked! Stock is now ${newStock}`,
+          ToastAndroid.SHORT,
+        ),
+      );
+    }
+    router.back();
+
     try {
+      // 2. API CALL (Background)
       await submitRestock({
         product_id: product.id,
-        quantity: Number(quantity),
+        quantity: addedQty,
         cost_per_unit: Number(costPrice),
         supplier: supplier || undefined,
         notes: notes || undefined,
       });
 
-      Alert.alert('Success', 'Restock recorded successfully', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch {
-      Alert.alert('Error', 'Failed to restock');
+      // Success - Silent revalidation or do nothing
+    } catch (e) {
+      // 3. ROLLBACK
+      rollbackStock(product.id, oldStock);
+      Alert.alert('Error', 'Restock failed - rolled back stock');
     }
   };
 

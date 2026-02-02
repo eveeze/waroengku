@@ -97,6 +97,7 @@ export interface UpdateProductRequest {
   max_stock?: number;
   is_refillable?: boolean;
   is_active?: boolean;
+  image_url?: string; // Send "" to delete
 }
 
 // Low stock product (with additional info)

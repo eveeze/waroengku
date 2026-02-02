@@ -3,9 +3,9 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image,
   StyleSheet,
   Alert,
+  Image,
 } from 'react-native';
 import { useImagePicker, ImageAsset } from '@/hooks/useImagePicker';
 
@@ -82,8 +82,9 @@ export function ImagePickerInput({
         {displayUri ? (
           <Image
             source={{ uri: displayUri }}
-            className="w-full h-full"
+            style={{ width: '100%', height: '100%' }}
             resizeMode="cover"
+            onError={(e) => console.log('Picker Error:', e.nativeEvent.error)}
           />
         ) : (
           <View className="flex-1 items-center justify-center">

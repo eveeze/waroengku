@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+  Platform,
+  ToastAndroid,
+} from 'react-native';
+import { useProductStore } from '@/stores/productStore';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApi } from '@/hooks/useApi';
@@ -48,27 +57,41 @@ export default function AdjustScreen() {
     else Alert.alert('Not Found', 'Product not found');
   };
 
+  /* OPTIMISTIC UI */
+  const { optimisticUpdateStock, rollbackStock, setProducts, products } =
+    useProductStore();
+
   const handleSubmit = async () => {
     if (!product || !quantity || !reason) {
       Alert.alert('Error', 'Please fill all fields');
       return;
     }
 
-    // adjustStock expects a delta number. Positive adds stock, negative removes.
+    const oldStock = product.current_stock;
     const delta = Number(quantity) * (type === 'decrease' ? -1 : 1);
+    const newStock = oldStock + delta;
+
+    // 1. Optimistic Update
+    if (products.length === 0) setProducts([product]);
+    optimisticUpdateStock(product.id, newStock);
+
+    // Immediate Feedback
+    if (Platform.OS === 'android') {
+      ToastAndroid.show('Stock updated!', ToastAndroid.SHORT);
+    }
+    router.back();
 
     try {
+      // 2. Background API
       await submitAdjust({
         product_id: product.id,
         quantity: delta,
         reason: reason,
       });
-
-      Alert.alert('Success', 'Stock adjusted successfully', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
     } catch {
-      Alert.alert('Error', 'Failed to adjust stock');
+      // 3. Rollback
+      rollbackStock(product.id, oldStock);
+      Alert.alert('Error', 'Adjustment failed - rolled back');
     }
   };
 

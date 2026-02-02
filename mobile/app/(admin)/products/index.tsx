@@ -7,9 +7,10 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router'; // Corrected import
 import { useApi } from '@/hooks/useApi';
 import {
   getProducts,
@@ -18,6 +19,7 @@ import {
 } from '@/api/endpoints';
 import { Product, Category, ProductListParams } from '@/api/types';
 import { Card, Loading, Button } from '@/components/ui';
+import { getCleanImageUrl } from '@/utils/image';
 import { BarcodeScanner } from '@/components/shared';
 
 /**
@@ -59,7 +61,7 @@ export default function ProductsScreen() {
   // Load categories on mount
   useEffect(() => {
     loadCategories();
-    loadProducts();
+    // loadProducts is now handled by useFocusEffect below
   }, []);
 
   const loadCategories = async () => {
@@ -90,15 +92,23 @@ export default function ProductsScreen() {
         const result = await fetchProducts(params);
         if (result && result.success) {
           if (append) {
-            setProducts((prev) => [...prev, ...result.data]);
+            setProducts((prev) => [...prev, ...(result.data || [])]);
           } else {
-            setProducts(result.data);
+            setProducts(result.data || []);
           }
           setHasMore(pageNum < result.meta.total_pages);
         }
       } catch {}
     },
     [search, selectedCategory, showLowStock, sortBy, statusFilter],
+  );
+
+  // Reload products whenever screen comes into focus
+  // Placed AFTER loadProducts definition
+  useFocusEffect(
+    useCallback(() => {
+      loadProducts(search, 1, false);
+    }, [loadProducts, search]),
   );
 
   const handleBarcodeScanned = async (barcode: string, type: string) => {
@@ -170,11 +180,17 @@ export default function ProductsScreen() {
         <Card className="rounded-none border-x-0 border-t-0 border-b border-secondary-200 shadow-none bg-transparent px-0 py-2">
           <View className="flex-row">
             {/* Image placeholder */}
-            <View className="w-16 h-16 bg-secondary-50 border border-secondary-200 rounded-md items-center justify-center mr-4">
+            <View className="w-16 h-16 bg-secondary-50 border border-secondary-200 rounded-md overflow-hidden mr-4">
               {item.image_url ? (
-                <Text className="text-xl">📷</Text>
+                <Image
+                  source={{ uri: getCleanImageUrl(item.image_url) }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
               ) : (
-                <Text className="text-xl text-secondary-300">#</Text>
+                <View className="w-full h-full items-center justify-center">
+                  <Text className="text-xl text-secondary-300">#</Text>
+                </View>
               )}
             </View>
 

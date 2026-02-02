@@ -14,11 +14,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Header } from '@/components/shared';
-import { Button, Card, Input, Loading } from '@/components/ui';
+import { Header, BarcodeScanner } from '@/components/shared';
+import {
+  Button,
+  Card,
+  Input,
+  Loading,
+  ImagePickerInput,
+} from '@/components/ui';
 import { updateProduct, getProductById, getCategories } from '@/api/endpoints';
 import { Category, Product } from '@/api/types';
-import { useApi } from '@/hooks/useApi';
+import { useApi, ImageAsset } from '@/hooks';
 
 // Edit form schema (all optional except changed fields)
 const editProductSchema = z.object({
@@ -48,6 +54,7 @@ export default function EditProductScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [product, setProduct] = useState<Product | null>(null);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
   const { execute: fetchProduct, isLoading } = useApi(() =>
     getProductById(id!),
@@ -57,6 +64,7 @@ export default function EditProductScreen() {
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
     reset,
   } = useForm<EditProductFormData>({
@@ -91,24 +99,61 @@ export default function EditProductScreen() {
     if (cats) setCategories(cats);
   };
 
+  /* Logic for Image Handling */
+  const [newImage, setNewImage] = useState<ImageAsset | null>(null);
+  const [isImageDeleted, setIsImageDeleted] = useState(false);
+
+  // Helper to determine what to show in the picker
+  // 1. New Local Image
+  // 2. Existing Remote Image (if not deleted)
+  // 3. Null (Placeholder)
+  const displayImageUri = newImage
+    ? newImage.uri
+    : isImageDeleted
+      ? undefined
+      : product?.image_url || undefined;
+
+  const handleImageSelected = (image: ImageAsset) => {
+    setNewImage(image);
+    setIsImageDeleted(false); // Reset delete flag if we pick a new one
+  };
+
+  const handleImageCleared = () => {
+    setNewImage(null);
+    setIsImageDeleted(true); // Mark as deleted
+  };
+
   const onSubmit = async (data: EditProductFormData) => {
     try {
       setIsSubmitting(true);
 
-      await updateProduct(id!, {
-        name: data.name,
-        barcode: data.barcode || undefined,
-        sku: data.sku || undefined,
-        description: data.description || undefined,
-        category_id: data.category_id || undefined,
-        unit: data.unit,
-        base_price: data.base_price,
-        cost_price: data.cost_price,
-        min_stock_alert: data.min_stock_alert,
-        max_stock: data.max_stock,
-        is_active: data.is_active,
-        is_refillable: data.is_refillable,
-      });
+      await updateProduct(
+        id!,
+        {
+          name: data.name,
+          barcode: data.barcode || undefined,
+          sku: data.sku || undefined,
+          description: data.description || undefined,
+          category_id: data.category_id || undefined,
+          unit: data.unit,
+          base_price: data.base_price,
+          cost_price: data.cost_price,
+          min_stock_alert: data.min_stock_alert,
+          max_stock: data.max_stock,
+          is_active: data.is_active,
+          is_refillable: data.is_refillable,
+          // If we flagged deletion AND didn't provide a new image, send empty string to delete it.
+          image_url: isImageDeleted && !newImage ? '' : undefined,
+        },
+        // If we have a new image, pass it for upload (multipart)
+        newImage
+          ? {
+              uri: newImage.uri,
+              type: newImage.mimeType || 'image/jpeg',
+              name: newImage.fileName || 'upload.jpg',
+            }
+          : undefined,
+      );
 
       Alert.alert('Success', 'Product updated successfully', [
         { text: 'OK', onPress: () => router.back() },
@@ -155,6 +200,20 @@ export default function EditProductScreen() {
           }}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Image Section */}
+          <View className="mb-8">
+            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+              PRODUCT IMAGE
+            </Text>
+            <ImagePickerInput
+              value={displayImageUri}
+              onImageSelected={handleImageSelected}
+              onImageCleared={handleImageCleared}
+              placeholder="TAP TO UPLOAD"
+              aspectRatio={[4, 3]}
+            />
+          </View>
+
           {/* Basic Info */}
           <View className="mb-8">
             <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
@@ -176,7 +235,19 @@ export default function EditProductScreen() {
               )}
             />
 
-            <View className="flex-row mt-1 gap-3">
+            {/* Barcode Scanner Modal */}
+            <BarcodeScanner
+              visible={showBarcodeScanner}
+              onClose={() => setShowBarcodeScanner(false)}
+              onScan={(code) => {
+                setValue('barcode', code);
+                setShowBarcodeScanner(false);
+                Alert.alert('Scanned', `Barcode: ${code}`);
+              }}
+              title="SCAN BARCODE"
+            />
+
+            <View className="flex-row mt-1 gap-3 items-end">
               <View className="flex-1">
                 <Controller
                   control={control}
@@ -192,6 +263,12 @@ export default function EditProductScreen() {
                   )}
                 />
               </View>
+              <TouchableOpacity
+                onPress={() => setShowBarcodeScanner(true)}
+                className="bg-primary-900 h-[52px] w-[52px] rounded-lg items-center justify-center mb-[2px]"
+              >
+                <Text className="text-white text-xl">📷</Text>
+              </TouchableOpacity>
               <View className="flex-1">
                 <Controller
                   control={control}
