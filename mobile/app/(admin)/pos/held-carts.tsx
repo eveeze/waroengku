@@ -10,7 +10,12 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApi } from '@/hooks/useApi';
-import { getHeldCarts, resumeCart, discardCart } from '@/api/endpoints';
+import {
+  getHeldCarts,
+  resumeCart,
+  discardCart,
+  getProductById,
+} from '@/api/endpoints';
 import { HeldCart } from '@/api/types';
 import { useCartStore } from '@/stores/cartStore';
 

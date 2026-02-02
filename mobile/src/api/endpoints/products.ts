@@ -186,3 +186,14 @@ export async function deletePricingTier(
 ): Promise<void> {
   await apiClient.delete(`/products/${productId}/pricing-tiers/${tierId}`);
 }
+
+/**
+ * Toggle active status
+ * PATCH /api/v1/products/{id}/toggle-active
+ */
+export async function toggleProductActive(id: string): Promise<Product> {
+  const response = await apiClient.patch<{ data: Product }>(
+    `/products/${id}/toggle-active`,
+  );
+  return response.data.data;
+}

@@ -35,6 +35,9 @@ export default function ProductsScreen() {
   const [selectedCategory, setSelectedCategory] = useState<
     string | undefined
   >();
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'active' | 'inactive'
+  >('active');
   const [showLowStock, setShowLowStock] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'base_price' | 'created_at'>(
     'name',
@@ -76,12 +79,16 @@ export default function ProductsScreen() {
         low_stock_only: showLowStock || undefined,
         sort_by: sortBy,
         sort_order: 'asc',
+        // is_active mapping:
+        // 'active' -> true
+        // 'inactive' -> false
+        // 'all' -> 'all' (backend requirement)
+        is_active: statusFilter === 'all' ? 'all' : statusFilter === 'active',
       };
 
       try {
         const result = await fetchProducts(params);
         if (result && result.success) {
-          // Align with PaginatedResponse
           if (append) {
             setProducts((prev) => [...prev, ...result.data]);
           } else {
@@ -91,7 +98,7 @@ export default function ProductsScreen() {
         }
       } catch {}
     },
-    [search, selectedCategory, showLowStock, sortBy],
+    [search, selectedCategory, showLowStock, sortBy, statusFilter],
   );
 
   const handleBarcodeScanned = async (barcode: string, type: string) => {
@@ -202,6 +209,13 @@ export default function ProductsScreen() {
                     STOCK: {item.current_stock}
                   </Text>
                 </View>
+                {!item.is_active && (
+                  <View className="px-2 py-0.5 rounded mr-2 border bg-gray-100 border-gray-300">
+                    <Text className="text-xs font-bold text-gray-500">
+                      INACTIVE
+                    </Text>
+                  </View>
+                )}
                 {item.pricing_tiers && item.pricing_tiers.length > 0 && (
                   <Text className="text-xs text-secondary-400 font-medium">
                     +{item.pricing_tiers.length} TIERS
@@ -283,7 +297,38 @@ export default function ProductsScreen() {
         {/* Filters */}
         {showFilters && (
           <View className="mt-4 pt-4 border-t border-secondary-100 animate-fade-in-down">
+            {/* Status Filter */}
+            <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500 mb-2">
+              Status
+            </Text>
+            <View className="flex-row mb-4 gap-2">
+              {(['active', 'inactive', 'all'] as const).map((status) => (
+                <TouchableOpacity
+                  key={status}
+                  onPress={() => setStatusFilter(status)}
+                  className={`px-4 py-2 rounded-md border ${
+                    statusFilter === status
+                      ? 'bg-primary-900 border-primary-900'
+                      : 'bg-white border-secondary-200'
+                  }`}
+                >
+                  <Text
+                    className={`text-xs font-bold uppercase tracking-wide ${
+                      statusFilter === status
+                        ? 'text-white'
+                        : 'text-primary-900'
+                    }`}
+                  >
+                    {status}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             {/* Category Filter */}
+            <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500 mb-2">
+              Category
+            </Text>
             <View className="flex-row flex-wrap mb-4 gap-2">
               <TouchableOpacity
                 onPress={() => setSelectedCategory(undefined)}
@@ -346,8 +391,25 @@ export default function ProductsScreen() {
           !isLoading ? (
             <View className="items-center py-20 opacity-50">
               <Text className="text-lg font-medium text-primary-900">
-                NO PRODUCTS
+                NO PRODUCTS FOUND
               </Text>
+              <Text className="text-sm text-secondary-500 mt-2 text-center mb-4 px-8">
+                {statusFilter === 'active'
+                  ? 'Your seeded products might be set to Inactive.'
+                  : 'Try adjusting filters or search terms.'}
+              </Text>
+              {statusFilter === 'active' && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setStatusFilter('inactive');
+                  }}
+                  className="bg-primary-900 px-6 py-3 rounded-lg"
+                >
+                  <Text className="text-white font-bold text-xs uppercase tracking-widest">
+                    Show Inactive Products
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : null
         }

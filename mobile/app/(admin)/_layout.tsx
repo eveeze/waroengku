@@ -72,6 +72,7 @@ export default function AdminLayout() {
       <Tabs.Screen name="cash-flow" options={{ href: null }} />
       <Tabs.Screen name="refillables" options={{ href: null }} />
       <Tabs.Screen name="stock-opname" options={{ href: null }} />
+      <Tabs.Screen name="inventory" options={{ href: null }} />
       <Tabs.Screen name="consignment" options={{ href: null }} />
     </Tabs>
   );

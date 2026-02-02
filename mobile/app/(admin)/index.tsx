@@ -265,17 +265,18 @@ export default function DashboardScreen() {
             </TouchableOpacity>
 
             {/* Settings/Users */}
+            {/* Inventory (Replaces Settings) */}
             <TouchableOpacity
-              onPress={() => router.push('/(admin)/users')}
+              onPress={() => router.push('/(admin)/inventory')}
               className="flex-1 min-w-[140px] bg-white border border-secondary-200 p-5 aspect-square justify-between"
             >
-              <Text className="text-3xl">⚙️</Text>
+              <Text className="text-3xl">🏭</Text>
               <View>
                 <Text className="font-heading text-lg text-primary-900">
-                  SETTINGS
+                  INVENTORY
                 </Text>
                 <Text className="text-xs text-secondary-500 font-medium">
-                  App & Users
+                  Restock & Count
                 </Text>
               </View>
             </TouchableOpacity>

@@ -95,16 +95,16 @@ export interface InventoryReportData {
 }
 
 export interface LowStockItem {
-  product_id: string;
-  product_name: string;
+  id: string;
+  name: string;
   current_stock: number;
   min_stock_alert: number;
   unit: string;
 }
 
 export interface OutOfStockItem {
-  product_id: string;
-  product_name: string;
+  id: string;
+  name: string;
   unit: string;
   last_sale_date?: string;
 }

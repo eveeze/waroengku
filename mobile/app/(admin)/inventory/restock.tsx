@@ -39,6 +39,7 @@ export default function RestockScreen() {
   );
 
   const handleScan = async (code: string) => {
+    if (!showScanner) return;
     setShowScanner(false);
     setBarcodeInput(code);
     const found = await searchProduct(code);
@@ -177,13 +178,21 @@ export default function RestockScreen() {
               onChangeText={setNotes}
             />
 
-            <Button
-              title="CONFIRM RESTOCK"
-              size="lg"
-              className="mt-4"
+            <TouchableOpacity
               onPress={handleSubmit}
-              isLoading={isSubmitting}
-            />
+              disabled={isSubmitting}
+              className={`mt-4 py-4 rounded-xl items-center justify-center bg-primary-900 ${
+                isSubmitting ? 'opacity-50' : ''
+              }`}
+            >
+              {isSubmitting ? (
+                <Text className="text-white font-bold">LOADING...</Text>
+              ) : (
+                <Text className="text-white font-bold text-lg tracking-tight">
+                  CONFIRM RESTOCK
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>

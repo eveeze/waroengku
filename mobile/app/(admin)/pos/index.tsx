@@ -153,7 +153,7 @@ export default function POSScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Hold',
-          onPress: async (name) => {
+          onPress: async (name?: string) => {
             if (!name) return;
             try {
               await submitHoldCart({

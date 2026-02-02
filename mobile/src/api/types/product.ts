@@ -59,7 +59,7 @@ export interface ProductListParams {
   barcode?: string;
   sort_by?: 'name' | 'base_price' | 'created_at';
   sort_order?: 'asc' | 'desc';
-  is_active?: boolean;
+  is_active?: boolean | 'all';
   is_stock_active?: boolean;
   low_stock_only?: boolean;
 }

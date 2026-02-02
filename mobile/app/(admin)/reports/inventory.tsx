@@ -57,14 +57,14 @@ export default function InventoryReportScreen() {
 
   const renderLowStockItem = (item: LowStockItem) => (
     <TouchableOpacity
-      key={item.product_id}
-      onPress={() => router.push(`/(admin)/products/${item.product_id}`)}
+      key={item.id}
+      onPress={() => router.push(`/(admin)/products/${item.id}`)}
       className="mb-0 border-b border-secondary-100 bg-white active:bg-secondary-50"
     >
       <View className="p-4 flex-row justify-between items-center">
         <View className="flex-1">
           <Text className="text-base font-bold text-primary-900 uppercase tracking-tight">
-            {item.product_name}
+            {item.name}
           </Text>
           <Text className="text-[10px] text-orange-600 font-bold uppercase tracking-wider mt-1">
             Minimum: {item.min_stock_alert} {item.unit}
@@ -84,14 +84,14 @@ export default function InventoryReportScreen() {
 
   const renderOutOfStockItem = (item: OutOfStockItem) => (
     <TouchableOpacity
-      key={item.product_id}
-      onPress={() => router.push(`/(admin)/products/${item.product_id}`)}
+      key={item.id}
+      onPress={() => router.push(`/(admin)/products/${item.id}`)}
       className="mb-0 border-b border-secondary-100 bg-white active:bg-secondary-50"
     >
       <View className="p-4 flex-row justify-between items-center">
         <View className="flex-1">
           <Text className="text-base font-bold text-primary-900 uppercase tracking-tight">
-            {item.product_name}
+            {item.name}
           </Text>
           {item.last_sale_date && (
             <Text className="text-[10px] text-secondary-500 font-bold uppercase tracking-wider mt-1">

@@ -1,16 +1,16 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import {
   Text,
   ActivityIndicator,
   View,
   Pressable,
-  Animated,
   PressableProps,
 } from 'react-native';
 
 /**
  * Button Component (Minimalist Futuristic)
  * High precision, tactile feedback, solid typography.
+ * Simplified to remove Animated/Reanimated conflicts.
  */
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
@@ -93,50 +93,30 @@ export function Button({
   textClassName,
   ...props
 }: ButtonProps) {
-  const scale = useRef(new Animated.Value(1)).current;
-
   const variantStyle = variantStyles[variant];
   const sizeStyle = sizeStyles[size];
   const isDisabled = disabled || isLoading;
 
-  const handlePressIn = () => {
-    if (isDisabled) return;
-    Animated.spring(scale, {
-      toValue: 0.96,
-      useNativeDriver: true,
-      speed: 20,
-      bounciness: 0,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    if (isDisabled) return;
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 20,
-      bounciness: 6,
-    }).start();
-  };
-
   return (
     <Pressable
       disabled={isDisabled}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
       {...props}
-      style={{ width: fullWidth ? '100%' : 'auto' }}
+      style={({ pressed }) => [
+        {
+          width: fullWidth ? '100%' : 'auto',
+          opacity: pressed ? 0.9 : 1,
+          transform: [{ scale: pressed ? 0.98 : 1 }],
+        },
+      ]}
     >
-      <Animated.View
+      <View
         className={`
           flex-row items-center justify-center
-          transform
           ${sizeStyle.container}
           ${variantStyle.container}
           ${isDisabled ? 'opacity-50' : ''}
           ${className || ''}
         `}
-        style={{ transform: [{ scale }] }}
       >
         {isLoading ? (
           <ActivityIndicator size="small" color={variantStyle.loader} />
@@ -159,7 +139,7 @@ export function Button({
             )}
           </>
         )}
-      </Animated.View>
+      </View>
     </Pressable>
   );
 }

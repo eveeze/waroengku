@@ -1,5 +1,15 @@
 import { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+  ToastAndroid,
+  Platform,
+} from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+const { setStringAsync } = Clipboard;
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApi } from '@/hooks/useApi';
@@ -7,6 +17,7 @@ import {
   getProductById,
   deleteProduct,
   deletePricingTier,
+  toggleProductActive,
 } from '@/api/endpoints/products';
 import { Header } from '@/components/shared';
 import { Card, Button, Loading } from '@/components/ui';
@@ -140,7 +151,19 @@ export default function ProductDetailScreen() {
           <Text className="text-4xl font-heading font-black tracking-tighter text-primary-900 uppercase flex-1 mr-4 leading-9">
             {product.name}
           </Text>
-          <View
+          <TouchableOpacity
+            onPress={async () => {
+              try {
+                const updated = await toggleProductActive(product.id);
+                setProduct(updated);
+                Alert.alert(
+                  'Success',
+                  `Product is now ${updated.is_active ? 'ACTIVE' : 'INACTIVE'}`,
+                );
+              } catch {
+                Alert.alert('Error', 'Failed to update status');
+              }
+            }}
             className={`px-3 py-1 rounded-full border ${
               product.is_active
                 ? 'bg-primary-900 border-primary-900'
@@ -154,7 +177,7 @@ export default function ProductDetailScreen() {
             >
               {product.is_active ? 'ACTIVE' : 'INACTIVE'}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -188,11 +211,22 @@ export default function ProductDetailScreen() {
             </View>
           )}
           {product.barcode && (
-            <View className="bg-secondary-50 border border-secondary-200 px-3 py-1.5 rounded-md">
+            <TouchableOpacity
+              onPress={async () => {
+                await setStringAsync(product.barcode!);
+                if (Platform.OS === 'android') {
+                  ToastAndroid.show('Barcode copied!', ToastAndroid.SHORT);
+                } else {
+                  Alert.alert('Copied', 'Barcode copied to clipboard');
+                }
+              }}
+              className="bg-secondary-50 border border-secondary-200 px-3 py-1.5 rounded-md flex-row items-center gap-2"
+            >
               <Text className="text-secondary-600 text-xs font-mono font-medium tracking-wide">
                 {product.barcode}
               </Text>
-            </View>
+              <Text className="text-[10px]">📋</Text>
+            </TouchableOpacity>
           )}
           {product.sku && (
             <View className="bg-secondary-50 border border-secondary-200 px-3 py-1.5 rounded-md">

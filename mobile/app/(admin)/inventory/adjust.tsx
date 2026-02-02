@@ -30,11 +30,15 @@ export default function AdjustScreen() {
   );
 
   const handleScan = async (code: string) => {
+    if (!showScanner) return;
     setShowScanner(false);
     setBarcodeInput(code);
     const found = await searchProduct(code);
-    if (found) setProduct(found);
-    else Alert.alert('Not Found', 'Product not found');
+    if (found) {
+      setProduct(found);
+    } else {
+      Alert.alert('Not Found', 'Product not found');
+    }
   };
 
   const handleSearch = async () => {
@@ -175,14 +179,21 @@ export default function AdjustScreen() {
               onChangeText={setReason}
             />
 
-            <Button
-              title="CONFIRM ADJUSTMENT"
-              size="lg"
-              className="mt-4"
+            <TouchableOpacity
               onPress={handleSubmit}
-              isLoading={isSubmitting}
-              variant={type === 'decrease' ? 'danger' : 'primary'}
-            />
+              disabled={isSubmitting}
+              className={`mt-4 py-4 rounded-xl items-center justify-center ${
+                type === 'decrease' ? 'bg-danger-600' : 'bg-primary-900'
+              } ${isSubmitting ? 'opacity-50' : ''}`}
+            >
+              {isSubmitting ? (
+                <Text className="text-white font-bold">LOADING...</Text>
+              ) : (
+                <Text className="text-white font-bold text-lg tracking-tight">
+                  CONFIRM ADJUSTMENT
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>

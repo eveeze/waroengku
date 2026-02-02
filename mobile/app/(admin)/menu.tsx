@@ -10,6 +10,12 @@ export default function MenuScreen() {
 
   const menuItems = [
     {
+      label: 'Inventory',
+      icon: '🏭',
+      route: '/(admin)/inventory',
+      desc: 'Restock & Stock Opname',
+    },
+    {
       label: 'Customers',
       icon: '👥',
       route: '/(admin)/customers',
@@ -56,12 +62,6 @@ export default function MenuScreen() {
       icon: '🤝',
       route: '/(admin)/consignment',
       desc: 'Titip Jual Suppliers',
-    },
-    {
-      label: 'Settings',
-      icon: '⚙️',
-      route: '/(admin)/users',
-      desc: 'App Configuration',
     },
   ];
 
