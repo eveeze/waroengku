@@ -87,28 +87,28 @@ export default function TransactionsScreen() {
     >
       <View className="px-6 py-5 flex-row justify-between items-center">
         <View>
-          <Text className="font-bold text-primary-900 uppercase tracking-tight text-base mb-1">
+          <Text className="font-heading font-bold text-primary-900 uppercase tracking-tight text-base mb-1">
             {item.invoice_number}
           </Text>
           <View className="flex-row items-center">
-            <Text className="text-xs text-secondary-500 font-bold uppercase tracking-wider mr-2">
+            <Text className="text-xs text-secondary-500 font-bold uppercase tracking-wider mr-2 font-body">
               {formatDate(item.created_at)} • {formatTime(item.created_at)}
             </Text>
-            <Text className="text-[10px] text-secondary-400 font-bold uppercase tracking-widest">
+            <Text className="text-[10px] text-secondary-400 font-bold uppercase tracking-widest font-body">
               | {item.payment_method}
             </Text>
           </View>
-          <Text className="text-secondary-600 text-xs mt-1 font-medium">
+          <Text className="text-secondary-600 text-xs mt-1 font-medium font-body">
             {item.customer_name || 'Guest Customer'}
           </Text>
         </View>
 
         <View className="items-end">
-          <Text className="font-black text-primary-900 text-lg tracking-tight">
+          <Text className="font-heading font-black text-primary-900 text-lg tracking-tight">
             {formatCurrency(item.final_amount)}
           </Text>
           <Text
-            className={`text-[10px] font-black uppercase tracking-widest mt-1 ${getStatusStyle(item.status)}`}
+            className={`text-[10px] font-bold uppercase tracking-widest mt-1 font-body ${getStatusStyle(item.status)}`}
           >
             {item.status}
           </Text>
@@ -127,11 +127,11 @@ export default function TransactionsScreen() {
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-black">
           HISTORY
         </Text>
       </View>

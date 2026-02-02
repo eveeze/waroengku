@@ -33,7 +33,9 @@ export default function RecordPaymentScreen() {
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { isLoading, execute: fetchCustomer } = useApi(() => getCustomerById(id!));
+  const { isLoading, execute: fetchCustomer } = useApi(() =>
+    getCustomerById(id!),
+  );
   const { execute: fetchSummary } = useApi(() => getKasbonSummary(id!));
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export default function RecordPaymentScreen() {
       Alert.alert(
         'Peringatan',
         `Pembayaran melebihi hutang. Hutang saat ini: ${formatCurrency(
-          summary.current_balance
+          summary.current_balance,
         )}`,
         [
           { text: 'Batal', style: 'cancel' },
@@ -74,7 +76,7 @@ export default function RecordPaymentScreen() {
             text: 'Lanjutkan',
             onPress: () => submitPayment(amountNum),
           },
-        ]
+        ],
       );
       return;
     }
@@ -98,7 +100,7 @@ export default function RecordPaymentScreen() {
     } catch (error) {
       Alert.alert(
         'Gagal',
-        error instanceof Error ? error.message : 'Gagal mencatat pembayaran'
+        error instanceof Error ? error.message : 'Gagal mencatat pembayaran',
       );
     } finally {
       setIsSubmitting(false);
@@ -124,7 +126,10 @@ export default function RecordPaymentScreen() {
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }}
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: insets.bottom + 100,
+          }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Customer Info */}
@@ -135,20 +140,20 @@ export default function RecordPaymentScreen() {
                   <Text className="text-2xl">👤</Text>
                 </View>
                 <View className="flex-1">
-                  <Text className="text-lg font-semibold text-secondary-900">
+                  <Text className="text-xl font-heading font-black text-secondary-900 mb-0.5">
                     {customer.name}
                   </Text>
-                  <Text className="text-sm text-secondary-500">
+                  <Text className="text-xs text-secondary-500 font-body">
                     {customer.phone || 'No phone'}
                   </Text>
                 </View>
               </View>
 
               <View className="mt-4 bg-danger-50 rounded-lg p-4">
-                <Text className="text-center text-secondary-500 mb-1">
+                <Text className="text-center text-xs text-secondary-500 mb-1 font-bold uppercase tracking-widest font-body">
                   Total Hutang Saat Ini
                 </Text>
-                <Text className="text-center text-2xl font-bold text-danger-600">
+                <Text className="text-center text-3xl font-heading font-black text-danger-600 tracking-tight">
                   {formatCurrency(summary.current_balance)}
                 </Text>
               </View>
@@ -165,7 +170,7 @@ export default function RecordPaymentScreen() {
                 <View className="flex-1 flex-row items-center bg-white border border-secondary-300 rounded-lg px-4 mr-2">
                   <Text className="text-secondary-400 mr-2">Rp</Text>
                   <TextInput
-                    className="flex-1 py-3 text-lg font-semibold"
+                    className="flex-1 py-3 text-lg font-heading font-bold text-primary-900"
                     placeholder="0"
                     value={amount}
                     onChangeText={setAmount}
@@ -217,10 +222,15 @@ export default function RecordPaymentScreen() {
                 </Text>
               </View>
               <View className="flex-row justify-between items-center py-2">
-                <Text className="text-secondary-700 font-medium">Sisa Hutang</Text>
-                <Text className="text-xl font-bold text-secondary-900">
+                <Text className="text-secondary-700 font-bold font-body uppercase tracking-wide text-xs">
+                  Sisa Hutang
+                </Text>
+                <Text className="text-xl font-heading font-black text-secondary-900 tracking-tight">
                   {formatCurrency(
-                    Math.max(0, summary.current_balance - (Number(amount) || 0))
+                    Math.max(
+                      0,
+                      summary.current_balance - (Number(amount) || 0),
+                    ),
                   )}
                 </Text>
               </View>

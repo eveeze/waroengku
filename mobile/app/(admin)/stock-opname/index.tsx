@@ -54,17 +54,17 @@ export default function StockOpnameListScreen() {
       className="bg-secondary-50 p-4 rounded-xl mb-3 border border-secondary-100 flex-row justify-between items-center"
     >
       <View>
-        <Text className="font-black text-lg text-primary-900 uppercase tracking-tight">
+        <Text className="font-heading font-black text-lg text-primary-900 uppercase tracking-tight">
           {item.session_number}
         </Text>
-        <Text className="text-secondary-500 text-xs font-bold mt-1">
+        <Text className="text-secondary-500 font-body text-xs font-bold mt-1 tracking-wide">
           {new Date(item.created_at).toLocaleDateString()} • {item.created_by}
         </Text>
       </View>
       <View
         className={`px-3 py-1 rounded-full ${item.status === 'active' ? 'bg-green-500' : 'bg-secondary-300'}`}
       >
-        <Text className="text-white text-[10px] font-black uppercase tracking-widest">
+        <Text className="text-white text-[10px] font-bold uppercase tracking-widest font-body">
           {item.status}
         </Text>
       </View>
@@ -80,11 +80,11 @@ export default function StockOpnameListScreen() {
       >
         <View>
           <TouchableOpacity onPress={() => router.back()} className="mb-4">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
               ← Back
             </Text>
           </TouchableOpacity>
-          <Text className="text-4xl font-heading uppercase tracking-tighter text-black">
+          <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-black">
             Stock Opname
           </Text>
         </View>

@@ -90,7 +90,7 @@ export default function CustomersScreen() {
   };
 
   const renderCustomer = ({ item }: { item: Customer }) => {
-    const hasDebt = item.current_balance > 0;
+    const hasDebt = item.current_debt > 0;
 
     return (
       <TouchableOpacity
@@ -99,10 +99,10 @@ export default function CustomersScreen() {
       >
         <View className="px-6 py-4 flex-row items-center justify-between">
           <View className="flex-1 mr-4">
-            <Text className="text-sm font-bold text-primary-900 mb-1">
+            <Text className="text-base font-heading font-bold text-primary-900 mb-0.5">
               {item.name}
             </Text>
-            <Text className="text-secondary-500 text-xs">
+            <Text className="text-secondary-500 font-body text-xs">
               {item.phone || 'No phone'}
             </Text>
           </View>
@@ -110,15 +110,15 @@ export default function CustomersScreen() {
           <View className="items-end">
             {hasDebt ? (
               <View className="items-end">
-                <Text className="font-black text-danger-600 text-sm">
-                  {formatCurrency(item.current_balance)}
+                <Text className="font-heading font-black text-danger-600 text-sm">
+                  {formatCurrency(item.current_debt)}
                 </Text>
-                <Text className="text-[10px] font-bold text-danger-500 uppercase tracking-wide">
+                <Text className="text-[10px] font-bold text-danger-500 uppercase tracking-wide font-body">
                   Debt
                 </Text>
               </View>
             ) : (
-              <Text className="text-[10px] font-bold text-secondary-300 uppercase tracking-widest">
+              <Text className="text-[10px] font-bold text-secondary-300 uppercase tracking-widest font-body">
                 No Debt
               </Text>
             )}
@@ -141,11 +141,11 @@ export default function CustomersScreen() {
         <View className="flex-row items-end justify-between mb-6">
           <View>
             <TouchableOpacity onPress={() => router.back()} className="mb-4">
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
                 ← Back
               </Text>
             </TouchableOpacity>
-            <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+            <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-black">
               MEMBERS
             </Text>
           </View>
@@ -153,7 +153,7 @@ export default function CustomersScreen() {
             onPress={() => router.push('/(admin)/customers/create')}
             className="bg-black px-5 py-3 rounded-none items-center justify-center"
           >
-            <Text className="text-white font-bold text-xs uppercase tracking-widest">
+            <Text className="text-white font-bold text-xs uppercase tracking-widest font-heading">
               + NEW MEMBER
             </Text>
           </TouchableOpacity>
@@ -163,7 +163,7 @@ export default function CustomersScreen() {
         <View className="flex-row gap-3">
           <View className="flex-1 bg-secondary-50 border border-secondary-200 px-4 h-12 justify-center">
             <TextInput
-              className="flex-1 text-base font-medium text-primary-900"
+              className="flex-1 text-base font-medium text-primary-900 font-body"
               placeholder="Search members..."
               value={search}
               onChangeText={setSearch}

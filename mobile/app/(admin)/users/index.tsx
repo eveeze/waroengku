@@ -94,10 +94,10 @@ export default function UsersScreen() {
       >
         <View className="px-6 py-5 flex-row items-center justify-between">
           <View>
-            <Text className="text-lg font-bold text-primary-900 tracking-tight mb-1">
+            <Text className="text-lg font-bold text-primary-900 tracking-tight mb-0.5 font-heading">
               {item.name}
             </Text>
-            <Text className="text-xs font-medium text-secondary-500 uppercase tracking-wider">
+            <Text className="text-xs font-medium text-secondary-500 uppercase tracking-wider font-body">
               {item.email}
             </Text>
           </View>
@@ -105,7 +105,7 @@ export default function UsersScreen() {
             className={`px-2 py-1 border ${isAdmin ? 'border-primary-900' : 'border-secondary-300'}`}
           >
             <Text
-              className={`text-[10px] font-bold uppercase tracking-widest ${isAdmin ? 'text-primary-900' : 'text-secondary-500'}`}
+              className={`text-[10px] font-bold uppercase tracking-widest font-heading ${isAdmin ? 'text-primary-900' : 'text-secondary-500'}`}
             >
               {roleLabel}
             </Text>
@@ -126,11 +126,11 @@ export default function UsersScreen() {
         <View className="flex-row items-end justify-between">
           <View>
             <TouchableOpacity onPress={() => router.back()} className="mb-4">
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
                 ← Back
               </Text>
             </TouchableOpacity>
-            <Text className="text-4xl font-black tracking-tighter text-primary-900 uppercase">
+            <Text className="text-4xl font-black tracking-tighter text-primary-900 uppercase font-heading">
               USERS
             </Text>
           </View>
@@ -138,7 +138,7 @@ export default function UsersScreen() {
             onPress={() => router.push('/(admin)/users/create')}
             className="bg-black px-5 py-3 items-center justify-center"
           >
-            <Text className="text-white font-bold text-xs uppercase tracking-widest">
+            <Text className="text-white font-bold text-xs uppercase tracking-widest font-heading">
               + NEW USER
             </Text>
           </TouchableOpacity>
@@ -178,7 +178,7 @@ export default function UsersScreen() {
         ListFooterComponent={
           users.length > 0 ? (
             <View className="py-6 items-center border-t border-secondary-50 mt-4">
-              <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest">
+              <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest font-body">
                 Long press to delete user
               </Text>
             </View>

@@ -121,22 +121,22 @@ export default function StockOpnameSessionScreen() {
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-3xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-3xl font-heading font-black uppercase tracking-tighter text-black">
           Session #{session.session_number}
         </Text>
         <View className="flex-row items-center mt-2 gap-2">
           <View
             className={`px-2 py-0.5 rounded-full ${isActive ? 'bg-green-500' : 'bg-secondary-500'}`}
           >
-            <Text className="text-white text-[10px] font-bold uppercase">
+            <Text className="text-white text-[10px] font-bold uppercase font-body tracking-wider">
               {session.status}
             </Text>
           </View>
-          <Text className="text-secondary-500 text-xs font-bold">
+          <Text className="text-secondary-500 text-xs font-bold font-body">
             {session.created_by}
           </Text>
         </View>
@@ -146,7 +146,7 @@ export default function StockOpnameSessionScreen() {
         {isActive ? (
           <View>
             <View className="bg-secondary-50 p-6 rounded-2xl mb-8 border border-secondary-200">
-              <Text className="text-center font-black uppercase text-xl mb-4 text-primary-900">
+              <Text className="text-center font-heading font-black uppercase text-xl mb-4 text-primary-900 tracking-tight">
                 Record Count
               </Text>
 

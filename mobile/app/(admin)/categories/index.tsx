@@ -85,12 +85,12 @@ export default function CategoriesScreen() {
             <Text className="text-secondary-400 text-xs">#</Text>
           </View>
           <View className="flex-1">
-            <Text className="text-base font-bold text-primary-900 uppercase tracking-wide">
+            <Text className="text-base font-heading font-bold text-primary-900 uppercase tracking-wide">
               {item.name}
             </Text>
             {item.description && (
               <Text
-                className="text-xs text-secondary-500 mt-1"
+                className="text-xs text-secondary-500 mt-1 font-body"
                 numberOfLines={1}
               >
                 {item.description}
@@ -101,10 +101,10 @@ export default function CategoriesScreen() {
 
         {item.product_count !== undefined && (
           <View className="items-end ml-4">
-            <Text className="text-lg font-black text-primary-900">
+            <Text className="text-lg font-heading font-black text-primary-900 tracking-tight">
               {item.product_count}
             </Text>
-            <Text className="text-[9px] font-bold text-secondary-400 uppercase tracking-wider">
+            <Text className="text-[9px] font-bold text-secondary-400 uppercase tracking-wider font-body">
               Products
             </Text>
           </View>
@@ -125,11 +125,11 @@ export default function CategoriesScreen() {
         <View className="flex-row items-end justify-between">
           <View>
             <TouchableOpacity onPress={() => router.back()} className="mb-4">
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
                 ← Back
               </Text>
             </TouchableOpacity>
-            <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+            <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-black">
               CATEGORIES
             </Text>
           </View>
@@ -137,7 +137,7 @@ export default function CategoriesScreen() {
             onPress={() => router.push('/(admin)/categories/create')}
             className="bg-black px-5 py-3 items-center justify-center"
           >
-            <Text className="text-white font-bold text-xs uppercase tracking-widest">
+            <Text className="text-white font-bold text-xs uppercase tracking-widest font-heading">
               + NEW
             </Text>
           </TouchableOpacity>
@@ -171,7 +171,7 @@ export default function CategoriesScreen() {
         ListFooterComponent={
           categories.length > 0 ? (
             <View className="py-6 items-center border-t border-secondary-50 mt-4">
-              <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest">
+              <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest font-body">
                 Long press to delete category
               </Text>
             </View>

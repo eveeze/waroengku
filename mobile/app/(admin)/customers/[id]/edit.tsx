@@ -122,7 +122,7 @@ export default function EditCustomerScreen() {
             />
 
             <View>
-              <Text className="text-sm font-medium text-secondary-700 mb-1.5">
+              <Text className="text-sm font-bold text-secondary-700 mb-1.5 font-heading">
                 Alamat
               </Text>
               <TextInput
@@ -143,7 +143,11 @@ export default function EditCustomerScreen() {
               value={creditLimit}
               onChangeText={setCreditLimit}
               keyboardType="numeric"
-              leftIcon={<Text className="text-secondary-400">Rp</Text>}
+              leftIcon={
+                <Text className="text-secondary-400 font-heading font-bold">
+                  Rp
+                </Text>
+              }
               helperText="Batas maksimal hutang pelanggan"
             />
           </Card>
@@ -165,10 +169,10 @@ export default function EditCustomerScreen() {
               className="flex-row items-center justify-between"
             >
               <View>
-                <Text className="text-secondary-900 font-medium">
+                <Text className="text-secondary-900 font-heading font-bold">
                   Pelanggan Aktif
                 </Text>
-                <Text className="text-secondary-500 text-sm">
+                <Text className="text-secondary-500 text-xs font-body mt-1">
                   Nonaktifkan jika pelanggan sudah tidak berlangganan
                 </Text>
               </View>

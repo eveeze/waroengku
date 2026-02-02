@@ -17,10 +17,12 @@ export default function CustomerDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [kasbonSummary, setKasbonSummary] = useState<KasbonSummary | null>(null);
+  const [kasbonSummary, setKasbonSummary] = useState<KasbonSummary | null>(
+    null,
+  );
 
   const { isLoading, execute: fetchCustomer } = useApi(() =>
-    getCustomerById(id!)
+    getCustomerById(id!),
   );
   const { execute: fetchKasbon } = useApi(() => getKasbonSummary(id!));
 
@@ -45,25 +47,31 @@ export default function CustomerDetailScreen() {
   };
 
   const handleDelete = () => {
-    Alert.alert('Hapus Pelanggan', `Yakin ingin menghapus "${customer?.name}"?`, [
-      { text: 'Batal', style: 'cancel' },
-      {
-        text: 'Hapus',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteCustomer(id!);
-            Alert.alert('Berhasil', 'Pelanggan berhasil dihapus');
-            router.back();
-          } catch (err) {
-            Alert.alert(
-              'Gagal',
-              err instanceof Error ? err.message : 'Gagal menghapus pelanggan'
-            );
-          }
+    Alert.alert(
+      'Hapus Pelanggan',
+      `Yakin ingin menghapus "${customer?.name}"?`,
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Hapus',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteCustomer(id!);
+              Alert.alert('Berhasil', 'Pelanggan berhasil dihapus');
+              router.back();
+            } catch (err) {
+              Alert.alert(
+                'Gagal',
+                err instanceof Error
+                  ? err.message
+                  : 'Gagal menghapus pelanggan',
+              );
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   if (isLoading && !customer) {
@@ -85,7 +93,7 @@ export default function CustomerDetailScreen() {
     );
   }
 
-  const hasDebt = customer.current_balance > 0;
+  const hasDebt = customer.current_debt > 0;
 
   return (
     <View className="flex-1 bg-secondary-50">
@@ -101,7 +109,10 @@ export default function CustomerDetailScreen() {
       />
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 16 }}
+        contentContainerStyle={{
+          padding: 16,
+          paddingBottom: insets.bottom + 16,
+        }}
       >
         {/* Customer Info */}
         <Card className="mb-4">
@@ -110,21 +121,23 @@ export default function CustomerDetailScreen() {
               <Text className="text-3xl">👤</Text>
             </View>
             <View className="flex-1">
-              <Text className="text-xl font-bold text-secondary-900">
+              <Text className="text-3xl font-heading font-black text-secondary-900 tracking-tight leading-8 mb-1">
                 {customer.name}
               </Text>
               {customer.phone && (
                 <TouchableOpacity>
-                  <Text className="text-primary-600">{customer.phone}</Text>
+                  <Text className="text-primary-600 font-body text-base font-medium">
+                    {customer.phone}
+                  </Text>
                 </TouchableOpacity>
               )}
               <View
-                className={`self-start px-2 py-0.5 rounded-full mt-1 ${
+                className={`self-start px-2 py-0.5 rounded-full mt-2 ${
                   customer.is_active ? 'bg-green-100' : 'bg-secondary-100'
                 }`}
               >
                 <Text
-                  className={`text-xs ${
+                  className={`text-[10px] font-bold uppercase tracking-widest ${
                     customer.is_active ? 'text-green-700' : 'text-secondary-500'
                   }`}
                 >
@@ -136,15 +149,23 @@ export default function CustomerDetailScreen() {
 
           {customer.address && (
             <View className="bg-secondary-50 rounded-lg p-3">
-              <Text className="text-sm text-secondary-500 mb-1">📍 Alamat</Text>
-              <Text className="text-secondary-900">{customer.address}</Text>
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body mb-1">
+                📍 Alamat
+              </Text>
+              <Text className="text-secondary-900 font-body">
+                {customer.address}
+              </Text>
             </View>
           )}
 
           {customer.notes && (
             <View className="bg-secondary-50 rounded-lg p-3 mt-2">
-              <Text className="text-sm text-secondary-500 mb-1">📝 Catatan</Text>
-              <Text className="text-secondary-900">{customer.notes}</Text>
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body mb-1">
+                📝 Catatan
+              </Text>
+              <Text className="text-secondary-900 font-body">
+                {customer.notes}
+              </Text>
             </View>
           )}
         </Card>
@@ -154,21 +175,27 @@ export default function CustomerDetailScreen() {
           {kasbonSummary ? (
             <>
               <View className="flex-row justify-between items-center py-3 border-b border-secondary-100">
-                <Text className="text-secondary-500">Total Hutang</Text>
-                <Text className="text-xl font-bold text-danger-600">
+                <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
+                  Total Hutang
+                </Text>
+                <Text className="text-xl font-heading font-black text-danger-600 tracking-tight">
                   {formatCurrency(kasbonSummary.current_balance)}
                 </Text>
               </View>
               <View className="flex-row justify-between items-center py-3 border-b border-secondary-100">
-                <Text className="text-secondary-500">Limit Kredit</Text>
-                <Text className="text-base text-secondary-700">
+                <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
+                  Limit Kredit
+                </Text>
+                <Text className="text-base font-heading font-bold text-secondary-700">
                   {formatCurrency(kasbonSummary.credit_limit)}
                 </Text>
               </View>
               <View className="flex-row justify-between items-center py-3 border-b border-secondary-100">
-                <Text className="text-secondary-500">Sisa Limit</Text>
+                <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
+                  Sisa Limit
+                </Text>
                 <Text
-                  className={`text-base font-medium ${
+                  className={`text-base font-heading font-bold ${
                     kasbonSummary.remaining_credit > 0
                       ? 'text-green-600'
                       : 'text-danger-600'
@@ -197,7 +224,9 @@ export default function CustomerDetailScreen() {
                   <Button
                     title="Bayar"
                     size="sm"
-                    onPress={() => router.push(`/(admin)/customers/${id}/payment`)}
+                    onPress={() =>
+                      router.push(`/(admin)/customers/${id}/payment`)
+                    }
                     className="flex-1 ml-2"
                   />
                 )}

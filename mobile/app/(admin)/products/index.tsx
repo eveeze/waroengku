@@ -176,18 +176,18 @@ export default function ProductsScreen() {
               <View className="flex-row justify-between items-start">
                 <View className="flex-1 pr-2">
                   <Text
-                    className="text-lg font-bold text-primary-900 tracking-tight leading-6"
+                    className="text-lg font-heading font-bold text-primary-900 tracking-tight leading-6"
                     numberOfLines={2}
                   >
                     {item.name}
                   </Text>
                   {item.category_name && (
-                    <Text className="text-xs font-bold text-secondary-500 uppercase tracking-wider mt-1">
+                    <Text className="text-xs font-body font-bold text-secondary-500 uppercase tracking-widest mt-1">
                       {item.category_name}
                     </Text>
                   )}
                 </View>
-                <Text className="text-lg font-bold text-primary-900">
+                <Text className="text-lg font-heading font-bold text-primary-900 tracking-tight">
                   {formatCurrency(item.base_price)}
                 </Text>
               </View>
@@ -230,11 +230,11 @@ export default function ProductsScreen() {
         style={{ paddingTop: insets.top + 24 }}
       >
         <View className="mb-6">
-          <Text className="text-sm font-bold tracking-widest text-secondary-500 mb-1">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-1 font-body">
             INVENTORY
           </Text>
           <View className="flex-row items-end justify-between">
-            <Text className="text-4xl font-black tracking-tighter text-primary-900">
+            <Text className="text-4xl font-heading font-bold tracking-tighter text-primary-900 uppercase">
               PRODUCTS
             </Text>
             <View className="flex-row gap-2">
@@ -352,7 +352,7 @@ export default function ProductsScreen() {
           ) : null
         }
         ListFooterComponent={
-          isLoading && products.length > 0 ? (
+          isLoading && products && products.length > 0 ? (
             <View className="py-8">
               <Loading />
             </View>

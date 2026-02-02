@@ -12,10 +12,7 @@ export default function CustomersLayout() {
     >
       <Stack.Screen name="index" />
       <Stack.Screen name="create" />
-      <Stack.Screen name="[id]/index" />
-      <Stack.Screen name="[id]/edit" />
-      <Stack.Screen name="[id]/kasbon" />
-      <Stack.Screen name="[id]/payment" />
+      <Stack.Screen name="[id]" />
     </Stack>
   );
 }

@@ -1,11 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header } from '@/components/shared';
@@ -37,7 +31,9 @@ export default function PricingTiersScreen() {
   const [maxQty, setMaxQty] = useState('');
   const [tierPrice, setTierPrice] = useState('');
 
-  const { execute: fetchProduct, isLoading } = useApi(() => getProductById(id!));
+  const { execute: fetchProduct, isLoading } = useApi(() =>
+    getProductById(id!),
+  );
 
   useEffect(() => {
     loadProduct();
@@ -70,7 +66,7 @@ export default function PricingTiersScreen() {
 
   const handleSubmit = async () => {
     if (!tierName || !minQty || !tierPrice) {
-      Alert.alert('Error', 'Lengkapi semua field yang wajib diisi');
+      Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
 
@@ -79,7 +75,7 @@ export default function PricingTiersScreen() {
     const max = maxQty ? Number(maxQty) : undefined;
 
     if (product && price >= product.base_price) {
-      Alert.alert('Warning', 'Harga tier sebaiknya lebih rendah dari harga dasar');
+      Alert.alert('Warning', 'Tier price should be lower than base price');
     }
 
     try {
@@ -93,7 +89,7 @@ export default function PricingTiersScreen() {
           max_quantity: max,
           price,
         });
-        Alert.alert('Berhasil', 'Tier berhasil diperbarui');
+        Alert.alert('Success', 'Tier updated successfully');
       } else {
         // Add new tier
         await addPricingTier(id!, {
@@ -102,15 +98,15 @@ export default function PricingTiersScreen() {
           max_quantity: max,
           price,
         });
-        Alert.alert('Berhasil', 'Tier berhasil ditambahkan');
+        Alert.alert('Success', 'Tier added successfully');
       }
 
       resetForm();
       loadProduct();
     } catch (error) {
       Alert.alert(
-        'Gagal',
-        error instanceof Error ? error.message : 'Gagal menyimpan tier'
+        'Error',
+        error instanceof Error ? error.message : 'Failed to save tier',
       );
     } finally {
       setIsSubmitting(false);
@@ -119,27 +115,29 @@ export default function PricingTiersScreen() {
 
   const handleDelete = (tier: PricingTier) => {
     Alert.alert(
-      'Hapus Tier',
-      `Hapus tier "${tier.name}"?`,
+      'Delete Tier',
+      `Are you sure you want to delete "${tier.name}"?`,
       [
-        { text: 'Batal', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Hapus',
+          text: 'Delete',
           style: 'destructive',
           onPress: async () => {
             try {
               await deletePricingTier(id!, tier.id);
-              Alert.alert('Berhasil', 'Tier berhasil dihapus');
+              Alert.alert('Success', 'Tier deleted successfully');
               loadProduct();
             } catch (error) {
               Alert.alert(
-                'Gagal',
-                error instanceof Error ? error.message : 'Gagal menghapus tier'
+                'Error',
+                error instanceof Error
+                  ? error.message
+                  : 'Failed to delete tier',
               );
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -152,109 +150,146 @@ export default function PricingTiersScreen() {
   };
 
   if (isLoading && !product) {
-    return <Loading fullScreen message="Memuat..." />;
+    return <Loading fullScreen message="Loading..." />;
   }
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Harga Grosir" onBack={() => router.back()} />
+    <View className="flex-1 bg-white">
+      {/* Header */}
+      <View
+        className="px-6 pb-6 border-b border-secondary-200"
+        style={{ paddingTop: insets.top + 24 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-secondary-500 font-bold uppercase tracking-widest text-xs font-body">
+            ← BACK TO PRODUCT
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-heading font-black tracking-tighter text-primary-900 uppercase">
+          WHOLESALE PRICING
+        </Text>
+      </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={{
+          padding: 24,
+          paddingBottom: insets.bottom + 100,
+        }}
       >
         {/* Product Info */}
-        <Card className="mb-4">
-          <View className="flex-row items-center">
-            <View className="w-12 h-12 bg-secondary-100 rounded-lg items-center justify-center mr-3">
-              <Text className="text-2xl">📦</Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-lg font-semibold text-secondary-900">
-                {product?.name}
-              </Text>
-              <Text className="text-secondary-500">
-                Harga dasar: {product && formatCurrency(product.base_price)}
-              </Text>
-            </View>
+        <View className="mb-8 flex-row items-center border border-secondary-200 p-4 rounded-lg bg-secondary-50">
+          <View className="w-12 h-12 bg-white border border-secondary-200 rounded-md items-center justify-center mr-4">
+            <Text className="text-xl">📦</Text>
           </View>
-        </Card>
+          <View className="flex-1">
+            <Text className="text-xl font-heading font-black text-primary-900 tracking-tight mb-1">
+              {product?.name}
+            </Text>
+            <Text className="text-xs font-bold font-body text-secondary-500 uppercase tracking-widest">
+              BASE PRICE: {product && formatCurrency(product.base_price)}
+            </Text>
+          </View>
+        </View>
 
         {/* Existing Tiers */}
-        <Card title="Tier Harga Aktif" className="mb-4">
+        <View className="mb-8">
+          <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+            ACTIVE TIERS
+          </Text>
+
           {product?.pricing_tiers && product.pricing_tiers.length > 0 ? (
             product.pricing_tiers
               .sort((a, b) => a.min_quantity - b.min_quantity)
               .map((tier, index) => (
                 <View
                   key={tier.id}
-                  className={`flex-row items-center justify-between py-3 ${
-                    index < product.pricing_tiers!.length - 1
-                      ? 'border-b border-secondary-100'
-                      : ''
-                  }`}
+                  className="bg-white border border-secondary-200 rounded-lg p-4 mb-3"
                 >
-                  <TouchableOpacity
-                    onPress={() => startEdit(tier)}
-                    className="flex-1"
-                  >
-                    <Text className="font-medium text-secondary-900">
-                      {tier.name}
-                    </Text>
-                    <Text className="text-sm text-secondary-500">
-                      {tier.min_quantity}
-                      {tier.max_quantity ? ` - ${tier.max_quantity}` : '+'} pcs
-                    </Text>
-                  </TouchableOpacity>
-                  <View className="flex-row items-center">
-                    <View className="items-end mr-3">
-                      <Text className="font-semibold text-primary-600">
-                        {formatCurrency(tier.price)}
+                  <View className="flex-row justify-between items-start mb-2">
+                    <View>
+                      <Text className="text-lg font-heading font-black text-primary-900 uppercase">
+                        {tier.name}
                       </Text>
-                      <Text className="text-xs text-green-500">
-                        -{((1 - tier.price / product.base_price) * 100).toFixed(0)}%
+                      <Text className="text-xs font-bold text-secondary-500 font-body uppercase tracking-wide mt-1">
+                        MIN QTY: {tier.min_quantity}{' '}
+                        {tier.max_quantity ? `- ${tier.max_quantity}` : '+'}
                       </Text>
                     </View>
-                    <TouchableOpacity onPress={() => handleDelete(tier)}>
-                      <Text className="text-danger-500 text-lg">🗑️</Text>
+                    <View className="items-end">
+                      <Text className="text-xl font-heading font-black text-primary-900 tracking-tight">
+                        {formatCurrency(tier.price)}
+                      </Text>
+                      <View className="bg-green-100 px-2 py-0.5 rounded mt-1">
+                        <Text className="text-[10px] font-bold text-green-700 uppercase tracking-widest font-body">
+                          SAVE{' '}
+                          {(
+                            (1 - tier.price / product!.base_price) *
+                            100
+                          ).toFixed(0)}
+                          %
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  <View className="flex-row gap-2 mt-2 pt-2 border-t border-secondary-100">
+                    <TouchableOpacity
+                      onPress={() => startEdit(tier)}
+                      className="flex-1 py-2 items-center border-r border-secondary-100"
+                    >
+                      <Text className="text-xs font-bold text-primary-900 uppercase tracking-widest font-body">
+                        EDIT
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleDelete(tier)}
+                      className="flex-1 py-2 items-center"
+                    >
+                      <Text className="text-xs font-bold text-danger-600 uppercase tracking-widest font-body">
+                        DELETE
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
               ))
           ) : (
-            <View className="items-center py-8">
-              <Text className="text-4xl mb-2">🏷️</Text>
-              <Text className="text-secondary-500">Belum ada tier harga</Text>
-              <Text className="text-secondary-400 text-sm text-center mt-1">
-                Tambahkan tier untuk memberikan diskon{'\n'}berdasarkan jumlah pembelian
+            <View className="items-center py-12 border border-dashed border-secondary-300 rounded-lg">
+              <Text className="text-4xl mb-2 opacity-50">🏷️</Text>
+              <Text className="text-secondary-400 font-bold uppercase tracking-widest font-body">
+                No Pricing Tiers
               </Text>
             </View>
           )}
-        </Card>
+        </View>
 
         {/* Add/Edit Form */}
         {showAddForm ? (
-          <Card title={editingTier ? 'Edit Tier' : 'Tambah Tier Baru'} className="mb-4">
+          <View className="bg-secondary-50 border border-secondary-200 p-4 rounded-lg animate-fade-in-down mb-8">
+            <Text className="text-xs font-bold tracking-widest text-primary-900 uppercase mb-4 font-body border-b border-secondary-200 pb-2">
+              {editingTier ? 'EDIT TIER' : 'NEW TIER'}
+            </Text>
+
             <Input
-              label="Nama Tier *"
-              placeholder="cth: Grosir 10+, Karton"
+              label="TIER NAME"
+              placeholder="e.g. Wholesale, Box"
               value={tierName}
               onChangeText={setTierName}
             />
 
-            <View className="flex-row mt-3">
-              <View className="flex-1 mr-2">
+            <View className="flex-row gap-3 mt-1">
+              <View className="flex-1">
                 <Input
-                  label="Min Qty *"
+                  label="MIN QTY"
                   placeholder="10"
                   value={minQty}
                   onChangeText={setMinQty}
                   keyboardType="numeric"
                 />
               </View>
-              <View className="flex-1 ml-2">
+              <View className="flex-1">
                 <Input
-                  label="Max Qty"
-                  placeholder="Opsional"
+                  label="MAX QTY"
+                  placeholder="Optional"
                   value={maxQty}
                   onChangeText={setMaxQty}
                   keyboardType="numeric"
@@ -262,57 +297,56 @@ export default function PricingTiersScreen() {
               </View>
             </View>
 
-            <View className="mt-3">
+            <View className="mt-1">
               <Input
-                label="Harga Per Unit *"
+                label="UNIT PRICE"
                 placeholder="0"
                 value={tierPrice}
                 onChangeText={setTierPrice}
                 keyboardType="numeric"
-                leftIcon={<Text className="text-secondary-400">Rp</Text>}
+                leftIcon={
+                  <Text className="text-secondary-400 font-heading font-bold">
+                    Rp
+                  </Text>
+                }
               />
               {product && Number(tierPrice) > 0 && (
-                <Text className="text-sm text-green-500 mt-1">
-                  Diskon: {formatCurrency(product.base_price - Number(tierPrice))} (
-                  {((1 - Number(tierPrice) / product.base_price) * 100).toFixed(1)}%)
+                <Text className="text-[10px] font-bold text-green-600 uppercase tracking-wide mt-1 font-body text-right">
+                  Discount:{' '}
+                  {((1 - Number(tierPrice) / product.base_price) * 100).toFixed(
+                    1,
+                  )}
+                  %
                 </Text>
               )}
             </View>
 
-            <View className="flex-row mt-4">
+            <View className="flex-row gap-3 mt-4">
               <Button
-                title="Batal"
-                variant="outline"
+                title="CANCEL"
+                variant="ghost"
                 onPress={resetForm}
-                className="flex-1 mr-2"
+                className="flex-1"
+                size="sm"
               />
               <Button
-                title={editingTier ? 'Simpan' : 'Tambah'}
+                title={editingTier ? 'UPDATE TIER' : 'ADD TIER'}
                 onPress={handleSubmit}
                 isLoading={isSubmitting}
-                className="flex-1 ml-2"
+                className="flex-1"
+                size="sm"
               />
             </View>
-          </Card>
+          </View>
         ) : (
           <Button
-            title="+ Tambah Tier Baru"
+            title="+ ADD NEW TIER"
             variant="outline"
+            size="lg"
             fullWidth
             onPress={() => setShowAddForm(true)}
           />
         )}
-
-        {/* Tips */}
-        <View className="bg-blue-50 rounded-lg p-4 mt-4">
-          <Text className="text-blue-800 font-medium mb-2">💡 Tips Harga Grosir</Text>
-          <Text className="text-blue-700 text-sm">
-            • Tier otomatis dipilih berdasarkan jumlah pembelian{'\n'}
-            • Urutkan dari quantity terkecil ke terbesar{'\n'}
-            • Harga tier harus lebih rendah dari harga dasar{'\n'}
-            • Gunakan max qty untuk membatasi range tier
-          </Text>
-        </View>
       </ScrollView>
     </View>
   );

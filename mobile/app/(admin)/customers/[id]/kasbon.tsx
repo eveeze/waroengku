@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
-import { View, Text, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  RefreshControl,
+  TouchableOpacity,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApi } from '@/hooks/useApi';
@@ -23,8 +29,9 @@ export default function KasbonHistoryScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [filter, setFilter] = useState<'all' | 'debt' | 'payment'>('all');
 
-  const { isLoading, execute: fetchHistory } = useApi((params: { page?: number; per_page?: number; type?: 'debt' | 'payment' }) =>
-    getKasbonHistory(id!, params)
+  const { isLoading, execute: fetchHistory } = useApi(
+    (params: { page?: number; per_page?: number; type?: 'debt' | 'payment' }) =>
+      getKasbonHistory(id!, params),
   );
   const { execute: fetchSummary } = useApi(() => getKasbonSummary(id!));
   const { execute: fetchCustomer } = useApi(() => getCustomerById(id!));
@@ -111,10 +118,10 @@ export default function KasbonHistoryScreen() {
             <Text className="text-lg">{isDebt ? '📤' : '📥'}</Text>
           </View>
           <View className="flex-1">
-            <Text className="font-medium text-secondary-900">
+            <Text className="font-heading font-bold text-secondary-900 text-base">
               {isDebt ? 'Kasbon' : 'Pembayaran'}
             </Text>
-            <Text className="text-xs text-secondary-500">
+            <Text className="text-[10px] text-secondary-500 font-body font-medium mt-0.5">
               {formatDate(item.created_at)}
             </Text>
             {item.notes && (
@@ -124,11 +131,12 @@ export default function KasbonHistoryScreen() {
             )}
           </View>
           <Text
-            className={`text-base font-bold ${
+            className={`text-base font-heading font-black tracking-tight ${
               isDebt ? 'text-danger-600' : 'text-green-600'
             }`}
           >
-            {isDebt ? '+' : '-'}{formatCurrency(item.amount)}
+            {isDebt ? '+' : '-'}
+            {formatCurrency(item.amount)}
           </Text>
         </View>
       </Card>
@@ -148,18 +156,20 @@ export default function KasbonHistoryScreen() {
                 <Text className="text-lg">👤</Text>
               </View>
               <View className="flex-1">
-                <Text className="font-semibold text-secondary-900">
+                <Text className="font-heading font-black text-lg text-secondary-900 mb-0.5">
                   {customer.name}
                 </Text>
-                <Text className="text-sm text-secondary-500">
+                <Text className="text-xs text-secondary-500 font-body">
                   {customer.phone || 'No phone'}
                 </Text>
               </View>
               <View className="items-end">
-                <Text className="text-lg font-bold text-danger-600">
+                <Text className="text-xl font-heading font-black text-danger-600 tracking-tight">
                   {formatCurrency(summary.current_balance)}
                 </Text>
-                <Text className="text-xs text-secondary-500">Total Hutang</Text>
+                <Text className="text-xs text-secondary-500 font-bold uppercase tracking-widest font-body">
+                  Total Hutang
+                </Text>
               </View>
             </View>
 
@@ -191,7 +201,7 @@ export default function KasbonHistoryScreen() {
               }`}
             >
               <Text
-                className={filter === item.key ? 'text-white' : 'text-secondary-700'}
+                className={`font-bold text-xs uppercase tracking-wider font-body ${filter === item.key ? 'text-white' : 'text-secondary-700'}`}
               >
                 {item.label}
               </Text>
@@ -205,9 +215,15 @@ export default function KasbonHistoryScreen() {
         data={entries}
         renderItem={renderEntry}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 16 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: insets.bottom + 16,
+        }}
         refreshControl={
-          <RefreshControl refreshing={isLoading && page === 1} onRefresh={handleRefresh} />
+          <RefreshControl
+            refreshing={isLoading && page === 1}
+            onRefresh={handleRefresh}
+          />
         }
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.3}

@@ -67,23 +67,26 @@ export default function VarianceReportScreen() {
   const renderItem = ({ item }: { item: OpnameVarianceItem }) => (
     <View className="flex-row justify-between items-center py-3 border-b border-secondary-100">
       <View className="flex-1 pr-4">
-        <Text className="font-bold text-primary-900">{item.product_name}</Text>
-        <Text className="text-secondary-500 text-xs">
+        <Text className="font-heading font-bold text-primary-900 text-base">
+          {item.product_name}
+        </Text>
+        <Text className="text-secondary-500 font-body text-xs font-medium mt-0.5">
           System: {item.system_stock} | Physical: {item.physical_stock}
         </Text>
       </View>
       <View className="items-end">
         <Text
-          className={`font-black ${item.variance === 0 ? 'text-green-600' : 'text-red-600'}`}
+          className={`font-heading font-black text-lg ${item.variance === 0 ? 'text-green-600' : 'text-red-600'}`}
         >
           {item.variance > 0 ? '+' : ''}
           {item.variance}
         </Text>
-        <Text className="text-[10px] text-secondary-400 font-bold">
+        <Text className="text-[10px] text-secondary-400 font-bold font-body">
           Value:{' '}
           {new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',
+            maximumFractionDigits: 0,
           }).format(item.variance_value)}
         </Text>
       </View>
@@ -92,7 +95,7 @@ export default function VarianceReportScreen() {
 
   return (
     <View className="flex-1 bg-white p-6">
-      <Text className="text-2xl font-black uppercase text-center mb-2">
+      <Text className="text-2xl font-heading font-black uppercase text-center mb-2 tracking-tight">
         Variance Report
       </Text>
 
@@ -101,18 +104,19 @@ export default function VarianceReportScreen() {
           <Text className="text-secondary-500 text-[10px] font-bold uppercase">
             Total Variance
           </Text>
-          <Text className="font-black text-xl text-primary-900">
+          <Text className="font-heading font-black text-xl text-primary-900">
             {report.total_variance}
           </Text>
         </View>
         <View className="flex-1 bg-red-50 p-3 rounded-lg border border-red-100 items-center">
-          <Text className="text-red-500 text-[10px] font-bold uppercase">
+          <Text className="text-red-500 text-[10px] font-bold uppercase font-body tracking-wider">
             Loss Value
           </Text>
-          <Text className="font-black text-lg text-red-900">
+          <Text className="font-heading font-black text-lg text-red-900">
             {new Intl.NumberFormat('id-ID', {
               style: 'currency',
               currency: 'IDR',
+              maximumFractionDigits: 0,
             }).format(report.total_loss_value)}
           </Text>
         </View>

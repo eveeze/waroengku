@@ -40,12 +40,12 @@ export function Card({
         <View className="flex-row items-center justify-between px-5 py-4 border-b border-secondary-100">
           <View className="flex-1">
             {title && (
-              <Text className="text-xl font-bold tracking-tight text-primary-900">
+              <Text className="text-xl font-heading font-black uppercase tracking-tight text-primary-900">
                 {title}
               </Text>
             )}
             {subtitle && (
-              <Text className="text-sm font-medium text-secondary-500 mt-1">
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body mt-1">
                 {subtitle}
               </Text>
             )}
@@ -57,7 +57,7 @@ export function Card({
                 onPress={item.onPress}
                 className="ml-3 px-3 py-1.5 bg-secondary-50 rounded-md border border-secondary-200"
               >
-                <Text className="text-xs font-bold text-primary-900 uppercase tracking-wide">
+                <Text className="text-xs font-bold text-primary-900 uppercase tracking-widest font-heading">
                   {item.title}
                 </Text>
               </TouchableOpacity>

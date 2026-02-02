@@ -29,7 +29,7 @@ export const Input = forwardRef<RNTextInput, InputProps>(
     return (
       <View className="mb-5">
         {label && (
-          <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2">
+          <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
             {label}
           </Text>
         )}
@@ -45,7 +45,7 @@ export const Input = forwardRef<RNTextInput, InputProps>(
           <RNTextInput
             ref={ref}
             className={`
-              flex-1 py-3.5 text-base font-medium text-primary-900
+              flex-1 py-3.5 text-base font-bold text-primary-900 font-heading
               ${className || ''}
             `}
             placeholderTextColor="#a1a1aa"
@@ -54,12 +54,12 @@ export const Input = forwardRef<RNTextInput, InputProps>(
           {rightIcon && <View className="ml-3">{rightIcon}</View>}
         </View>
         {hasError && (
-          <Text className="text-xs font-medium text-danger-600 mt-1.5 ml-1">
+          <Text className="text-xs font-medium text-danger-600 mt-1.5 ml-1 font-body">
             {error}
           </Text>
         )}
         {!hasError && helperText && (
-          <Text className="text-xs text-secondary-400 mt-1.5 ml-1">
+          <Text className="text-xs text-secondary-400 mt-1.5 ml-1 font-body">
             {helperText}
           </Text>
         )}

@@ -153,11 +153,11 @@ export default function CreateProductScreen() {
         style={{ paddingTop: insets.top + 24 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-secondary-500 font-bold uppercase tracking-widest text-xs">
+          <Text className="text-secondary-500 font-bold uppercase tracking-widest text-xs font-body">
             ← BACK TO LIST
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black tracking-tighter text-primary-900">
+        <Text className="text-4xl font-heading font-black tracking-tighter text-primary-900">
           NEW PRODUCT
         </Text>
       </View>
@@ -175,7 +175,7 @@ export default function CreateProductScreen() {
         >
           {/* Section: Image */}
           <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3">
+            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
               PRODUCT IMAGE
             </Text>
             <ImagePickerInput
@@ -189,7 +189,7 @@ export default function CreateProductScreen() {
 
           {/* Section: Basic Info */}
           <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3">
+            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
               BASIC INFORMATION
             </Text>
 
@@ -237,7 +237,7 @@ export default function CreateProductScreen() {
               name="category_id"
               render={({ field: { onChange, value } }) => (
                 <View className="mt-2 mb-5">
-                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2">
+                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
                     CATEGORY
                   </Text>
                   <ScrollView
@@ -256,7 +256,7 @@ export default function CreateProductScreen() {
                         }`}
                       >
                         <Text
-                          className={`text-xs font-bold uppercase tracking-wide ${
+                          className={`text-xs font-bold uppercase tracking-widest font-heading ${
                             value === cat.id ? 'text-white' : 'text-primary-900'
                           }`}
                         >
@@ -274,7 +274,7 @@ export default function CreateProductScreen() {
               name="description"
               render={({ field: { onChange, onBlur, value } }) => (
                 <View>
-                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2">
+                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
                     DESCRIPTION
                   </Text>
                   <TextInput
@@ -294,7 +294,7 @@ export default function CreateProductScreen() {
 
           {/* Section: Pricing */}
           <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3">
+            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
               PRICING & STOCK
             </Text>
 
@@ -389,7 +389,7 @@ export default function CreateProductScreen() {
                       <Text className="text-white text-xs font-bold">✓</Text>
                     )}
                   </View>
-                  <Text className="text-base font-medium text-primary-900">
+                  <Text className="text-base font-bold font-heading text-primary-900">
                     Track Stock Inventory
                   </Text>
                 </TouchableOpacity>

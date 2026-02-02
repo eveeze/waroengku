@@ -22,7 +22,7 @@ import { useApi } from '@/hooks/useApi';
 
 // Edit form schema (all optional except changed fields)
 const editProductSchema = z.object({
-  name: z.string().min(2, 'Nama minimal 2 karakter'),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
   barcode: z.string().optional(),
   sku: z.string().optional(),
   description: z.string().optional(),
@@ -110,13 +110,13 @@ export default function EditProductScreen() {
         is_refillable: data.is_refillable,
       });
 
-      Alert.alert('Berhasil', 'Produk berhasil diperbarui', [
+      Alert.alert('Success', 'Product updated successfully', [
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error) {
       Alert.alert(
-        'Gagal',
-        error instanceof Error ? error.message : 'Gagal memperbarui produk',
+        'Error',
+        error instanceof Error ? error.message : 'Failed to update product',
       );
     } finally {
       setIsSubmitting(false);
@@ -124,12 +124,25 @@ export default function EditProductScreen() {
   };
 
   if (isLoading && !product) {
-    return <Loading fullScreen message="Memuat produk..." />;
+    return <Loading fullScreen message="Loading product..." />;
   }
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Edit Produk" onBack={() => router.back()} />
+    <View className="flex-1 bg-white">
+      {/* Header */}
+      <View
+        className="px-6 pb-6 border-b border-secondary-200"
+        style={{ paddingTop: insets.top + 24 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-secondary-500 font-bold uppercase tracking-widest text-xs font-body">
+            ← BACK TO DETAIL
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-heading font-black tracking-tighter text-primary-900 uppercase">
+          EDIT PRODUCT
+        </Text>
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -137,20 +150,24 @@ export default function EditProductScreen() {
       >
         <ScrollView
           contentContainerStyle={{
-            padding: 16,
+            padding: 24,
             paddingBottom: insets.bottom + 180,
           }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Basic Info */}
-          <Card title="Informasi Dasar" className="mb-4">
+          <View className="mb-8">
+            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+              BASIC INFORMATION
+            </Text>
+
             <Controller
               control={control}
               name="name"
               render={({ field: { onChange, onBlur, value } }) => (
                 <Input
-                  label="Nama Produk *"
-                  placeholder="Masukkan nama produk"
+                  label="PRODUCT NAME *"
+                  placeholder="Enter product name"
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
@@ -159,14 +176,14 @@ export default function EditProductScreen() {
               )}
             />
 
-            <View className="flex-row mt-3">
-              <View className="flex-1 mr-2">
+            <View className="flex-row mt-1 gap-3">
+              <View className="flex-1">
                 <Controller
                   control={control}
                   name="barcode"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
-                      label="Barcode"
+                      label="BARCODE"
                       placeholder="Scan/input"
                       value={value}
                       onChangeText={onChange}
@@ -175,14 +192,14 @@ export default function EditProductScreen() {
                   )}
                 />
               </View>
-              <View className="flex-1 ml-2">
+              <View className="flex-1">
                 <Controller
                   control={control}
                   name="sku"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
                       label="SKU"
-                      placeholder="Kode produk"
+                      placeholder="Product code"
                       value={value}
                       onChangeText={onChange}
                       onBlur={onBlur}
@@ -196,27 +213,28 @@ export default function EditProductScreen() {
               control={control}
               name="description"
               render={({ field: { onChange, onBlur, value } }) => (
-                <View className="mt-3">
-                  <Text className="text-sm font-medium text-secondary-700 mb-1.5">
-                    Deskripsi
+                <View className="mt-1">
+                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+                    DESCRIPTION
                   </Text>
                   <TextInput
-                    className="border border-secondary-200 rounded-lg px-4 py-3 bg-white text-base"
-                    placeholder="Deskripsi produk (opsional)"
+                    className="border border-secondary-200 rounded-lg px-4 py-3 bg-secondary-50 text-base font-body text-primary-900 min-h-[100px]"
+                    placeholder="Product description (optional)"
+                    textAlignVertical="top"
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
                     multiline
-                    numberOfLines={3}
+                    numberOfLines={4}
                   />
                 </View>
               )}
             />
 
             {/* Category */}
-            <View className="mt-3">
-              <Text className="text-sm font-medium text-secondary-700 mb-1.5">
-                Kategori
+            <View className="mt-5">
+              <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+                CATEGORY
               </Text>
               <Controller
                 control={control}
@@ -225,32 +243,32 @@ export default function EditProductScreen() {
                   <View className="flex-row flex-wrap">
                     <TouchableOpacity
                       onPress={() => onChange('')}
-                      className={`px-4 py-2 rounded-lg mr-2 mb-2 ${
-                        !value ? 'bg-primary-600' : 'bg-secondary-100'
+                      className={`px-4 py-2 rounded-lg mr-2 mb-2 border ${
+                        !value
+                          ? 'bg-primary-900 border-primary-900'
+                          : 'bg-white border-secondary-200'
                       }`}
                     >
                       <Text
-                        className={!value ? 'text-white' : 'text-secondary-700'}
+                        className={`text-xs font-bold uppercase tracking-widest font-heading ${!value ? 'text-white' : 'text-primary-900'}`}
                       >
-                        Tidak Ada
+                        NONE
                       </Text>
                     </TouchableOpacity>
                     {categories.map((cat) => (
                       <TouchableOpacity
                         key={cat.id}
                         onPress={() => onChange(cat.id)}
-                        className={`px-4 py-2 rounded-lg mr-2 mb-2 ${
+                        className={`px-4 py-2 rounded-lg mr-2 mb-2 border ${
                           value === cat.id
-                            ? 'bg-primary-600'
-                            : 'bg-secondary-100'
+                            ? 'bg-primary-900 border-primary-900'
+                            : 'bg-white border-secondary-200'
                         }`}
                       >
                         <Text
-                          className={
-                            value === cat.id
-                              ? 'text-white'
-                              : 'text-secondary-700'
-                          }
+                          className={`text-xs font-bold uppercase tracking-widest font-heading ${
+                            value === cat.id ? 'text-white' : 'text-primary-900'
+                          }`}
                         >
                           {cat.name}
                         </Text>
@@ -266,83 +284,103 @@ export default function EditProductScreen() {
               name="unit"
               render={({ field: { onChange, value } }) => (
                 <View className="mt-3">
-                  <Text className="text-sm font-medium text-secondary-700 mb-1.5">
-                    Satuan
+                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+                    UNIT
                   </Text>
-                  <View className="flex-row">
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    className="flex-row"
+                  >
                     {['pcs', 'kg', 'liter', 'pack', 'dus'].map((unit) => (
                       <TouchableOpacity
                         key={unit}
                         onPress={() => onChange(unit)}
-                        className={`px-4 py-2 rounded-lg mr-2 ${
-                          value === unit ? 'bg-primary-600' : 'bg-secondary-100'
+                        className={`px-4 py-2 rounded-lg mr-2 border ${
+                          value === unit
+                            ? 'bg-primary-900 border-primary-900'
+                            : 'bg-white border-secondary-200'
                         }`}
                       >
                         <Text
-                          className={
-                            value === unit ? 'text-white' : 'text-secondary-700'
-                          }
+                          className={`text-xs font-bold uppercase tracking-widest font-heading ${
+                            value === unit ? 'text-white' : 'text-primary-900'
+                          }`}
                         >
                           {unit}
                         </Text>
                       </TouchableOpacity>
                     ))}
-                  </View>
+                  </ScrollView>
                 </View>
               )}
             />
-          </Card>
+          </View>
 
           {/* Pricing */}
-          <Card title="Harga" className="mb-4">
-            <View className="flex-row">
-              <View className="flex-1 mr-2">
+          <View className="mb-8">
+            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+              PRICING
+            </Text>
+            <View className="flex-row gap-3">
+              <View className="flex-1">
                 <Controller
                   control={control}
                   name="cost_price"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
-                      label="Harga Modal *"
+                      label="COST (HPP)"
                       placeholder="0"
                       value={value !== undefined ? String(value) : ''}
                       onChangeText={(text) => onChange(Number(text) || 0)}
                       onBlur={onBlur}
                       keyboardType="numeric"
-                      leftIcon={<Text className="text-secondary-400">Rp</Text>}
+                      leftIcon={
+                        <Text className="text-secondary-400 font-heading font-bold">
+                          Rp
+                        </Text>
+                      }
                     />
                   )}
                 />
               </View>
-              <View className="flex-1 ml-2">
+              <View className="flex-1">
                 <Controller
                   control={control}
                   name="base_price"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
-                      label="Harga Jual *"
+                      label="SELLING PRICE"
                       placeholder="0"
                       value={value !== undefined ? String(value) : ''}
                       onChangeText={(text) => onChange(Number(text) || 0)}
                       onBlur={onBlur}
                       keyboardType="numeric"
-                      leftIcon={<Text className="text-secondary-400">Rp</Text>}
+                      leftIcon={
+                        <Text className="text-secondary-400 font-heading font-bold">
+                          Rp
+                        </Text>
+                      }
                     />
                   )}
                 />
               </View>
             </View>
-          </Card>
+          </View>
 
           {/* Stock Settings */}
-          <Card title="Pengaturan Stok" className="mb-4">
-            <View className="flex-row">
-              <View className="flex-1 mr-2">
+          <View className="mb-8">
+            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+              STOCK SETTINGS
+            </Text>
+            <View className="flex-row gap-3">
+              <View className="flex-1">
                 <Controller
                   control={control}
                   name="min_stock_alert"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
-                      label="Stok Minimum"
+                      label="MIN ALERT"
                       placeholder="10"
                       value={value !== undefined ? String(value) : ''}
                       onChangeText={(text) => onChange(Number(text) || 0)}
@@ -352,14 +390,14 @@ export default function EditProductScreen() {
                   )}
                 />
               </View>
-              <View className="flex-1 ml-2">
+              <View className="flex-1">
                 <Controller
                   control={control}
                   name="max_stock"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <Input
-                      label="Stok Maksimum"
-                      placeholder="Opsional"
+                      label="MAX STOCK"
+                      placeholder="Optional"
                       value={value !== undefined ? String(value) : ''}
                       onChangeText={(text) =>
                         onChange(text ? Number(text) : undefined)
@@ -378,46 +416,49 @@ export default function EditProductScreen() {
               render={({ field: { onChange, value } }) => (
                 <TouchableOpacity
                   onPress={() => onChange(!value)}
-                  className="flex-row items-center mt-4"
+                  className="flex-row items-center mt-2 border border-secondary-200 rounded-lg p-3"
                 >
                   <View
-                    className={`w-5 h-5 rounded border mr-2 items-center justify-center ${
+                    className={`w-5 h-5 rounded border mr-3 items-center justify-center ${
                       value
-                        ? 'bg-primary-600 border-primary-600'
+                        ? 'bg-primary-900 border-primary-900'
                         : 'border-secondary-300'
                     }`}
                   >
                     {value && <Text className="text-white text-xs">✓</Text>}
                   </View>
-                  <Text className="text-secondary-700">
-                    Produk Refillable (Gas/Galon)
+                  <Text className="text-primary-900 font-heading font-bold uppercase tracking-wider text-xs">
+                    REFILLABLE PRODUCT (GAS/GALON)
                   </Text>
                 </TouchableOpacity>
               )}
             />
-          </Card>
+          </View>
 
           {/* Status */}
-          <Card title="Status" className="mb-4">
+          <View className="mb-8">
+            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+              STATUS
+            </Text>
             <Controller
               control={control}
               name="is_active"
               render={({ field: { onChange, value } }) => (
                 <TouchableOpacity
                   onPress={() => onChange(!value)}
-                  className="flex-row items-center justify-between"
+                  className="flex-row items-center justify-between border border-secondary-200 rounded-lg p-4 bg-secondary-50"
                 >
                   <View>
-                    <Text className="text-secondary-900 font-medium">
-                      Produk Aktif
+                    <Text className="text-primary-900 font-heading font-black uppercase text-sm">
+                      PRODUCT ACTIVE
                     </Text>
-                    <Text className="text-secondary-500 text-sm">
-                      Produk nonaktif tidak akan muncul di POS
+                    <Text className="text-secondary-500 text-xs font-body mt-1">
+                      Inactive products won't show in POS
                     </Text>
                   </View>
                   <View
                     className={`w-12 h-6 rounded-full p-1 ${
-                      value ? 'bg-primary-600' : 'bg-secondary-300'
+                      value ? 'bg-primary-900' : 'bg-secondary-300'
                     }`}
                   >
                     <View
@@ -429,17 +470,18 @@ export default function EditProductScreen() {
                 </TouchableOpacity>
               )}
             />
-          </Card>
+          </View>
         </ScrollView>
 
         {/* Submit Button */}
         <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-4 py-3"
+          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-6 py-4"
           style={{ paddingBottom: insets.bottom + 90 }}
         >
           <Button
-            title="Simpan Perubahan"
+            title="SAVE CHANGES"
             fullWidth
+            size="lg"
             onPress={handleSubmit(onSubmit)}
             isLoading={isSubmitting}
           />
