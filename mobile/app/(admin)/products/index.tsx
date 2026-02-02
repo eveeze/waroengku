@@ -73,7 +73,7 @@ export default function ProductsScreen() {
         per_page: 20,
         search: searchTerm || undefined,
         category_id: selectedCategory,
-        low_stock: showLowStock || undefined,
+        low_stock_only: showLowStock || undefined,
         sort_by: sortBy,
         sort_order: 'asc',
       };
@@ -332,7 +332,7 @@ export default function ProductsScreen() {
         data={products}
         renderItem={renderProduct}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 24 }}
+        contentContainerStyle={{ padding: 24, paddingBottom: 120 }}
         refreshControl={
           <RefreshControl
             refreshing={isLoading && page === 1}

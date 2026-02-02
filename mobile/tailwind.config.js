@@ -77,7 +77,9 @@ module.exports = {
         ring: '#18181b',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['PlusJakartaSans_500Medium', 'system-ui', 'sans-serif'],
+        heading: ['SpaceGrotesk_700Bold', 'sans-serif'],
+        body: ['PlusJakartaSans_500Medium', 'sans-serif'],
       },
     },
   },

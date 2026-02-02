@@ -34,4 +34,20 @@ export interface RecordPaymentRequest {
   amount: number;
   notes?: string;
   created_by?: string;
+  payment_method?: 'cash' | 'transfer';
+}
+
+// Alias for consistency with customers module
+export type PayKasbonRequest = RecordPaymentRequest;
+
+export interface KasbonHistory {
+  id: string;
+  transaction_id: string;
+  amount: number;
+  type: 'debt' | 'payment';
+  balance_before: number;
+  balance_after: number;
+  description: string;
+  created_at: string;
+  created_by_name: string;
 }

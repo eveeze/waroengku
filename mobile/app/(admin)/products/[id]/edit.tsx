@@ -49,7 +49,9 @@ export default function EditProductScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [product, setProduct] = useState<Product | null>(null);
 
-  const { execute: fetchProduct, isLoading } = useApi(() => getProductById(id!));
+  const { execute: fetchProduct, isLoading } = useApi(() =>
+    getProductById(id!),
+  );
   const { execute: fetchCategories } = useApi(getCategories);
 
   const {
@@ -66,11 +68,8 @@ export default function EditProductScreen() {
   }, []);
 
   const loadData = async () => {
-    const [prod, cats] = await Promise.all([
-      fetchProduct(),
-      fetchCategories(),
-    ]);
-    
+    const [prod, cats] = await Promise.all([fetchProduct(), fetchCategories()]);
+
     if (prod) {
       setProduct(prod);
       reset({
@@ -88,14 +87,14 @@ export default function EditProductScreen() {
         is_refillable: prod.is_refillable,
       });
     }
-    
+
     if (cats) setCategories(cats);
   };
 
   const onSubmit = async (data: EditProductFormData) => {
     try {
       setIsSubmitting(true);
-      
+
       await updateProduct(id!, {
         name: data.name,
         barcode: data.barcode || undefined,
@@ -117,7 +116,7 @@ export default function EditProductScreen() {
     } catch (error) {
       Alert.alert(
         'Gagal',
-        error instanceof Error ? error.message : 'Gagal memperbarui produk'
+        error instanceof Error ? error.message : 'Gagal memperbarui produk',
       );
     } finally {
       setIsSubmitting(false);
@@ -137,7 +136,10 @@ export default function EditProductScreen() {
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }}
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: insets.bottom + 180,
+          }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Basic Info */}
@@ -227,7 +229,9 @@ export default function EditProductScreen() {
                         !value ? 'bg-primary-600' : 'bg-secondary-100'
                       }`}
                     >
-                      <Text className={!value ? 'text-white' : 'text-secondary-700'}>
+                      <Text
+                        className={!value ? 'text-white' : 'text-secondary-700'}
+                      >
                         Tidak Ada
                       </Text>
                     </TouchableOpacity>
@@ -236,10 +240,18 @@ export default function EditProductScreen() {
                         key={cat.id}
                         onPress={() => onChange(cat.id)}
                         className={`px-4 py-2 rounded-lg mr-2 mb-2 ${
-                          value === cat.id ? 'bg-primary-600' : 'bg-secondary-100'
+                          value === cat.id
+                            ? 'bg-primary-600'
+                            : 'bg-secondary-100'
                         }`}
                       >
-                        <Text className={value === cat.id ? 'text-white' : 'text-secondary-700'}>
+                        <Text
+                          className={
+                            value === cat.id
+                              ? 'text-white'
+                              : 'text-secondary-700'
+                          }
+                        >
                           {cat.name}
                         </Text>
                       </TouchableOpacity>
@@ -266,7 +278,11 @@ export default function EditProductScreen() {
                           value === unit ? 'bg-primary-600' : 'bg-secondary-100'
                         }`}
                       >
-                        <Text className={value === unit ? 'text-white' : 'text-secondary-700'}>
+                        <Text
+                          className={
+                            value === unit ? 'text-white' : 'text-secondary-700'
+                          }
+                        >
                           {unit}
                         </Text>
                       </TouchableOpacity>
@@ -345,7 +361,9 @@ export default function EditProductScreen() {
                       label="Stok Maksimum"
                       placeholder="Opsional"
                       value={value !== undefined ? String(value) : ''}
-                      onChangeText={(text) => onChange(text ? Number(text) : undefined)}
+                      onChangeText={(text) =>
+                        onChange(text ? Number(text) : undefined)
+                      }
                       onBlur={onBlur}
                       keyboardType="numeric"
                     />
@@ -364,12 +382,16 @@ export default function EditProductScreen() {
                 >
                   <View
                     className={`w-5 h-5 rounded border mr-2 items-center justify-center ${
-                      value ? 'bg-primary-600 border-primary-600' : 'border-secondary-300'
+                      value
+                        ? 'bg-primary-600 border-primary-600'
+                        : 'border-secondary-300'
                     }`}
                   >
                     {value && <Text className="text-white text-xs">✓</Text>}
                   </View>
-                  <Text className="text-secondary-700">Produk Refillable (Gas/Galon)</Text>
+                  <Text className="text-secondary-700">
+                    Produk Refillable (Gas/Galon)
+                  </Text>
                 </TouchableOpacity>
               )}
             />
@@ -386,7 +408,9 @@ export default function EditProductScreen() {
                   className="flex-row items-center justify-between"
                 >
                   <View>
-                    <Text className="text-secondary-900 font-medium">Produk Aktif</Text>
+                    <Text className="text-secondary-900 font-medium">
+                      Produk Aktif
+                    </Text>
                     <Text className="text-secondary-500 text-sm">
                       Produk nonaktif tidak akan muncul di POS
                     </Text>
@@ -411,7 +435,7 @@ export default function EditProductScreen() {
         {/* Submit Button */}
         <View
           className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-4 py-3"
-          style={{ paddingBottom: insets.bottom + 12 }}
+          style={{ paddingBottom: insets.bottom + 90 }}
         >
           <Button
             title="Simpan Perubahan"

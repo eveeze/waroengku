@@ -89,10 +89,10 @@ export default function DashboardScreen() {
         >
           <View className="flex-row justify-between items-start mb-6">
             <View>
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-1">
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-1 font-body">
                 Welcome back,
               </Text>
-              <Text className="text-2xl font-black uppercase tracking-tight text-primary-900">
+              <Text className="text-3xl font-heading uppercase tracking-tight text-primary-900">
                 {userName}
               </Text>
             </View>
@@ -119,10 +119,10 @@ export default function DashboardScreen() {
 
           {/* Hero Metric: Today's Sales */}
           <View className="py-2">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2 font-body">
               Today's Revenue
             </Text>
-            <Text className="text-5xl font-black tracking-tighter text-black leading-tight">
+            <Text className="text-6xl font-heading tracking-tighter text-black leading-tight">
               {formatCurrency(todaySales)}
             </Text>
             <View className="flex-row items-center gap-4 mt-2">
@@ -223,7 +223,7 @@ export default function DashboardScreen() {
             >
               <Text className="text-3xl">📦</Text>
               <View>
-                <Text className="font-black text-lg text-primary-900">
+                <Text className="font-heading text-lg text-primary-900">
                   PRODUCTS
                 </Text>
                 <Text className="text-xs text-secondary-500 font-medium">
@@ -239,7 +239,7 @@ export default function DashboardScreen() {
             >
               <Text className="text-3xl">👥</Text>
               <View>
-                <Text className="font-black text-lg text-primary-900">
+                <Text className="font-heading text-lg text-primary-900">
                   CUSTOMERS
                 </Text>
                 <Text className="text-xs text-secondary-500 font-medium">
@@ -255,7 +255,7 @@ export default function DashboardScreen() {
             >
               <Text className="text-3xl">📈</Text>
               <View>
-                <Text className="font-black text-lg text-primary-900">
+                <Text className="font-heading text-lg text-primary-900">
                   REPORTS
                 </Text>
                 <Text className="text-xs text-secondary-500 font-medium">
@@ -271,7 +271,7 @@ export default function DashboardScreen() {
             >
               <Text className="text-3xl">⚙️</Text>
               <View>
-                <Text className="font-black text-lg text-primary-900">
+                <Text className="font-heading text-lg text-primary-900">
                   SETTINGS
                 </Text>
                 <Text className="text-xs text-secondary-500 font-medium">

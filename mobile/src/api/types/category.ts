@@ -6,6 +6,7 @@ export interface Category {
   id: string;
   name: string;
   description?: string;
+  parent_id?: string;
   product_count?: number;
   is_active: boolean;
   created_at: string;
@@ -23,6 +24,7 @@ export interface CategoryListParams {
 export interface CreateCategoryRequest {
   name: string;
   description?: string;
+  parent_id?: string;
 }
 
 // Update category request

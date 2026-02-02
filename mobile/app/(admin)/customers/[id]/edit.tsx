@@ -33,7 +33,9 @@ export default function EditCustomerScreen() {
   const [creditLimit, setCreditLimit] = useState('');
   const [isActive, setIsActive] = useState(true);
 
-  const { isLoading, execute: fetchCustomer } = useApi(() => getCustomerById(id!));
+  const { isLoading, execute: fetchCustomer } = useApi(() =>
+    getCustomerById(id!),
+  );
 
   useEffect(() => {
     loadCustomer();
@@ -46,7 +48,9 @@ export default function EditCustomerScreen() {
       setPhone(customer.phone || '');
       setAddress(customer.address || '');
       setNotes(customer.notes || '');
-      setCreditLimit(customer.credit_limit > 0 ? String(customer.credit_limit) : '');
+      setCreditLimit(
+        customer.credit_limit > 0 ? String(customer.credit_limit) : '',
+      );
       setIsActive(customer.is_active);
     }
   };
@@ -75,7 +79,7 @@ export default function EditCustomerScreen() {
     } catch (error) {
       Alert.alert(
         'Gagal',
-        error instanceof Error ? error.message : 'Gagal memperbarui pelanggan'
+        error instanceof Error ? error.message : 'Gagal memperbarui pelanggan',
       );
     } finally {
       setIsSubmitting(false);
@@ -95,7 +99,10 @@ export default function EditCustomerScreen() {
         className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 100 }}
+          contentContainerStyle={{
+            padding: 16,
+            paddingBottom: insets.bottom + 100,
+          }}
           keyboardShouldPersistTaps="handled"
         >
           <Card title="Informasi Pelanggan" className="mb-4">
@@ -158,7 +165,9 @@ export default function EditCustomerScreen() {
               className="flex-row items-center justify-between"
             >
               <View>
-                <Text className="text-secondary-900 font-medium">Pelanggan Aktif</Text>
+                <Text className="text-secondary-900 font-medium">
+                  Pelanggan Aktif
+                </Text>
                 <Text className="text-secondary-500 text-sm">
                   Nonaktifkan jika pelanggan sudah tidak berlangganan
                 </Text>
@@ -181,7 +190,7 @@ export default function EditCustomerScreen() {
         {/* Submit Button */}
         <View
           className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-4 py-3"
-          style={{ paddingBottom: insets.bottom + 12 }}
+          style={{ paddingBottom: insets.bottom + 90 }}
         >
           <Button
             title="Simpan Perubahan"

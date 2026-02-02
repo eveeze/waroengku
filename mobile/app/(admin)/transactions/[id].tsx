@@ -6,11 +6,18 @@ import {
   Alert,
   TouchableOpacity,
   StatusBar,
+  Linking,
+  RefreshControl,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApi } from '@/hooks/useApi';
-import { getTransaction, cancelTransaction } from '@/api/endpoints';
+import {
+  getTransaction,
+  cancelTransaction,
+  generateSnapToken,
+  manualVerifyPayment,
+} from '@/api/endpoints';
 import { Transaction } from '@/api/types';
 import { Button, Loading } from '@/components/ui';
 
@@ -26,14 +33,23 @@ export default function TransactionDetailScreen() {
   const { isLoading: isCancelling, execute: doCancel } = useApi(() =>
     cancelTransaction(id!),
   );
+  const { isLoading: isRetrying, execute: getSnapToken } =
+    useApi(generateSnapToken);
+  const { isLoading: isVerifying, execute: doVerify } = useApi((data: any) =>
+    manualVerifyPayment(id!, data),
+  );
 
   useEffect(() => {
+    loadTransaction();
+  }, [id]);
+
+  const loadTransaction = () => {
     if (id) {
       fetchTransaction().then((data) => {
         if (data) setTransaction(data);
       });
     }
-  }, [id]);
+  };
 
   const handleCancel = () => {
     Alert.alert(
@@ -48,13 +64,57 @@ export default function TransactionDetailScreen() {
             try {
               await doCancel();
               Alert.alert('SUCCESS', 'Transaction cancelled.');
-              router.back();
+              loadTransaction();
             } catch (err) {
               Alert.alert('FAILED', (err as Error).message);
             }
           },
         },
       ],
+    );
+  };
+
+  const handleRetryPayment = async () => {
+    if (!transaction) return;
+    try {
+      const token = await getSnapToken({
+        order_id: transaction.invoice_number, // Use invoice number as order_id
+        gross_amount: transaction.final_amount,
+      });
+
+      if (token && token.redirect_url) {
+        Linking.openURL(token.redirect_url);
+      } else {
+        Alert.alert('Error', 'Could not generate payment link');
+      }
+    } catch {
+      Alert.alert('Error', 'Failed to initiate payment');
+    }
+  };
+
+  const handleManualVerify = () => {
+    Alert.prompt(
+      'MANUAL VERIFY',
+      'Enter notes/ref number for verification:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Verify',
+          onPress: async (notes?: string) => {
+            try {
+              await doVerify({
+                notes: notes || 'Manual verification by admin',
+                status: 'settlement',
+              });
+              Alert.alert('Success', 'Payment verified manually.');
+              loadTransaction();
+            } catch {
+              Alert.alert('Error', 'Failed to verify payment.');
+            }
+          },
+        },
+      ],
+      'plain-text',
     );
   };
 
@@ -108,6 +168,10 @@ export default function TransactionDetailScreen() {
           padding: 24,
           paddingBottom: insets.bottom + 100,
         }}
+        refreshControl={
+          // Refresh by pulling down
+          <RefreshControl refreshing={isLoading} onRefresh={loadTransaction} />
+        }
       >
         {/* Status Badge */}
         <View className="flex-row justify-between items-center mb-8 border-b border-black pb-4">
@@ -230,21 +294,45 @@ export default function TransactionDetailScreen() {
         </View>
 
         {/* Actions */}
-        {transaction.status === 'completed' && (
-          <View className="mt-4">
-            <Button
-              title="VOID TRANSACTION"
-              variant="outline"
-              className="border-red-600"
-              textClassName="text-red-600"
-              onPress={handleCancel}
-              isLoading={isCancelling}
-            />
-            <Text className="text-center text-[10px] text-secondary-400 mt-3 font-bold uppercase tracking-widest">
-              Authentication Required for Voiding
-            </Text>
-          </View>
-        )}
+        <View className="gap-3">
+          {transaction.status === 'pending' && (
+            <>
+              {/* Retry Online Payment */}
+              {(transaction.payment_method === 'qris' ||
+                transaction.payment_method === 'transfer') && (
+                <Button
+                  title="RETRY PAYMENT"
+                  onPress={handleRetryPayment}
+                  isLoading={isRetrying}
+                />
+              )}
+
+              {/* Manual Verify */}
+              <Button
+                title="MANUAL VERIFY (ADMIN)"
+                variant="outline"
+                onPress={handleManualVerify}
+                isLoading={isVerifying}
+              />
+            </>
+          )}
+
+          {transaction.status === 'completed' && (
+            <View className="">
+              <Button
+                title="VOID TRANSACTION"
+                variant="outline"
+                className="border-red-600"
+                textClassName="text-red-600"
+                onPress={handleCancel}
+                isLoading={isCancelling}
+              />
+              <Text className="text-center text-[10px] text-secondary-400 mt-3 font-bold uppercase tracking-widest">
+                Authentication Required for Voiding
+              </Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </View>
   );

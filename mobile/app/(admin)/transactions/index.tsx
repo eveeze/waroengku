@@ -141,7 +141,7 @@ export default function TransactionsScreen() {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 16,
+          paddingBottom: insets.bottom + 120,
         }}
         ListEmptyComponent={
           !isLoading ? (

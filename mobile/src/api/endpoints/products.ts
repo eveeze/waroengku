@@ -21,11 +21,14 @@ import {
  * GET /api/v1/products
  */
 export async function getProducts(
-  params?: ProductListParams
+  params?: ProductListParams,
 ): Promise<PaginatedResponse<Product>> {
-  const response = await apiClient.get<PaginatedResponse<Product>>('/products', {
-    params,
-  });
+  const response = await apiClient.get<PaginatedResponse<Product>>(
+    '/products',
+    {
+      params,
+    },
+  );
   return response.data;
 }
 
@@ -40,7 +43,7 @@ export async function createProduct(
     uri: string;
     type: string;
     name: string;
-  }
+  },
 ): Promise<Product> {
   const formData = new FormData();
   formData.append('data', JSON.stringify(data));
@@ -53,11 +56,15 @@ export async function createProduct(
     } as unknown as Blob);
   }
 
-  const response = await apiClient.post<{ data: Product }>('/products', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
+  const response = await apiClient.post<{ data: Product }>(
+    '/products',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     },
-  });
+  );
   return response.data.data;
 }
 
@@ -66,24 +73,21 @@ export async function createProduct(
  * GET /api/v1/products/search?barcode=xxx
  */
 export async function searchProductByBarcode(
-  barcode: string
+  barcode: string,
 ): Promise<Product | null> {
   try {
-    const product = await apiCall<Product>('get', '/products/search', undefined, {
-      barcode,
-    });
+    const product = await apiCall<Product>(
+      'get',
+      '/products/search',
+      undefined,
+      {
+        barcode,
+      },
+    );
     return product;
   } catch {
     return null;
   }
-}
-
-/**
- * Get low stock products
- * GET /api/v1/products/low-stock
- */
-export async function getLowStockProducts(): Promise<LowStockProduct[]> {
-  return apiCall<LowStockProduct[]>('get', '/products/low-stock');
 }
 
 /**
@@ -105,7 +109,7 @@ export async function updateProduct(
     uri: string;
     type: string;
     name: string;
-  }
+  },
 ): Promise<Product> {
   if (image) {
     // Use form-data if updating with image
@@ -124,7 +128,7 @@ export async function updateProduct(
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-      }
+      },
     );
     return response.data.data;
   }
@@ -147,9 +151,13 @@ export async function deleteProduct(id: string): Promise<void> {
  */
 export async function addPricingTier(
   productId: string,
-  data: CreatePricingTierRequest
+  data: CreatePricingTierRequest,
 ): Promise<PricingTier> {
-  return apiCall<PricingTier>('post', `/products/${productId}/pricing-tiers`, data);
+  return apiCall<PricingTier>(
+    'post',
+    `/products/${productId}/pricing-tiers`,
+    data,
+  );
 }
 
 /**
@@ -159,12 +167,12 @@ export async function addPricingTier(
 export async function updatePricingTier(
   productId: string,
   tierId: string,
-  data: UpdatePricingTierRequest
+  data: UpdatePricingTierRequest,
 ): Promise<PricingTier> {
   return apiCall<PricingTier>(
     'put',
     `/products/${productId}/pricing-tiers/${tierId}`,
-    data
+    data,
   );
 }
 
@@ -174,7 +182,7 @@ export async function updatePricingTier(
  */
 export async function deletePricingTier(
   productId: string,
-  tierId: string
+  tierId: string,
 ): Promise<void> {
   await apiClient.delete(`/products/${productId}/pricing-tiers/${tierId}`);
 }

@@ -10,7 +10,7 @@ export interface Customer {
   address?: string;
   notes?: string;
   credit_limit: number;
-  current_balance: number;  // Current debt
+  current_debt: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -21,6 +21,7 @@ export interface CustomerListParams {
   per_page?: number;
   search?: string;
   has_debt?: boolean;
+  is_active?: boolean;
 }
 
 export interface CreateCustomerRequest {
@@ -29,6 +30,7 @@ export interface CreateCustomerRequest {
   address?: string;
   notes?: string;
   credit_limit?: number;
+  is_active?: boolean;
 }
 
 export interface UpdateCustomerRequest {
@@ -42,6 +44,6 @@ export interface UpdateCustomerRequest {
 
 // Customer with debt info
 export interface CustomerWithDebt extends Customer {
-  total_debt: number;
+  has_overdue: boolean;
   last_transaction_date?: string;
 }

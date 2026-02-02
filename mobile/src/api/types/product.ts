@@ -59,7 +59,9 @@ export interface ProductListParams {
   barcode?: string;
   sort_by?: 'name' | 'base_price' | 'created_at';
   sort_order?: 'asc' | 'desc';
-  low_stock?: boolean;
+  is_active?: boolean;
+  is_stock_active?: boolean;
+  low_stock_only?: boolean;
 }
 
 // Create product request (JSON for form-data)

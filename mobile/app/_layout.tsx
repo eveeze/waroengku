@@ -7,6 +7,22 @@ import { useAuthStore } from '@/stores/authStore';
 import { useNetworkStore } from '@/stores/networkStore';
 import { OfflineNotice } from '@/components/shared';
 
+import {
+  useFonts,
+  SpaceGrotesk_300Light,
+  SpaceGrotesk_400Regular,
+  SpaceGrotesk_500Medium,
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+} from '@expo-google-fonts/space-grotesk';
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+} from '@expo-google-fonts/plus-jakarta-sans';
+
 import '../global.css';
 
 /**
@@ -17,6 +33,19 @@ export default function RootLayout() {
   const hydrate = useAuthStore((state) => state.hydrate);
   const setupNetworkListener = useNetworkStore((state) => state.setupListener);
 
+  const [fontsLoaded] = useFonts({
+    SpaceGrotesk_300Light,
+    SpaceGrotesk_400Regular,
+    SpaceGrotesk_500Medium,
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+  });
+
   useEffect(() => {
     // Hydrate auth state from storage on app start
     hydrate();
@@ -25,6 +54,10 @@ export default function RootLayout() {
     const unsubscribe = setupNetworkListener();
     return () => unsubscribe();
   }, [hydrate, setupNetworkListener]);
+
+  if (!fontsLoaded) {
+    return null; // Or a splash screen
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

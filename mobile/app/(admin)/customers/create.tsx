@@ -86,7 +86,7 @@ export default function CreateCustomerScreen() {
         <ScrollView
           contentContainerStyle={{
             padding: 24,
-            paddingBottom: insets.bottom + 100,
+            paddingBottom: insets.bottom + 180,
           }}
           keyboardShouldPersistTaps="handled"
         >
@@ -200,7 +200,7 @@ export default function CreateCustomerScreen() {
         {/* Submit Button */}
         <View
           className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-6 py-4"
-          style={{ paddingBottom: insets.bottom + 12 }}
+          style={{ paddingBottom: insets.bottom + 90 }}
         >
           <Button
             title="SAVE MEMBER"

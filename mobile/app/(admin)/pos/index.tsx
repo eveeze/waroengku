@@ -17,6 +17,7 @@ import {
   getProducts,
   getCategories,
   searchProductByBarcode,
+  holdCart,
 } from '@/api/endpoints';
 import { Product, Category, ProductListParams } from '@/api/types';
 import { Loading } from '@/components/ui';
@@ -139,6 +140,41 @@ export default function POSScreen() {
     }
   };
 
+  const { execute: submitHoldCart } = useApi(holdCart);
+  const { items, clearCart } = useCartStore();
+
+  const handleHoldCart = async () => {
+    if (items.length === 0) return;
+
+    Alert.prompt(
+      'Hold Cart',
+      'Enter a reference name/note for this cart:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Hold',
+          onPress: async (name) => {
+            if (!name) return;
+            try {
+              await submitHoldCart({
+                items: items.map((i) => ({
+                  product_id: i.product.id,
+                  quantity: i.quantity,
+                })),
+                held_by: name,
+              });
+              clearCart();
+              Alert.alert('Success', 'Cart held successfully.');
+            } catch (e) {
+              Alert.alert('Error', 'Failed to hold cart.');
+            }
+          },
+        },
+      ],
+      'plain-text',
+    );
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -253,9 +289,16 @@ export default function POSScreen() {
 
           <TouchableOpacity
             onPress={() => setShowBarcodeScanner(true)}
-            className="bg-black w-12 h-12 rounded-lg items-center justify-center"
+            className="bg-black w-12 h-12 rounded-lg items-center justify-center mr-2"
           >
             <Text className="text-white text-xl">📷</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.push('/(admin)/pos/held-carts')}
+            className="bg-secondary-100 w-12 h-12 rounded-lg items-center justify-center"
+          >
+            <Text className="text-xl">📋</Text>
           </TouchableOpacity>
         </View>
 
@@ -324,32 +367,44 @@ export default function POSScreen() {
           className="absolute bottom-6 left-5 right-5"
           style={{ marginBottom: insets.bottom }}
         >
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => router.push('/(admin)/pos/checkout')}
-            className="bg-black rounded-xl shadow-xl p-4 flex-row items-center justify-between border border-secondary-800"
-          >
-            <View className="flex-row items-center gap-3">
-              <View className="bg-white/20 px-3 py-1 rounded-md">
-                <Text className="text-white font-bold">{getItemCount()}</Text>
-              </View>
-              <View>
-                <Text className="text-white/60 text-[10px] font-bold uppercase tracking-widest">
-                  Total
-                </Text>
-                <Text className="text-white font-black text-lg tracking-tight">
-                  {formatCurrency(getTotal())}
-                </Text>
-              </View>
-            </View>
-
-            <View className="flex-row items-center">
-              <Text className="text-white font-bold mr-2 uppercase text-xs tracking-wider">
-                Checkout
+          <View className="flex-row gap-3">
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={handleHoldCart}
+              className="flex-1 bg-secondary-800 rounded-xl shadow-xl p-4 flex-row items-center justify-center border border-secondary-800"
+            >
+              <Text className="text-white font-bold uppercase text-xs tracking-wider">
+                Hold
               </Text>
-              <Text className="text-white">→</Text>
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => router.push('/(admin)/pos/checkout')}
+              className="flex-[3] bg-black rounded-xl shadow-xl p-4 flex-row items-center justify-between border border-secondary-800"
+            >
+              <View className="flex-row items-center gap-3">
+                <View className="bg-white/20 px-3 py-1 rounded-md">
+                  <Text className="text-white font-bold">{getItemCount()}</Text>
+                </View>
+                <View>
+                  <Text className="text-white/60 text-[10px] font-bold uppercase tracking-widest">
+                    Total
+                  </Text>
+                  <Text className="text-white font-black text-lg tracking-tight">
+                    {formatCurrency(getTotal())}
+                  </Text>
+                </View>
+              </View>
+
+              <View className="flex-row items-center">
+                <Text className="text-white font-bold mr-2 uppercase text-xs tracking-wider">
+                  Checkout
+                </Text>
+                <Text className="text-white">→</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>

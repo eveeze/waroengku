@@ -1,123 +1,61 @@
-import {
-  UserInfo,
-  UserListParams,
-  UpdateUserRequest,
-  PaginatedResponse,
-} from '../types';
+import apiClient from '../client';
+import { UserInfo, UserListParams, PaginatedResponse } from '../types';
+import { RegisterUserFormData } from '@/utils/validation';
 
 /**
- * Users API Endpoints (Admin Only)
- * MOCK IMPLEMENTATION - Backend endpoint does not exist yet.
+ * USERS MANAGEMENT (Admin Only)
+ * Sinkron dengan Backend Router: /api/v1/users
  */
 
-// Dummy data for mocking
-const MOCK_USERS: UserInfo[] = [
-  {
-    id: '1',
-    name: 'Super Admin',
-    email: 'admin@warung.com',
-    role: 'admin',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    name: 'Budi Kasir',
-    email: 'budi@warung.com',
-    role: 'cashier',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    name: 'Siti Gudang',
-    email: 'siti@warung.com',
-    role: 'inventory',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
 /**
- * Get all users with pagination
- * GET /api/v1/users (MOCKED)
+ * List Users
+ * Backend: GET /api/v1/users (adminOnly)
  */
 export async function getUsers(
   params?: UserListParams,
 ): Promise<PaginatedResponse<UserInfo>> {
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  return {
-    success: true,
-    data: MOCK_USERS,
-    meta: {
-      page: params?.page || 1,
-      per_page: params?.per_page || 10,
-      total_items: MOCK_USERS.length,
-      total_pages: 1,
-    },
-  };
+  // Backend pake response.SuccessWithMeta, jadi kita return response.data
+  const response = await apiClient.get('/users', { params });
+  return response.data;
 }
+
 /**
- * Create new user (Admin Only)
- * POST /api/v1/admin/users
+ * Create User (Admin Only atau Public Registration tergantung Backend)
+ * Backend: POST /api/v1/users
  */
-export async function createUser(data: RegisterRequest): Promise<UserInfo> {
-  const response = await fetch(`${API_URL}/api/v1/admin/users`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // WAJIB sertakan token Admin karena ini route terproteksi
-      Authorization: `Bearer ${adminToken}`,
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error?.message || 'Failed to create user');
-  }
-
-  const result = await response.json();
-  return result.data; // Mengembalikan data user yang baru dibuat
+export async function createUser(
+  data: RegisterUserFormData,
+): Promise<UserInfo> {
+  // Sesuai rute lu: mux.HandleFunc("POST "+apiPrefix+"/users", ...)
+  const response = await apiClient.post('/users', data);
+  return response.data.data;
 }
+
 /**
- * Get single user by ID
- * GET /api/v1/users/:id (MOCKED)
+ * Get User By ID
+ * Backend: GET /api/v1/users/{id}
  */
 export async function getUserById(id: string): Promise<UserInfo> {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-  const user = MOCK_USERS.find((u) => u.id === id);
-  if (!user) throw new Error('User not found');
-  return user;
+  const response = await apiClient.get(`/users/${id}`);
+  return response.data.data;
 }
 
 /**
- * Update user
- * PUT /api/v1/users/:id (MOCKED)
+ * Update User
+ * Backend: PUT /api/v1/users/{id}
  */
 export async function updateUser(
   id: string,
-  data: UpdateUserRequest,
+  data: any, // Sesuai UpdateUserRequest di backend
 ): Promise<UserInfo> {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  // In a real mock we would update the array, but for simple display this is enough
-  return {
-    ...MOCK_USERS[0],
-    id,
-    ...data,
-  };
+  const response = await apiClient.put(`/users/${id}`, data);
+  return response.data.data;
 }
 
 /**
- * Delete/deactivate user
- * DELETE /api/v1/users/:id (MOCKED)
+ * Delete User
+ * Backend: DELETE /api/v1/users/{id}
  */
 export async function deleteUser(id: string): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  // Mock success
+  await apiClient.delete(`/users/${id}`);
 }

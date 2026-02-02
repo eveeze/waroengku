@@ -384,9 +384,9 @@ export default function CheckoutScreen() {
                 <Text className="text-secondary-500 font-medium">
                   {item.phone}
                 </Text>
-                {item.current_balance > 0 && (
+                {item.current_debt > 0 && (
                   <Text className="text-danger-600 text-xs font-bold mt-1">
-                    DEBT: {formatCurrency(item.current_balance)}
+                    DEBT: {formatCurrency(item.current_debt)}
                   </Text>
                 )}
               </TouchableOpacity>

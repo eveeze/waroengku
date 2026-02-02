@@ -14,7 +14,8 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Input } from '@/components/ui';
 import { registerUserSchema, RegisterUserFormData } from '@/utils/validation';
-import { registerUser } from '@/api/endpoints/auth';
+// PASTIKAN IMPORT INI KE users.ts YANG BARU
+import { createUser } from '@/api/endpoints/users';
 
 const roles = [
   { value: 'admin', label: 'Admin', description: 'Full access + Management' },
@@ -22,10 +23,6 @@ const roles = [
   { value: 'inventory', label: 'Inventory', description: 'Stock & Products' },
 ];
 
-/**
- * Create User Screen
- * Swiss Minimalist Refactor
- */
 export default function CreateUserScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -35,7 +32,6 @@ export default function CreateUserScreen() {
     control,
     handleSubmit,
     formState: { errors },
-    watch,
   } = useForm<RegisterUserFormData>({
     resolver: zodResolver(registerUserSchema),
     defaultValues: {
@@ -46,27 +42,25 @@ export default function CreateUserScreen() {
     },
   });
 
-  const selectedRole = watch('role');
-
   const onSubmit = async (data: RegisterUserFormData) => {
     try {
       setIsSubmitting(true);
 
-      await registerUser({
+      // Nembak ke POST /api/v1/users lewat function createUser
+      await createUser({
         name: data.name,
         email: data.email,
         password: data.password,
         role: data.role,
       });
 
-      // Simple success alert
-      Alert.alert('SUCCESS', 'User account created.', [
+      Alert.alert('BERHASIL', 'Akun user berhasil dibuat.', [
         { text: 'OK', onPress: () => router.back() },
       ]);
     } catch (error) {
       Alert.alert(
-        'FAILED',
-        error instanceof Error ? error.message : 'Could not create user',
+        'GAGAL',
+        error instanceof Error ? error.message : 'Gagal membuat user',
       );
     } finally {
       setIsSubmitting(false);
@@ -82,11 +76,11 @@ export default function CreateUserScreen() {
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
           <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
-            ← Back
+            ← Kembali
           </Text>
         </TouchableOpacity>
         <Text className="text-4xl font-black uppercase tracking-tighter text-black">
-          NEW USER
+          USER BARU
         </Text>
       </View>
 
@@ -97,14 +91,13 @@ export default function CreateUserScreen() {
         <ScrollView
           contentContainerStyle={{
             padding: 24,
-            paddingBottom: insets.bottom + 100,
+            paddingBottom: insets.bottom + 180,
           }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* User Info */}
           <View className="mb-8">
             <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-6">
-              Account Details
+              Informasi Akun
             </Text>
 
             <Controller
@@ -113,8 +106,8 @@ export default function CreateUserScreen() {
               render={({ field: { onChange, onBlur, value } }) => (
                 <View className="mb-4">
                   <Input
-                    label="FULL NAME *"
-                    placeholder="Enter full name"
+                    label="NAMA LENGKAP *"
+                    placeholder="Masukkan nama lengkap"
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
@@ -130,7 +123,7 @@ export default function CreateUserScreen() {
               render={({ field: { onChange, onBlur, value } }) => (
                 <View className="mb-4">
                   <Input
-                    label="EMAIL ADDRESS *"
+                    label="ALAMAT EMAIL *"
                     placeholder="user@example.com"
                     value={value}
                     onChangeText={onChange}
@@ -150,7 +143,7 @@ export default function CreateUserScreen() {
                 <View className="mb-4">
                   <Input
                     label="PASSWORD *"
-                    placeholder="Min 6 characters"
+                    placeholder="Min. 6 karakter"
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
@@ -162,10 +155,9 @@ export default function CreateUserScreen() {
             />
           </View>
 
-          {/* Role Selection */}
           <View className="mb-8">
             <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-6">
-              Select Role
+              Pilih Role
             </Text>
             <Controller
               control={control}
@@ -175,11 +167,7 @@ export default function CreateUserScreen() {
                   {roles.map((role) => (
                     <TouchableOpacity
                       key={role.value}
-                      onPress={() =>
-                        onChange(
-                          role.value as 'admin' | 'cashier' | 'inventory',
-                        )
-                      }
+                      onPress={() => onChange(role.value as any)}
                       className={`flex-row items-center p-4 mb-3 border ${
                         value === role.value
                           ? 'border-black bg-black'
@@ -188,20 +176,12 @@ export default function CreateUserScreen() {
                     >
                       <View className="flex-1">
                         <Text
-                          className={`font-bold uppercase tracking-wide text-sm ${
-                            value === role.value
-                              ? 'text-white'
-                              : 'text-primary-900'
-                          }`}
+                          className={`font-bold uppercase tracking-wide text-sm ${value === role.value ? 'text-white' : 'text-primary-900'}`}
                         >
                           {role.label}
                         </Text>
                         <Text
-                          className={`text-xs mt-1 ${
-                            value === role.value
-                              ? 'text-secondary-400'
-                              : 'text-secondary-500'
-                          }`}
+                          className={`text-xs mt-1 ${value === role.value ? 'text-secondary-400' : 'text-secondary-500'}`}
                         >
                           {role.description}
                         </Text>
@@ -211,24 +191,18 @@ export default function CreateUserScreen() {
                       )}
                     </TouchableOpacity>
                   ))}
-                  {errors.role && (
-                    <Text className="text-red-600 text-xs font-bold mt-2 uppercase tracking-wide">
-                      {errors.role.message}
-                    </Text>
-                  )}
                 </View>
               )}
             />
           </View>
         </ScrollView>
 
-        {/* Submit Button */}
         <View
           className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-6 py-4"
-          style={{ paddingBottom: insets.bottom + 12 }}
+          style={{ paddingBottom: insets.bottom + 90 }}
         >
           <Button
-            title="CREATE USER ACCOUNT"
+            title="SIMPAN AKUN USER"
             fullWidth
             size="lg"
             onPress={handleSubmit(onSubmit)}
