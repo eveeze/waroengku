@@ -20,10 +20,7 @@ export type LoginFormData = z.infer<typeof loginSchema>;
 
 // Register user validation (Admin)
 export const registerUserSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Nama wajib diisi')
-    .min(2, 'Nama minimal 2 karakter'),
+  name: z.string().min(1, 'Nama wajib diisi').min(2, 'Nama minimal 2 karakter'),
   email: z
     .string()
     .min(1, 'Email wajib diisi')
@@ -49,6 +46,7 @@ export const productSchema = z.object({
   sku: z.string().optional(),
   description: z.string().optional(),
   category_id: z.string().optional(),
+  consignor_id: z.string().optional().nullable(),
   unit: z.string().default('pcs'),
   base_price: z
     .number({ required_error: 'Harga jual wajib diisi' })
@@ -67,9 +65,7 @@ export type ProductFormData = z.infer<typeof productSchema>;
 
 // Pricing tier validation
 export const pricingTierSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Nama tier wajib diisi'),
+  name: z.string().min(1, 'Nama tier wajib diisi'),
   min_quantity: z
     .number({ required_error: 'Qty minimum wajib diisi' })
     .min(1, 'Qty minimum harus lebih dari 0'),

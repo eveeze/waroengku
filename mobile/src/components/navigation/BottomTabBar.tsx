@@ -28,6 +28,14 @@ export function BottomTabBar({
   // Route Config
   const visibleRoutes = ['index', 'products', 'pos', 'transactions', 'menu'];
 
+  // HIDE TAB BAR ON POS SCREEN
+  // If the currently active tab is 'pos', we hide the bottom bar completely
+  // to give full screen real estate to the POS interface.
+  const currentRouteName = state.routes[state.index].name;
+  if (currentRouteName === 'pos') {
+    return null;
+  }
+
   return (
     <View
       style={[

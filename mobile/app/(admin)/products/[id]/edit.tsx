@@ -22,8 +22,13 @@ import {
   Loading,
   ImagePickerInput,
 } from '@/components/ui';
-import { updateProduct, getProductById, getCategories } from '@/api/endpoints';
-import { Category, Product } from '@/api/types';
+import {
+  updateProduct,
+  getProductById,
+  getCategories,
+  getConsignors,
+} from '@/api/endpoints';
+import { Category, Product, Consignor } from '@/api/types';
 import { useApi, ImageAsset, useOptimisticMutation } from '@/hooks';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetcher } from '@/api/client';
@@ -35,6 +40,7 @@ const editProductSchema = z.object({
   sku: z.string().optional(),
   description: z.string().optional(),
   category_id: z.string().optional(),
+  consignor_id: z.string().nullable().optional(),
   unit: z.string(),
   base_price: z.number().min(0),
   cost_price: z.number().min(0),
@@ -55,6 +61,7 @@ export default function EditProductScreen() {
   const insets = useSafeAreaInsets();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [consignors, setConsignors] = useState<Consignor[]>([]);
   const [product, setProduct] = useState<Product | null>(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const queryClient = useQueryClient();
@@ -74,6 +81,11 @@ export default function EditProductScreen() {
     queryFn: ({ queryKey }) => fetcher<Category[]>({ queryKey }),
   });
 
+  const { data: consignorsData } = useQuery({
+    queryKey: ['/consignors'],
+    queryFn: ({ queryKey }) => fetcher<Consignor[]>({ queryKey }),
+  });
+
   // Optimistic Mutation
   const { mutate: mutateProduct, isPending: isUpdating } =
     useOptimisticMutation<
@@ -90,6 +102,7 @@ export default function EditProductScreen() {
           sku: variables.sku || undefined,
           description: variables.description || undefined,
           category_id: variables.category_id || undefined,
+          consignor_id: variables.consignor_id,
           unit: variables.unit,
           base_price: variables.base_price,
           cost_price: variables.cost_price,
@@ -152,6 +165,7 @@ export default function EditProductScreen() {
         sku: productData.sku || '',
         description: productData.description || '',
         category_id: productData.category_id || '',
+        consignor_id: productData.consignor_id || null,
         unit: productData.unit,
         base_price: productData.base_price,
         cost_price: productData.cost_price,
@@ -168,6 +182,16 @@ export default function EditProductScreen() {
       setCategories(categoriesData);
     }
   }, [categoriesData]);
+
+  useEffect(() => {
+    if (consignorsData) {
+      // Safe unwrap similar to what we did in index
+      const list = Array.isArray(consignorsData)
+        ? consignorsData
+        : (consignorsData as any)?.data || [];
+      setConsignors(list);
+    }
+  }, [consignorsData]);
 
   // Removed manual loadData
 
@@ -383,6 +407,58 @@ export default function EditProductScreen() {
                           }`}
                         >
                           {cat.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              />
+            </View>
+
+            {/* Consignor */}
+            <View className="mt-5">
+              <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+                CONSIGNOR
+              </Text>
+              <Controller
+                control={control}
+                name="consignor_id"
+                render={({ field: { onChange, value } }) => (
+                  <View className="flex-row flex-wrap">
+                    <TouchableOpacity
+                      onPress={() => onChange(null)}
+                      className={`px-4 py-2 rounded-lg mr-2 mb-2 border ${
+                        !value
+                          ? 'bg-primary-900 border-primary-900'
+                          : 'bg-white border-secondary-200'
+                      }`}
+                    >
+                      <Text
+                        className={`text-xs font-bold uppercase tracking-widest font-heading ${!value ? 'text-white' : 'text-primary-900'}`}
+                      >
+                        NONE
+                      </Text>
+                    </TouchableOpacity>
+                    {consignors.map((cons) => (
+                      <TouchableOpacity
+                        key={cons.id}
+                        onPress={() =>
+                          onChange(value === cons.id ? null : cons.id)
+                        }
+                        className={`px-4 py-2 rounded-lg mr-2 mb-2 border ${
+                          value === cons.id
+                            ? 'bg-primary-900 border-primary-900'
+                            : 'bg-white border-secondary-200'
+                        }`}
+                      >
+                        <Text
+                          className={`text-xs font-bold uppercase tracking-widest font-heading ${
+                            value === cons.id
+                              ? 'text-white'
+                              : 'text-primary-900'
+                          }`}
+                        >
+                          {cons.name}
                         </Text>
                       </TouchableOpacity>
                     ))}

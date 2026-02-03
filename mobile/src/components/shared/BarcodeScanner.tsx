@@ -39,25 +39,36 @@ export function BarcodeScanner({
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [lastScannedCode, setLastScannedCode] = useState<string | null>(null);
+  const isProcessing = React.useRef(false);
 
   useEffect(() => {
     if (visible) {
       setScanned(false);
       setLastScannedCode(null);
+      isProcessing.current = false;
     }
   }, [visible]);
 
   const handleBarcodeScanned = (result: BarcodeScanningResult) => {
-    if (scanned || result.data === lastScannedCode) return;
+    // Synchronous check to prevent race conditions
+    if (isProcessing.current || result.data === lastScannedCode) return;
 
+    isProcessing.current = true;
     setScanned(true);
     setLastScannedCode(result.data);
+
+    // Slight delay to ensure UI updates before allowing any potential re-trigger logic interaction
+    // passed to parent
     onScan(result.data, result.type);
   };
 
   const handleRescan = () => {
     setScanned(false);
     setLastScannedCode(null);
+    // Allow scanning again after state update
+    setTimeout(() => {
+      isProcessing.current = false;
+    }, 500);
   };
 
   if (!permission) {

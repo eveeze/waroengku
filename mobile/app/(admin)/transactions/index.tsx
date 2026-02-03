@@ -12,13 +12,27 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
-import { Transaction, PaginatedResponse } from '@/api/types';
+import { Transaction, PaginatedResponse, Customer } from '@/api/types';
 import { Loading, Button } from '@/components/ui';
+import { CustomerSelector } from '@/components/shared/CustomerSelector';
+import {
+  TransactionFilterModal,
+  FilterState,
+} from '@/components/shared/TransactionFilterModal';
 
 export default function TransactionsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState<FilterState>({
+    status: null,
+    payment_method: null,
+    date_from: '',
+    date_to: '',
+    customer: null,
+  });
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showCustomerSelector, setShowCustomerSelector] = useState(false);
 
   const {
     data,
@@ -29,7 +43,7 @@ export default function TransactionsScreen() {
     refetch,
     isRefetching,
   } = useInfiniteQuery({
-    queryKey: ['/transactions', { search }],
+    queryKey: ['/transactions', { search, ...filters }],
     queryFn: async ({ pageParam = 1, queryKey }) => {
       const [url, params] = queryKey as [string, { search?: string }];
       // fetchWithCache expects a queryKey compatible context or just call it directly?
@@ -45,6 +59,11 @@ export default function TransactionsScreen() {
             page: pageParam,
             per_page: 20,
             search: params?.search || undefined,
+            customer_id: filters.customer?.id,
+            status: filters.status || undefined,
+            payment_method: filters.payment_method || undefined,
+            date_from: filters.date_from || undefined,
+            date_to: filters.date_to || undefined,
           },
         ],
         meta: undefined,
@@ -62,12 +81,13 @@ export default function TransactionsScreen() {
 
   const transactions = data?.pages.flatMap((page) => page.data) || [];
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | string | undefined | null) => {
+    const value = parseFloat(String(amount || 0));
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0,
-    }).format(amount);
+    }).format(isNaN(value) ? 0 : value);
   };
 
   const formatDate = (dateString: string) => {
@@ -135,13 +155,13 @@ export default function TransactionsScreen() {
             className="text-secondary-600 text-xs mt-1 font-medium font-body truncate"
             numberOfLines={1}
           >
-            {item.customer_name || 'Guest Customer'}
+            {item.customer?.name || 'Guest Customer'}
           </Text>
         </View>
 
         <View className="items-end">
           <Text className="font-heading font-black text-primary-900 text-lg tracking-tight">
-            {formatCurrency(item.final_amount)}
+            {formatCurrency(item.total_amount)}
           </Text>
           <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest mt-1">
             {item.payment_method}
@@ -170,16 +190,122 @@ export default function TransactionsScreen() {
         </Text>
 
         {/* Search */}
-        <View className="bg-secondary-50 border border-secondary-200 rounded-lg px-4 py-3">
-          <TextInput
-            placeholder="SEARCH INVOICE / CUSTOMER..."
-            placeholderTextColor="#9CA3AF"
-            className="font-bold text-sm text-primary-900"
-            value={search}
-            onChangeText={setSearch}
-          />
+        <View className="flex-row gap-2 mb-4">
+          <View className="flex-1 bg-secondary-50 border border-secondary-200 rounded-lg px-4 py-3">
+            <TextInput
+              placeholder="SEARCH INVOICE / NAME..."
+              placeholderTextColor="#9CA3AF"
+              className="font-bold text-sm text-primary-900"
+              value={search}
+              onChangeText={setSearch}
+            />
+          </View>
+          <TouchableOpacity
+            onPress={() => setShowFilterModal(true)}
+            className={`w-12 h-12 items-center justify-center rounded-lg border ${
+              filters.status ||
+              filters.payment_method ||
+              filters.date_from ||
+              filters.customer
+                ? 'bg-black border-black'
+                : 'bg-white border-secondary-200'
+            }`}
+          >
+            <Text
+              className={`${
+                filters.status ||
+                filters.payment_method ||
+                filters.date_from ||
+                filters.customer
+                  ? 'text-white'
+                  : 'text-primary-900'
+              } text-lg`}
+            >
+              ⚙️
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Active Filters Display */}
+        <View className="flex-row flex-wrap gap-2 mb-4">
+          {filters.customer && (
+            <TouchableOpacity
+              onPress={() =>
+                setFilters((prev) => ({ ...prev, customer: null }))
+              }
+              className="bg-black px-3 py-1 rounded-full flex-row items-center"
+            >
+              <Text className="text-white text-xs font-bold mr-2">
+                User: {filters.customer.name}
+              </Text>
+              <Text className="text-white text-xs">✕</Text>
+            </TouchableOpacity>
+          )}
+          {filters.status && (
+            <TouchableOpacity
+              onPress={() => setFilters((prev) => ({ ...prev, status: null }))}
+              className="bg-secondary-900 px-3 py-1 rounded-full flex-row items-center"
+            >
+              <Text className="text-white text-xs font-bold mr-2">
+                Status: {filters.status}
+              </Text>
+              <Text className="text-white text-xs">✕</Text>
+            </TouchableOpacity>
+          )}
+          {filters.payment_method && (
+            <TouchableOpacity
+              onPress={() =>
+                setFilters((prev) => ({ ...prev, payment_method: null }))
+              }
+              className="bg-secondary-900 px-3 py-1 rounded-full flex-row items-center"
+            >
+              <Text className="text-white text-xs font-bold mr-2">
+                Pay: {filters.payment_method}
+              </Text>
+              <Text className="text-white text-xs">✕</Text>
+            </TouchableOpacity>
+          )}
+          {filters.date_from !== '' && (
+            <TouchableOpacity
+              onPress={() =>
+                setFilters((prev) => ({ ...prev, date_from: '', date_to: '' }))
+              }
+              className="bg-secondary-900 px-3 py-1 rounded-full flex-row items-center"
+            >
+              <Text className="text-white text-xs font-bold mr-2">
+                Date: {filters.date_from}
+              </Text>
+              <Text className="text-white text-xs">✕</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
+
+      <TransactionFilterModal
+        visible={showFilterModal}
+        onClose={() => setShowFilterModal(false)}
+        currentFilters={filters}
+        onApply={setFilters}
+        onClear={() =>
+          setFilters({
+            status: null,
+            payment_method: null,
+            date_from: '',
+            date_to: '',
+            customer: null,
+          })
+        }
+        onOpenCustomerSelector={() => setShowCustomerSelector(true)}
+      />
+
+      <CustomerSelector
+        visible={showCustomerSelector}
+        onClose={() => setShowCustomerSelector(false)}
+        onSelect={(customer) => {
+          setFilters((prev) => ({ ...prev, customer }));
+        }}
+        title="FILTER BY CUSTOMER"
+      />
 
       <FlatList
         data={transactions}

@@ -18,9 +18,10 @@ import apiClient, { fetcher, fetchWithCache } from '@/api/client';
 import {
   getProducts,
   getCategories,
+  getConsignors,
   searchProductByBarcode,
 } from '@/api/endpoints';
-import { Product, Category, ProductListParams } from '@/api/types';
+import { Product, Category, ProductListParams, Consignor } from '@/api/types';
 import { Card, Loading, Button } from '@/components/ui';
 import { getCleanImageUrl } from '@/utils/image';
 import { BarcodeScanner } from '@/components/shared';
@@ -38,6 +39,9 @@ export default function ProductsScreen() {
   const [selectedCategory, setSelectedCategory] = useState<
     string | undefined
   >();
+  const [selectedConsignor, setSelectedConsignor] = useState<
+    string | undefined
+  >();
   const [statusFilter, setStatusFilter] = useState<
     'all' | 'active' | 'inactive'
   >('active');
@@ -47,6 +51,7 @@ export default function ProductsScreen() {
   );
   const [showFilters, setShowFilters] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [consignors, setConsignors] = useState<Consignor[]>([]);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
   // React Query with useInfiniteQuery
@@ -65,6 +70,7 @@ export default function ProductsScreen() {
         per_page: 20,
         search: search || undefined,
         category_id: selectedCategory,
+        consignor_id: selectedConsignor,
         low_stock_only: showLowStock || undefined,
         sort_by: sortBy,
         sort_order: 'asc',
@@ -110,6 +116,11 @@ export default function ProductsScreen() {
     queryFn: ({ queryKey }) => fetcher<Category[]>({ queryKey }),
   });
 
+  const { data: consignorsData } = useQuery({
+    queryKey: ['/consignors'],
+    queryFn: ({ queryKey }) => fetcher<Consignor[]>({ queryKey }),
+  });
+
   // Derived state
   // Derived state effects removed as we use data directly
   // ...
@@ -118,7 +129,17 @@ export default function ProductsScreen() {
     if (categoriesData) {
       setCategories(categoriesData);
     }
-  }, [categoriesData]);
+    if (consignorsData) {
+      // Handle if consignorsData is wrapped in ApiResponse or plain array
+      // Though fetcher normally unwraps data if configured, we should be safe
+      // Assuming fetcher<Consignor[]> returns Consignor[] directly or we iterate.
+      // Actually, let's use Array.isArray check to be safe as previously seen.
+      const list = Array.isArray(consignorsData)
+        ? consignorsData
+        : (consignorsData as any)?.data || [];
+      setConsignors(list);
+    }
+  }, [categoriesData, consignorsData]);
 
   // Barcode search manually triggered
   const { isLoading: isSearchingBarcode, execute: searchByBarcode } = useApi(
@@ -410,6 +431,44 @@ export default function ProductsScreen() {
                     className={`text-xs font-bold uppercase tracking-wide ${selectedCategory === cat.id ? 'text-white' : 'text-primary-900'}`}
                   >
                     {cat.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Consignor Filter */}
+            <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500 mb-2">
+              Consignor
+            </Text>
+            <View className="flex-row flex-wrap mb-4 gap-2">
+              <TouchableOpacity
+                onPress={() => setSelectedConsignor(undefined)}
+                className={`px-4 py-2 rounded-md border ${
+                  !selectedConsignor
+                    ? 'bg-primary-900 border-primary-900'
+                    : 'bg-white border-secondary-200'
+                }`}
+              >
+                <Text
+                  className={`text-xs font-bold uppercase tracking-wide ${!selectedConsignor ? 'text-white' : 'text-primary-900'}`}
+                >
+                  ALL
+                </Text>
+              </TouchableOpacity>
+              {consignors.map((cons) => (
+                <TouchableOpacity
+                  key={cons.id}
+                  onPress={() => setSelectedConsignor(cons.id)}
+                  className={`px-4 py-2 rounded-md border ${
+                    selectedConsignor === cons.id
+                      ? 'bg-primary-900 border-primary-900'
+                      : 'bg-white border-secondary-200'
+                  }`}
+                >
+                  <Text
+                    className={`text-xs font-bold uppercase tracking-wide ${selectedConsignor === cons.id ? 'text-white' : 'text-primary-900'}`}
+                  >
+                    {cons.name}
                   </Text>
                 </TouchableOpacity>
               ))}

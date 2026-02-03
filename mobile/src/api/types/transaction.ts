@@ -7,7 +7,7 @@ export interface TransactionItem {
   product_name?: string;
   unit?: string;
   unit_price?: number;
-  subtotal?: number;
+  total_amount?: number; // Renamed from subtotal
   tier_name?: string;
 }
 
@@ -15,12 +15,17 @@ export interface Transaction {
   id: string;
   invoice_number: string;
   customer_id?: string;
-  customer_name?: string;
+  customer?: {
+    id: string;
+    name: string;
+  };
+  // customer_name removed favor of customer object
   items: TransactionItem[];
-  total_amount: number;
+  subtotal: number; // Added based on doc
+  total_amount: number; // This is the FINAL amount after tax/discount
   discount_amount: number;
   tax_amount: number;
-  final_amount: number;
+  // final_amount removed as doc uses total_amount
   payment_method: 'cash' | 'kasbon' | 'transfer' | 'qris';
   amount_paid: number;
   change_amount: number;
@@ -65,6 +70,7 @@ export interface CartCalculationResult {
 export interface TransactionListParams {
   page?: number;
   per_page?: number;
+  search?: string;
   customer_id?: string;
   status?: string;
   payment_method?: string;

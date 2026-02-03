@@ -35,6 +35,7 @@ export interface Product {
   description?: string;
   category_id?: string;
   category_name?: string;
+  consignor_id?: string;
   unit: string;
   base_price: number;
   cost_price: number;
@@ -62,6 +63,7 @@ export interface ProductListParams {
   is_active?: boolean | 'all';
   is_stock_active?: boolean;
   low_stock_only?: boolean;
+  consignor_id?: string;
 }
 
 // Create product request (JSON for form-data)
@@ -71,6 +73,7 @@ export interface CreateProductRequest {
   sku?: string;
   description?: string;
   category_id?: string;
+  consignor_id?: string | null;
   unit?: string;
   base_price: number;
   cost_price: number;
@@ -89,6 +92,7 @@ export interface UpdateProductRequest {
   sku?: string;
   description?: string;
   category_id?: string;
+  consignor_id?: string | null;
   unit?: string;
   base_price?: number;
   cost_price?: number;

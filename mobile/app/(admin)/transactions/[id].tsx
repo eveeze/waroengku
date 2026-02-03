@@ -34,7 +34,10 @@ export default function TransactionDetailScreen() {
     refetch,
   } = useQuery({
     queryKey: [`/transactions/${id}`],
-    queryFn: ({ queryKey }) => fetchWithCache<Transaction>({ queryKey }),
+    queryFn: async ({ queryKey }) => {
+      const result = await fetchWithCache<{ data: Transaction }>({ queryKey });
+      return result.data;
+    },
     enabled: !!id,
     initialData: () => {
       // Search in infinite query cache
@@ -81,7 +84,7 @@ export default function TransactionDetailScreen() {
       // But standard way is to just call the function.
       const token = await generateSnapToken({
         order_id: transaction.invoice_number,
-        gross_amount: transaction.final_amount,
+        gross_amount: transaction.total_amount,
       });
 
       if (token && token.redirect_url) {
@@ -164,12 +167,13 @@ export default function TransactionDetailScreen() {
     );
   }
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | string | undefined | null) => {
+    const value = parseFloat(String(amount || 0));
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0,
-    }).format(amount);
+    }).format(isNaN(value) ? 0 : value);
   };
 
   const formatDate = (dateString: string) => {
@@ -265,7 +269,7 @@ export default function TransactionDetailScreen() {
                   </Text>
                 </View>
                 <Text className="font-bold text-primary-900 text-sm">
-                  {formatCurrency(item.subtotal || 0)}
+                  {formatCurrency(item.total_amount || 0)}
                 </Text>
               </View>
             ))}
@@ -278,7 +282,7 @@ export default function TransactionDetailScreen() {
               Subtotal
             </Text>
             <Text className="text-primary-900 font-bold text-sm">
-              {formatCurrency(transaction.total_amount)}
+              {formatCurrency(transaction.subtotal)}
             </Text>
           </View>
 
@@ -309,7 +313,7 @@ export default function TransactionDetailScreen() {
               Total
             </Text>
             <Text className="text-2xl font-black text-black">
-              {formatCurrency(transaction.final_amount)}
+              {formatCurrency(transaction.total_amount)}
             </Text>
           </View>
 

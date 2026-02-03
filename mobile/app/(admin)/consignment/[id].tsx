@@ -98,6 +98,13 @@ export default function ConsignorDetailScreen() {
           <Text className="text-secondary-500">{consignor.phone}</Text>
         </Card>
 
+        <Button
+          title="View Associated Products"
+          variant="outline"
+          onPress={() => router.push(`/(admin)/products?consignor_id=${id}`)}
+          className="mb-4"
+        />
+
         <Button title="Delete" variant="danger" onPress={handleDelete} />
       </ScrollView>
     </View>

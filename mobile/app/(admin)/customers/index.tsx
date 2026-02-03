@@ -97,11 +97,7 @@ export default function CustomersScreen() {
             {item.phone || '-'}
           </Text>
         </View>
-        // Use current_debt if total_debt is missing in type definition, or fix
-        type. // Assuming current_debt based on detail screen usage. // If type
-        definition has current_debt, we use it. // If type definition has
-        total_debt, then we keep it. Use 'any' cast if unsure or check types. //
-        But let's assume current_debt is the correct one.
+
         {item.current_debt > 0 && (
           <View className="bg-red-100 px-2 py-1 rounded-md">
             <Text className="text-red-700 text-[10px] font-black uppercase tracking-widest">

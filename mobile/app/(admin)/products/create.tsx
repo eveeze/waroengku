@@ -16,8 +16,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { BarcodeScanner } from '@/components/shared';
 import { Button, Card, Input, ImagePickerInput } from '@/components/ui';
 import { productSchema, ProductFormData } from '@/utils/validation';
-import { createProduct, getCategories } from '@/api/endpoints';
-import { Category, CreatePricingTierRequest } from '@/api/types';
+import { createProduct, getCategories, getConsignors } from '@/api/endpoints';
+import { Category, CreatePricingTierRequest, Consignor } from '@/api/types';
 import { useApi, ImageAsset } from '@/hooks';
 
 /**
@@ -28,6 +28,7 @@ export default function CreateProductScreen() {
   const insets = useSafeAreaInsets();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [consignors, setConsignors] = useState<Consignor[]>([]);
   const [pricingTiers, setPricingTiers] = useState<CreatePricingTierRequest[]>(
     [],
   );
@@ -43,6 +44,7 @@ export default function CreateProductScreen() {
   });
 
   const { execute: fetchCategories } = useApi(getCategories);
+  const { execute: fetchConsignors } = useApi(getConsignors);
 
   const {
     control,
@@ -57,6 +59,8 @@ export default function CreateProductScreen() {
       barcode: '',
       sku: '',
       description: '',
+      category_id: '',
+      consignor_id: null,
       unit: 'pcs',
       base_price: 0,
       cost_price: 0,
@@ -79,6 +83,26 @@ export default function CreateProductScreen() {
       if (cats) setCategories(cats);
     } catch {}
   };
+
+  const loadConsignors = async () => {
+    try {
+      const result = await fetchConsignors();
+      if (result && Array.isArray(result)) {
+        setConsignors(result);
+      } else if (
+        result &&
+        'data' in result &&
+        Array.isArray((result as any).data)
+      ) {
+        // Handle ApiResponse wrapper if present
+        setConsignors((result as any).data);
+      }
+    } catch {}
+  };
+
+  useEffect(() => {
+    loadConsignors();
+  }, []);
 
   const handleBarcodeScanned = (barcode: string, type: string) => {
     setValue('barcode', barcode);
@@ -112,10 +136,16 @@ export default function CreateProductScreen() {
     try {
       setIsSubmitting(true);
 
+      // Default SKU to Barcode if empty
+      const productData = { ...data };
+      if (!productData.sku && productData.barcode) {
+        productData.sku = productData.barcode;
+      }
+
       // FIXED: Pass image to createProduct
       await createProduct(
         {
-          ...data,
+          ...productData,
           pricing_tiers: pricingTiers.length > 0 ? pricingTiers : undefined,
         },
         productImage
@@ -261,6 +291,62 @@ export default function CreateProductScreen() {
                           }`}
                         >
                           {cat.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+            />
+            <Controller
+              control={control}
+              name="consignor_id"
+              render={({ field: { onChange, value } }) => (
+                <View className="mb-5">
+                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+                    CONSIGNOR / SUPPLIER
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    className="flex-row"
+                  >
+                    <TouchableOpacity
+                      onPress={() => onChange(null)}
+                      className={`px-4 py-2 rounded-md mr-2 border ${
+                        !value
+                          ? 'bg-primary-900 border-primary-900'
+                          : 'bg-white border-secondary-200'
+                      }`}
+                    >
+                      <Text
+                        className={`text-xs font-bold uppercase tracking-widest font-heading ${
+                          !value ? 'text-white' : 'text-primary-900'
+                        }`}
+                      >
+                        NONE
+                      </Text>
+                    </TouchableOpacity>
+                    {consignors.map((cons) => (
+                      <TouchableOpacity
+                        key={cons.id}
+                        onPress={() =>
+                          onChange(value === cons.id ? null : cons.id)
+                        }
+                        className={`px-4 py-2 rounded-md mr-2 border ${
+                          value === cons.id
+                            ? 'bg-primary-900 border-primary-900'
+                            : 'bg-white border-secondary-200'
+                        }`}
+                      >
+                        <Text
+                          className={`text-xs font-bold uppercase tracking-widest font-heading ${
+                            value === cons.id
+                              ? 'text-white'
+                              : 'text-primary-900'
+                          }`}
+                        >
+                          {cons.name}
                         </Text>
                       </TouchableOpacity>
                     ))}

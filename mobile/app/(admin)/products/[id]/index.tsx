@@ -15,7 +15,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApi, useOptimisticMutation } from '@/hooks'; // useApi still used? Maybe generic one.
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetcher } from '@/api/client';
+import { fetcher, fetchWithCache } from '@/api/client';
 import {
   getProductById,
   deleteProduct,
@@ -24,7 +24,7 @@ import {
 } from '@/api/endpoints/products';
 import { Header } from '@/components/shared';
 import { Card, Button, Loading } from '@/components/ui';
-import { Product, PricingTier } from '@/api/types';
+import { Product, PricingTier, Consignor, ApiResponse } from '@/api/types';
 import { getCleanImageUrl } from '@/utils/image';
 // import { useApi } from '@/hooks/useApi'; // Removed generic useApi for fetching
 
@@ -48,6 +48,18 @@ export default function ProductDetailScreen() {
     queryFn: ({ queryKey }) => fetcher<Product>({ queryKey }),
     enabled: !!id,
   });
+
+  // Fetch consignors to resolve name if needed
+  const { data: consignorsResponse } = useQuery({
+    queryKey: ['/consignors'],
+    queryFn: ({ queryKey }) =>
+      fetchWithCache<ApiResponse<Consignor[]>>({ queryKey }),
+    enabled: !!product?.consignor_id,
+  });
+
+  const consignorName = product?.consignor_id
+    ? consignorsResponse?.data?.find((c) => c.id === product.consignor_id)?.name
+    : null;
 
   const { mutate: mutateDeleteProduct } = useOptimisticMutation(
     async () => deleteProduct(id!),
@@ -265,6 +277,27 @@ export default function ProductDetailScreen() {
             </View>
           )}
         </View>
+
+        {product.consignor_id && consignorName && (
+          <View className="mb-8 mt-4 bg-secondary-50 border border-secondary-200 rounded-lg p-4">
+            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-1 font-body">
+              CONSIGNOR
+            </Text>
+            <View className="flex-row items-center justify-between">
+              <Text className="text-lg font-heading font-black text-primary-900">
+                {consignorName}
+              </Text>
+              <TouchableOpacity
+                onPress={() =>
+                  router.push(`/(admin)/consignment/${product.consignor_id}`)
+                }
+                className="bg-white border border-secondary-200 px-3 py-1 rounded"
+              >
+                <Text className="text-xs font-bold text-primary-900">VIEW</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {product.description && (
           <View className="mb-8">

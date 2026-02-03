@@ -24,8 +24,8 @@ import { Loading } from '@/components/ui';
 import { BarcodeScanner } from '@/components/shared';
 import { useCartStore } from '@/stores/cartStore';
 import { useOptimisticMutation } from '@/hooks';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetcher } from '@/api/client'; // useApi replaced
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { fetcher, fetchWithCache } from '@/api/client'; // useApi replaced
 
 // Screen Dimensions
 const { width } = Dimensions.get('window');
@@ -37,13 +37,15 @@ const ITEM_WIDTH = (width - PADDING * 2 - GAP) / COLUMN_COUNT;
 export default function POSScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { addItem, getItemCount, getTotal } = useCartStore();
+  const { addItem, getItemCount, getTotal, items, updateQuantity, clearCart } =
+    useCartStore();
 
   // State
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [hasMore, setHasMore] = useState(true);
+
+  // page state removed
+  // products state removed
+  // hasMore state removed
   const [selectedCategory, setSelectedCategory] = useState<
     string | undefined
   >();
@@ -57,16 +59,18 @@ export default function POSScreen() {
   });
 
   // React Query for Products
+  // React Query for Products (Infinite)
   const {
-    data: productsResponse,
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     isLoading,
     isRefetching,
-    refetch,
-  } = useQuery({
+  } = useInfiniteQuery({
     queryKey: [
       '/products',
       {
-        page,
         per_page: 20,
         search: search || undefined,
         category_id: selectedCategory,
@@ -74,8 +78,22 @@ export default function POSScreen() {
         sort_order: 'asc',
       },
     ],
-    queryFn: ({ queryKey }) => fetcher<any>({ queryKey }),
+    queryFn: ({ pageParam = 1, queryKey }) => {
+      const [path, params] = queryKey as [string, any];
+      return fetchWithCache<any>({
+        queryKey: [path, { ...params, page: pageParam }],
+      });
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta && lastPage.meta.page < lastPage.meta.total_pages) {
+        return lastPage.meta.page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
   });
+
+  const products = data?.pages.flatMap((page) => page.data) || [];
 
   // Barcode search manually triggered (generic useApi valid here or mutation)
   const { execute: searchByBarcode } = useApi((code: string) =>
@@ -83,22 +101,6 @@ export default function POSScreen() {
   );
 
   // Derived state for products (handling pagination locally if needed or replace)
-  useEffect(() => {
-    if (productsResponse?.data) {
-      if (page === 1) {
-        setProducts(productsResponse.data);
-      } else {
-        setProducts((prev) => {
-          const newIds = new Set(
-            productsResponse.data.map((p: Product) => p.id),
-          );
-          const filteredPrev = prev.filter((p) => !newIds.has(p.id));
-          return [...filteredPrev, ...productsResponse.data];
-        });
-      }
-      setHasMore(page < (productsResponse.meta?.total_pages || 1));
-    }
-  }, [productsResponse, page]);
 
   // Clean up manual loaders
   // loadCategories removal
@@ -107,14 +109,12 @@ export default function POSScreen() {
   // loadProducts removed
 
   const handleSearch = () => {
-    setPage(1);
-    // search update triggers useQuery
+    // search update triggers useInfiniteQuery reset automatically
   };
 
   const handleCategorySelect = (id?: string) => {
     setSelectedCategory(id);
-    setPage(1);
-    // category update triggers useQuery
+    // category update triggers useInfiniteQuery reset automatically
   };
 
   // loadProductsWithCategory removed
@@ -148,7 +148,6 @@ export default function POSScreen() {
       },
     },
   );
-  const { items, clearCart } = useCartStore();
 
   const handleHoldCart = async () => {
     if (items.length === 0) return;
@@ -190,6 +189,8 @@ export default function POSScreen() {
 
   const renderProduct = ({ item }: { item: Product }) => {
     const hasStock = item.is_stock_active ? item.current_stock > 0 : true;
+    const cartItem = items.find((i) => i.product.id === item.id);
+    const qty = cartItem ? cartItem.quantity : 0;
 
     return (
       <TouchableOpacity
@@ -224,8 +225,26 @@ export default function POSScreen() {
               </View>
             )}
 
-            {/* Add Badge Overlay */}
-            {hasStock && (
+            {/* Qty Controls Overlay */}
+            {hasStock && qty > 0 && (
+              <View className="absolute bottom-0 left-0 right-0 bg-black/80 flex-row items-center justify-between px-3 py-2">
+                <TouchableOpacity
+                  onPress={() => updateQuantity(item.id, qty - 1)}
+                  className="w-8 h-8 items-center justify-center bg-white/20 rounded-full"
+                >
+                  <Text className="text-white font-bold text-lg">-</Text>
+                </TouchableOpacity>
+                <Text className="text-white font-bold text-base">{qty}</Text>
+                <TouchableOpacity
+                  onPress={() => addItem(item)}
+                  className="w-8 h-8 items-center justify-center bg-white/20 rounded-full"
+                >
+                  <Text className="text-white font-bold text-lg">+</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {hasStock && qty === 0 && (
               <View className="absolute bottom-2 right-2 bg-black h-8 w-8 items-center justify-center rounded-full opacity-0 group-active:opacity-100">
                 <Text className="text-white font-bold text-xs">+</Text>
               </View>
@@ -349,8 +368,8 @@ export default function POSScreen() {
         }}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
         onEndReached={() => {
-          if (!isLoading && !isRefetching && hasMore) {
-            setPage((prev) => prev + 1);
+          if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
           }
         }}
         onEndReachedThreshold={0.5}
