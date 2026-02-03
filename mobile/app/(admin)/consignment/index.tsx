@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
-import { Consignor } from '@/api/types';
+import { Consignor, ApiResponse } from '@/api/types';
 import { Loading, Button } from '@/components/ui';
 
 export default function ConsignorListScreen() {
@@ -19,13 +19,16 @@ export default function ConsignorListScreen() {
   const insets = useSafeAreaInsets();
 
   const {
-    data: consignors = [],
+    data: response,
     isLoading,
     refetch,
   } = useQuery({
     queryKey: ['/consignors'],
-    queryFn: ({ queryKey }) => fetchWithCache<Consignor[]>({ queryKey }),
+    queryFn: ({ queryKey }) =>
+      fetchWithCache<ApiResponse<Consignor[]>>({ queryKey }),
   });
+
+  const consignors = response?.data || [];
 
   const renderItem = ({ item }: { item: Consignor }) => (
     <TouchableOpacity

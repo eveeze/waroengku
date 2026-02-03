@@ -11,7 +11,11 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
-import { KasbonCustomerSummary, KasbonReportData } from '@/api/types';
+import {
+  KasbonCustomerSummary,
+  KasbonReportData,
+  ApiResponse,
+} from '@/api/types';
 import { Loading } from '@/components/ui';
 
 export default function KasbonReportScreen() {
@@ -19,14 +23,17 @@ export default function KasbonReportScreen() {
   const router = useRouter();
 
   const {
-    data: report,
+    data: response,
     isLoading,
     refetch,
     error,
   } = useQuery({
     queryKey: ['/reports/kasbon'],
-    queryFn: ({ queryKey }) => fetchWithCache<KasbonReportData>({ queryKey }),
+    queryFn: ({ queryKey }) =>
+      fetchWithCache<ApiResponse<KasbonReportData>>({ queryKey }),
   });
+
+  const report = response?.data;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {

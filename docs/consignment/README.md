@@ -11,13 +11,19 @@ Manages "Titip Jual" (goods owned by others).
 
 ## Frontend Implementation Guide
 
-### 1. Consignor Dashboard
+### 1. Consignor Dashboard & Settlements
 
 > [!TIP]
 > **Optimistic UI Support**:
 > Use `ETag` to cache consignor lists and settlement history.
 > See [Optimistic UI Guide](../OPTIMISTIC_UI.md).
 
+- **Owed Amount**: Calculation: `Total Sales of Consignment Items` - `Commission`.a product, show a dropdown **"Supplier / Consignor"**.
+- **Context**: Linking a product to a consignor allows the system to track who owns the stock and who needs to be paid when it sells.
+
+### 3. Inventory Filters
+
+- **Stock List**: Add filter by "Consignor" to see stock belonging to specific suppliers.
 - **Owed Amount**: Calculation: `Total Sales of Consignment Items` - `Commission`.
 - **Settlement Button**: "Pay Consignor" -> Records an Expense in Cash Flow.
 
@@ -94,5 +100,23 @@ Update consignor details.
   "success": true,
   "message": "Consignor updated",
   "data": { ... }
+}
+```
+
+### 4. Delete Consignor
+
+Soft delete a consignor.
+
+- **URL**: `/consignors/{id}`
+- **Method**: `DELETE`
+- **Auth Required**: Yes (Admin only)
+
+#### Response (200 OK)
+
+```json
+{
+  "success": true,
+  "message": "Consignor deleted successfully",
+  "data": null
 }
 ```

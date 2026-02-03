@@ -15,7 +15,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import { useQuery } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
-import { DailyReportData } from '@/api/types';
+import { DailyReportData, ApiResponse } from '@/api/types';
 import { Loading } from '@/components/ui';
 
 export default function DailyReportScreen() {
@@ -27,14 +27,17 @@ export default function DailyReportScreen() {
   const dateString = selectedDate.toISOString().split('T')[0];
 
   const {
-    data: report,
+    data: response,
     isLoading,
     refetch,
     error,
   } = useQuery({
     queryKey: ['/reports/daily', dateString],
-    queryFn: ({ queryKey }) => fetchWithCache<DailyReportData>({ queryKey }),
+    queryFn: ({ queryKey }) =>
+      fetchWithCache<ApiResponse<DailyReportData>>({ queryKey }),
   });
+
+  const report = response?.data;
 
   const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
     setShowDatePicker(Platform.OS === 'ios');

@@ -12,8 +12,8 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
-import { getOpnameSessions, startOpnameSession } from '@/api/endpoints';
-import { OpnameSession } from '@/api/types';
+import { startOpnameSession } from '@/api/endpoints';
+import { OpnameSession, ApiResponse } from '@/api/types';
 import { Loading, Button } from '@/components/ui';
 import { useOptimisticMutation } from '@/hooks';
 
@@ -22,13 +22,16 @@ export default function StockOpnameListScreen() {
   const insets = useSafeAreaInsets();
 
   const {
-    data: sessions = [],
+    data: response,
     isLoading,
     refetch,
   } = useQuery({
     queryKey: ['/opname-sessions'],
-    queryFn: ({ queryKey }) => fetchWithCache<OpnameSession[]>({ queryKey }),
+    queryFn: ({ queryKey }) =>
+      fetchWithCache<ApiResponse<OpnameSession[]>>({ queryKey }),
   });
+
+  const sessions = response?.data || [];
 
   const { mutate: mutateCreate, isPending: isCreating } = useOptimisticMutation(
     async (payload: any) => startOpnameSession(payload),

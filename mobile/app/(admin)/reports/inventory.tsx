@@ -16,6 +16,7 @@ import {
   LowStockItem,
   OutOfStockItem,
   StockByCategory,
+  ApiResponse,
 } from '@/api/types';
 import { Loading } from '@/components/ui';
 
@@ -27,15 +28,17 @@ export default function InventoryReportScreen() {
   >('overview');
 
   const {
-    data: report,
+    data: response,
     isLoading,
     error,
     refetch,
   } = useQuery({
     queryKey: ['/reports/inventory'],
     queryFn: ({ queryKey }) =>
-      fetchWithCache<InventoryReportData>({ queryKey }),
+      fetchWithCache<ApiResponse<InventoryReportData>>({ queryKey }),
   });
+
+  const report = response?.data;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {

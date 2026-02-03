@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
 import { getCurrentSession } from '@/api/endpoints';
-import { DrawerSession } from '@/api/types';
+import { DrawerSession, ApiResponse } from '@/api/types';
 import { Loading, Button } from '@/components/ui';
 
 export default function CashFlowScreen() {
@@ -20,13 +20,16 @@ export default function CashFlowScreen() {
   const insets = useSafeAreaInsets();
 
   const {
-    data: session,
+    data: response,
     isLoading,
     refetch,
   } = useQuery({
     queryKey: ['/cash-flow/session/current'],
-    queryFn: ({ queryKey }) => fetchWithCache<DrawerSession>({ queryKey }),
+    queryFn: ({ queryKey }) =>
+      fetchWithCache<ApiResponse<DrawerSession>>({ queryKey }),
   });
+
+  const session = response?.data;
 
   // Removed manual loadData and useFocusEffect in favor of useQuery
   // useQuery will auto-refetch on focus by default in React Query v5 (if configured)

@@ -6,7 +6,7 @@ import { Header } from '@/components/shared';
 import { Button, Loading, Card } from '@/components/ui';
 // import { getConsignorById } from '@/api/endpoints/consignment';
 import { fetcher } from '@/api/client';
-import { Consignor } from '@/api/types';
+import { Consignor, ApiResponse } from '@/api/types';
 import { useOptimisticMutation } from '@/hooks';
 
 // Dummy delete function until endpoint exists/imported
@@ -30,9 +30,13 @@ export default function ConsignorDetailScreen() {
     enabled: !!id,
     initialData: () => {
       // Find in list cache: ['/consignors']
-      // Assuming list returns just array Consignor[]
-      const list = queryClient.getQueryData<Consignor[]>(['/consignors']);
-      return list?.find((c) => c.id === id);
+      const listResponse = queryClient.getQueryData<ApiResponse<Consignor[]>>([
+        '/consignors',
+      ]);
+      if (listResponse?.data && Array.isArray(listResponse.data)) {
+        return listResponse.data.find((c) => c.id === id);
+      }
+      return undefined;
     },
   });
 

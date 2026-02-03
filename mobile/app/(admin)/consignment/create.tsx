@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { createConsignor } from '@/api/endpoints';
 import { Button, Input } from '@/components/ui';
 import { useOptimisticMutation } from '@/hooks';
+import { ApiResponse, Consignor } from '@/api/types';
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -54,7 +55,35 @@ export default function CreateConsignorScreen() {
       }),
     {
       queryKey: ['/consignors'],
-      updater: (old: any) => old, // No optimistic update for create, relying on invalidation
+      updater: (
+        old: ApiResponse<Consignor[]> | undefined,
+        newData: FormData,
+      ) => {
+        const optimisticConsignor: Consignor = {
+          id: 'temp-' + Date.now(),
+          name: newData.name,
+          phone: newData.phone,
+
+          bank_name: newData.bank_name || undefined,
+          bank_account: newData.bank_account || undefined,
+
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        if (!old) {
+          return {
+            success: true,
+            data: [optimisticConsignor],
+          };
+        }
+
+        return {
+          ...old,
+          data: [...old.data, optimisticConsignor],
+        };
+      },
       invalidates: true,
       onSuccess: () => {
         Alert.alert('Success', 'Consignor added successfully');
