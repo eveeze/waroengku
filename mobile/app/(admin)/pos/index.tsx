@@ -23,6 +23,9 @@ import { Product, Category, ProductListParams } from '@/api/types';
 import { Loading } from '@/components/ui';
 import { BarcodeScanner } from '@/components/shared';
 import { useCartStore } from '@/stores/cartStore';
+import { useOptimisticMutation } from '@/hooks';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetcher } from '@/api/client'; // useApi replaced
 
 // Screen Dimensions
 const { width } = Dimensions.get('window');
@@ -44,86 +47,77 @@ export default function POSScreen() {
   const [selectedCategory, setSelectedCategory] = useState<
     string | undefined
   >();
-  const [categories, setCategories] = useState<Category[]>([]);
+  // categories state removed, handled by useQuery
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
-  // API
-  const { isLoading, execute: fetchProducts } = useApi(
-    (params: ProductListParams) => getProducts(params),
-  );
-  const { execute: fetchCategories } = useApi(getCategories);
+  // React Query for Categories
+  const { data: categories = [] } = useQuery({
+    queryKey: ['/categories'],
+    queryFn: ({ queryKey }) => fetcher<Category[]>({ queryKey }),
+  });
+
+  // React Query for Products
+  const {
+    data: productsResponse,
+    isLoading,
+    isRefetching,
+    refetch,
+  } = useQuery({
+    queryKey: [
+      '/products',
+      {
+        page,
+        per_page: 20,
+        search: search || undefined,
+        category_id: selectedCategory,
+        sort_by: 'name',
+        sort_order: 'asc',
+      },
+    ],
+    queryFn: ({ queryKey }) => fetcher<any>({ queryKey }),
+  });
+
+  // Barcode search manually triggered (generic useApi valid here or mutation)
   const { execute: searchByBarcode } = useApi((code: string) =>
     searchProductByBarcode(code),
   );
 
+  // Derived state for products (handling pagination locally if needed or replace)
   useEffect(() => {
-    loadCategories();
-    loadProducts();
-  }, []);
+    if (productsResponse?.data) {
+      if (page === 1) {
+        setProducts(productsResponse.data);
+      } else {
+        setProducts((prev) => {
+          const newIds = new Set(
+            productsResponse.data.map((p: Product) => p.id),
+          );
+          const filteredPrev = prev.filter((p) => !newIds.has(p.id));
+          return [...filteredPrev, ...productsResponse.data];
+        });
+      }
+      setHasMore(page < (productsResponse.meta?.total_pages || 1));
+    }
+  }, [productsResponse, page]);
 
-  const loadCategories = async () => {
-    try {
-      const cats = await fetchCategories();
-      if (cats) setCategories(cats);
-    } catch {}
-  };
+  // Clean up manual loaders
+  // loadCategories removal
+  // loadProducts removal
 
-  const loadProducts = useCallback(
-    async (searchTerm = search, pageNum = 1, append = false) => {
-      const params: ProductListParams = {
-        page: pageNum,
-        per_page: 20,
-        search: searchTerm || undefined,
-        category_id: selectedCategory,
-        sort_by: 'name',
-        sort_order: 'asc',
-      };
-
-      try {
-        const result = await fetchProducts(params);
-        if (result) {
-          if (append) {
-            setProducts((prev) => [...prev, ...result.data]);
-          } else {
-            setProducts(result.data);
-          }
-          setHasMore(pageNum < result.meta.total_pages);
-        }
-      } catch {}
-    },
-    [search, selectedCategory],
-  );
+  // loadProducts removed
 
   const handleSearch = () => {
     setPage(1);
-    loadProducts(search, 1, false);
+    // search update triggers useQuery
   };
 
   const handleCategorySelect = (id?: string) => {
     setSelectedCategory(id);
     setPage(1);
-    setTimeout(() => {
-      loadProductsWithCategory(id);
-    }, 0);
+    // category update triggers useQuery
   };
 
-  const loadProductsWithCategory = async (catId?: string) => {
-    const params: ProductListParams = {
-      page: 1,
-      per_page: 20,
-      search: search || undefined,
-      category_id: catId,
-      sort_by: 'name',
-      sort_order: 'asc',
-    };
-    try {
-      const result = await fetchProducts(params);
-      if (result) {
-        setProducts(result.data);
-        setHasMore(1 < result.meta.total_pages);
-      }
-    } catch {}
-  };
+  // loadProductsWithCategory removed
 
   const handleBarcodeScanned = async (barcode: string) => {
     setShowBarcodeScanner(false);
@@ -140,7 +134,20 @@ export default function POSScreen() {
     }
   };
 
-  const { execute: submitHoldCart } = useApi(holdCart);
+  const { mutate: mutateHoldCart } = useOptimisticMutation(
+    async (variables: any) => holdCart(variables),
+    {
+      queryKey: ['/carts/held'], // Invalidate held carts list?
+      updater: (old: any) => old,
+      onSuccess: () => {
+        clearCart();
+        Alert.alert('Success', 'Cart held successfully.');
+      },
+      onError: (e: Error) => {
+        Alert.alert('Error', 'Failed to hold cart.');
+      },
+    },
+  );
   const { items, clearCart } = useCartStore();
 
   const handleHoldCart = async () => {
@@ -156,17 +163,15 @@ export default function POSScreen() {
           onPress: async (name?: string) => {
             if (!name) return;
             try {
-              await submitHoldCart({
+              mutateHoldCart({
                 items: items.map((i) => ({
                   product_id: i.product.id,
                   quantity: i.quantity,
                 })),
                 held_by: name,
               });
-              clearCart();
-              Alert.alert('Success', 'Cart held successfully.');
             } catch (e) {
-              Alert.alert('Error', 'Failed to hold cart.');
+              // Mutate is sync, error handled in onError
             }
           },
         },
@@ -344,7 +349,9 @@ export default function POSScreen() {
         }}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
         onEndReached={() => {
-          if (!isLoading && hasMore) loadProducts(search, page + 1, true);
+          if (!isLoading && !isRefetching && hasMore) {
+            setPage((prev) => prev + 1);
+          }
         }}
         onEndReachedThreshold={0.5}
         ListFooterComponent={

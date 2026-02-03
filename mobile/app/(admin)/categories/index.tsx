@@ -10,9 +10,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useApi } from '@/hooks/useApi';
-import { getCategories, deleteCategory } from '@/api/endpoints/categories';
-import { Category } from '@/api/types';
+import { useOptimisticMutation } from '@/hooks';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
+import { deleteCategory } from '@/api/endpoints/categories';
+import { Category, ApiResponse } from '@/api/types';
 import { Button } from '@/components/ui';
 
 /**
@@ -22,20 +24,41 @@ import { Button } from '@/components/ui';
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [categories, setCategories] = useState<Category[]>([]);
 
-  const { isLoading, execute: fetchCategories } = useApi(getCategories);
+  // useQuery - TData must match the actual response body structure
+  const {
+    data: response,
+    isLoading,
+    isRefetching,
+    refetch,
+  } = useQuery({
+    queryKey: ['/categories'],
+    queryFn: ({ queryKey }) =>
+      fetchWithCache<ApiResponse<Category[]>>({ queryKey }),
+  });
 
-  useEffect(() => {
-    loadCategories();
-  }, []);
+  const categories = response?.data || [];
 
-  const loadCategories = async () => {
-    const result = await fetchCategories();
-    if (result) {
-      setCategories(result);
-    }
-  };
+  // Optimistic Delete
+  const { mutate: mutateDelete } = useOptimisticMutation(
+    async (id: string) => deleteCategory(id),
+    {
+      queryKey: ['/categories'],
+      updater: (old: ApiResponse<Category[]> | undefined, id: string) => {
+        if (!old) return old;
+        return {
+          ...old,
+          data: old.data.filter((c) => c.id !== id),
+        };
+      },
+      onSuccess: () => {
+        Alert.alert('SUCCESS', 'Category deleted successfully');
+      },
+      onError: (err: Error) => {
+        Alert.alert('FAILED', err.message || 'Failed to delete category');
+      },
+    },
+  );
 
   const handleDelete = (category: Category) => {
     if (category.product_count && category.product_count > 0) {
@@ -54,20 +77,7 @@ export default function CategoriesScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteCategory(category.id);
-              Alert.alert('SUCCESS', 'Category deleted successfully');
-              loadCategories();
-            } catch (err) {
-              Alert.alert(
-                'FAILED',
-                err instanceof Error
-                  ? err.message
-                  : 'Failed to delete category',
-              );
-            }
-          },
+          onPress: () => mutateDelete(category.id),
         },
       ],
     );
@@ -151,7 +161,7 @@ export default function CategoriesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={loadCategories} />
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
         }
         ListEmptyComponent={
           !isLoading ? (

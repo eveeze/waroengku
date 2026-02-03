@@ -1,41 +1,107 @@
-import { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+  RefreshControl,
+  StatusBar,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useApi } from '@/hooks/useApi';
-import { getCustomerById, deleteCustomer } from '@/api/endpoints/customers';
-import { getKasbonSummary } from '@/api/endpoints/kasbon';
-import { Header } from '@/components/shared';
-import { Card, Button, Loading } from '@/components/ui';
-import { Customer, KasbonSummary } from '@/api/types';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
+import { deleteCustomer } from '@/api/endpoints/customers';
+import { Button, Loading } from '@/components/ui';
+import {
+  Customer,
+  KasbonSummary,
+  ApiResponse,
+  PaginatedResponse,
+} from '@/api/types';
+import { useOptimisticMutation } from '@/hooks';
 
-/**
- * Customer Detail Screen
- */
 export default function CustomerDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [kasbonSummary, setKasbonSummary] = useState<KasbonSummary | null>(
-    null,
+  const queryClient = useQueryClient();
+
+  const {
+    data: response,
+    isLoading: isLoadingCustomer,
+    refetch: refetchCustomer,
+  } = useQuery({
+    queryKey: [`/customers/${id}`],
+    queryFn: ({ queryKey }) =>
+      fetchWithCache<ApiResponse<Customer>>({ queryKey }),
+    enabled: !!id,
+    initialData: () => {
+      // Find in infinite query cache
+      const queries = queryClient
+        .getQueryCache()
+        .findAll({ queryKey: ['/customers'] });
+      for (const query of queries) {
+        const state = query.state.data as any; // InfiniteData<PaginatedResponse<Customer>>
+        if (state?.pages) {
+          for (const page of state.pages) {
+            const found = page.data.find((c: Customer) => c.id === id);
+            if (found) return { success: true, data: found };
+          }
+        }
+      }
+      return undefined;
+    },
+  });
+
+  const customer = response?.data;
+
+  const {
+    data: kasbonSummary,
+    isLoading: isLoadingKasbon,
+    refetch: refetchKasbon,
+  } = useQuery({
+    queryKey: [`/kasbon/customers/${id}/summary`],
+    queryFn: ({ queryKey }) => fetchWithCache<KasbonSummary>({ queryKey }),
+    enabled: !!id,
+  });
+
+  const isLoading = isLoadingCustomer || isLoadingKasbon;
+
+  const handleRefresh = () => {
+    refetchCustomer();
+    refetchKasbon();
+  };
+
+  const { mutate: mutateDelete } = useOptimisticMutation(
+    async () => deleteCustomer(id!),
+    {
+      queryKey: ['/customers'],
+      updater: (old: any) => old, // Infinite query invalidation handles removal
+      invalidates: true,
+      onSuccess: () => {
+        Alert.alert('SUCCESS', 'Customer deleted successfully');
+        router.back();
+      },
+      onError: (err: Error) => {
+        Alert.alert('ERROR', err.message || 'Failed to delete customer');
+      },
+    },
   );
 
-  const { isLoading, execute: fetchCustomer } = useApi(() =>
-    getCustomerById(id!),
-  );
-  const { execute: fetchKasbon } = useApi(() => getKasbonSummary(id!));
-
-  useEffect(() => {
-    if (id) {
-      loadData();
-    }
-  }, [id]);
-
-  const loadData = async () => {
-    const [cust, kasbon] = await Promise.all([fetchCustomer(), fetchKasbon()]);
-    if (cust) setCustomer(cust);
-    if (kasbon) setKasbonSummary(kasbon);
+  const handleDelete = () => {
+    Alert.alert(
+      'DELETE ITEM',
+      `Are you sure you want to delete "${customer?.name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => mutateDelete(undefined),
+        },
+      ],
+    );
   };
 
   const formatCurrency = (amount: number) => {
@@ -46,224 +112,144 @@ export default function CustomerDetailScreen() {
     }).format(amount);
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      'Hapus Pelanggan',
-      `Yakin ingin menghapus "${customer?.name}"?`,
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Hapus',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteCustomer(id!);
-              Alert.alert('Berhasil', 'Pelanggan berhasil dihapus');
-              router.back();
-            } catch (err) {
-              Alert.alert(
-                'Gagal',
-                err instanceof Error
-                  ? err.message
-                  : 'Gagal menghapus pelanggan',
-              );
-            }
-          },
-        },
-      ],
-    );
-  };
-
   if (isLoading && !customer) {
-    return <Loading fullScreen message="Memuat..." />;
-  }
-
-  if (!customer) {
     return (
-      <View className="flex-1 bg-secondary-50 items-center justify-center">
-        <Text className="text-4xl mb-4">❌</Text>
-        <Text className="text-secondary-500">Pelanggan tidak ditemukan</Text>
-        <Button
-          title="Kembali"
-          variant="outline"
-          onPress={() => router.back()}
-          className="mt-4"
-        />
+      <View className="flex-1 bg-white items-center justify-center">
+        <Loading />
       </View>
     );
   }
 
-  const hasDebt = customer.current_debt > 0;
+  if (!customer) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center">
+        <Text>Customer not found</Text>
+        <Button title="Back" onPress={() => router.back()} />
+      </View>
+    );
+  }
+
+  const hasDebt = (customer.current_debt || 0) > 0;
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header
-        title="Detail Pelanggan"
-        onBack={() => router.back()}
-        actions={[
-          {
-            icon: '✏️',
-            onPress: () => router.push(`/(admin)/customers/${id}/edit`),
-          },
-        ]}
-      />
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+      {/* Swiss Header */}
+      <View
+        className="px-6 pb-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
+      >
+        <View className="flex-row justify-between items-start mb-2">
+          <TouchableOpacity onPress={() => router.back()} className="mb-4">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+              ← Back
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push(`/(admin)/customers/${id}/edit`)}
+            className="bg-secondary-100 px-3 py-1.5 rounded-full"
+          >
+            <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-900">
+              EDIT
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black leading-tight">
+          {customer.name}
+        </Text>
+        <Text className="text-secondary-500 text-xs font-bold mt-1 uppercase tracking-wide">
+          {customer.phone || 'No Phone'}
+        </Text>
+      </View>
 
       <ScrollView
-        contentContainerStyle={{
-          padding: 16,
-          paddingBottom: insets.bottom + 16,
-        }}
+        contentContainerStyle={{ padding: 24 }}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
+        }
       >
-        {/* Customer Info */}
-        <Card className="mb-4">
-          <View className="flex-row items-center mb-4">
-            <View className="w-16 h-16 bg-primary-100 rounded-full items-center justify-center mr-4">
-              <Text className="text-3xl">👤</Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-3xl font-heading font-black text-secondary-900 tracking-tight leading-8 mb-1">
-                {customer.name}
+        {/* Debt Card */}
+        <View
+          className={`p-6 rounded-none mb-8 border ${hasDebt ? 'bg-red-50 border-red-100' : 'bg-secondary-50 border-secondary-100'}`}
+        >
+          <Text
+            className={`text-xs font-bold uppercase tracking-widest mb-1 ${hasDebt ? 'text-red-500' : 'text-secondary-500'}`}
+          >
+            Outstanding Debt (Kasbon)
+          </Text>
+          <Text
+            className={`text-3xl font-black tracking-tighter ${hasDebt ? 'text-red-600' : 'text-secondary-900'}`}
+          >
+            {formatCurrency(kasbonSummary?.current_balance || 0)}
+          </Text>
+          <View className="mt-4 pt-4 border-t border-secondary-200">
+            <View className="flex-row justify-between mb-1">
+              <Text className="text-secondary-500 text-xs font-bold uppercase">
+                Limit
               </Text>
-              {customer.phone && (
-                <TouchableOpacity>
-                  <Text className="text-primary-600 font-body text-base font-medium">
-                    {customer.phone}
-                  </Text>
-                </TouchableOpacity>
-              )}
-              <View
-                className={`self-start px-2 py-0.5 rounded-full mt-2 ${
-                  customer.is_active ? 'bg-green-100' : 'bg-secondary-100'
-                }`}
-              >
-                <Text
-                  className={`text-[10px] font-bold uppercase tracking-widest ${
-                    customer.is_active ? 'text-green-700' : 'text-secondary-500'
-                  }`}
-                >
-                  {customer.is_active ? '● Aktif' : '○ Nonaktif'}
-                </Text>
-              </View>
+              <Text className="font-bold">
+                {formatCurrency(kasbonSummary?.credit_limit || 0)}
+              </Text>
+            </View>
+            <View className="flex-row justify-between">
+              <Text className="text-secondary-500 text-xs font-bold uppercase">
+                Remaining
+              </Text>
+              <Text className="font-bold text-green-600">
+                {formatCurrency(kasbonSummary?.remaining_credit || 0)}
+              </Text>
             </View>
           </View>
+        </View>
 
-          {customer.address && (
-            <View className="bg-secondary-50 rounded-lg p-3">
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body mb-1">
-                📍 Alamat
-              </Text>
-              <Text className="text-secondary-900 font-body">
-                {customer.address}
-              </Text>
-            </View>
-          )}
+        {/* Info */}
+        <View className="mb-8">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-4">
+            Details
+          </Text>
+          <View className="mb-4">
+            <Text className="text-xs text-secondary-400 font-bold uppercase mb-1">
+              Address
+            </Text>
+            <Text className="text-base font-bold text-primary-900">
+              {customer.address || '-'}
+            </Text>
+          </View>
+          <View>
+            <Text className="text-xs text-secondary-400 font-bold uppercase mb-1">
+              Notes
+            </Text>
+            <Text className="text-base font-bold text-primary-900">
+              {customer.notes || '-'}
+            </Text>
+          </View>
+        </View>
 
-          {customer.notes && (
-            <View className="bg-secondary-50 rounded-lg p-3 mt-2">
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body mb-1">
-                📝 Catatan
-              </Text>
-              <Text className="text-secondary-900 font-body">
-                {customer.notes}
-              </Text>
-            </View>
-          )}
-        </Card>
-
-        {/* Kasbon Summary */}
-        <Card title="Ringkasan Kasbon" className="mb-4">
-          {kasbonSummary ? (
-            <>
-              <View className="flex-row justify-between items-center py-3 border-b border-secondary-100">
-                <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
-                  Total Hutang
-                </Text>
-                <Text className="text-xl font-heading font-black text-danger-600 tracking-tight">
-                  {formatCurrency(kasbonSummary.current_balance)}
-                </Text>
-              </View>
-              <View className="flex-row justify-between items-center py-3 border-b border-secondary-100">
-                <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
-                  Limit Kredit
-                </Text>
-                <Text className="text-base font-heading font-bold text-secondary-700">
-                  {formatCurrency(kasbonSummary.credit_limit)}
-                </Text>
-              </View>
-              <View className="flex-row justify-between items-center py-3 border-b border-secondary-100">
-                <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
-                  Sisa Limit
-                </Text>
-                <Text
-                  className={`text-base font-heading font-bold ${
-                    kasbonSummary.remaining_credit > 0
-                      ? 'text-green-600'
-                      : 'text-danger-600'
-                  }`}
-                >
-                  {formatCurrency(kasbonSummary.remaining_credit)}
-                </Text>
-              </View>
-              <View className="flex-row justify-between items-center py-3">
-                <Text className="text-secondary-500">Total Pembayaran</Text>
-                <Text className="text-base text-green-600">
-                  {formatCurrency(kasbonSummary.total_payment)}
-                </Text>
-              </View>
-
-              {/* Quick Actions */}
-              <View className="flex-row mt-4">
-                <Button
-                  title="Riwayat"
-                  variant="outline"
-                  size="sm"
-                  onPress={() => router.push(`/(admin)/customers/${id}/kasbon`)}
-                  className="flex-1 mr-2"
-                />
-                {hasDebt && (
-                  <Button
-                    title="Bayar"
-                    size="sm"
-                    onPress={() =>
-                      router.push(`/(admin)/customers/${id}/payment`)
-                    }
-                    className="flex-1 ml-2"
-                  />
-                )}
-              </View>
-            </>
-          ) : (
-            <View className="items-center py-4">
-              <Text className="text-secondary-500">Tidak ada data kasbon</Text>
-            </View>
-          )}
-        </Card>
-
-        {/* Actions */}
-        <View className="space-y-3">
+        {/* Actions - Kasbon Related */}
+        <View className="gap-3">
           <Button
-            title="Lihat Riwayat Kasbon"
-            variant="primary"
+            title="VIEW HISTORY"
+            variant="outline"
             fullWidth
             onPress={() => router.push(`/(admin)/customers/${id}/kasbon`)}
           />
           {hasDebt && (
             <Button
-              title="Catat Pembayaran"
-              variant="outline"
+              title="RECORD PAYMENT"
               fullWidth
               onPress={() => router.push(`/(admin)/customers/${id}/payment`)}
-              className="mt-3"
             />
           )}
+          <View className="h-4" />
           <Button
-            title="Hapus Pelanggan"
+            title="DELETE CUSTOMER"
             variant="danger"
             fullWidth
             onPress={handleDelete}
-            className="mt-3"
           />
         </View>
+
+        <View className="h-10" />
       </ScrollView>
     </View>
   );

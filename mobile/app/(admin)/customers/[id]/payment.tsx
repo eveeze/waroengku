@@ -1,110 +1,112 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TextInput,
+  TouchableOpacity,
   Alert,
+  StatusBar,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Header } from '@/components/shared';
-import { Button, Card, Input, Loading } from '@/components/ui';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
 import { recordKasbonPayment, getKasbonSummary } from '@/api/endpoints/kasbon';
 import { getCustomerById } from '@/api/endpoints/customers';
-import { useApi } from '@/hooks/useApi';
-import { useAuthStore } from '@/stores/authStore';
+import { Button, Loading } from '@/components/ui';
 import { Customer, KasbonSummary } from '@/api/types';
+import { useOptimisticMutation } from '@/hooks';
 
-/**
- * Record Payment Screen
- */
 export default function RecordPaymentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const user = useAuthStore((state) => state.user);
-
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [summary, setSummary] = useState<KasbonSummary | null>(null);
+  const queryClient = useQueryClient();
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { isLoading, execute: fetchCustomer } = useApi(() =>
-    getCustomerById(id!),
+  const { data: customer } = useQuery({
+    queryKey: [`/customers/${id}`],
+    queryFn: ({ queryKey }) => fetchWithCache<Customer>({ queryKey }),
+    enabled: !!id,
+  });
+
+  const { data: summary } = useQuery({
+    queryKey: [`/kasbon/customers/${id}/summary`],
+    queryFn: ({ queryKey }) => fetchWithCache<KasbonSummary>({ queryKey }),
+    enabled: !!id,
+  });
+
+  const { mutate: mutatePayment, isPending } = useOptimisticMutation(
+    async (payAmount: number) =>
+      recordKasbonPayment(id!, {
+        amount: payAmount,
+        notes: notes || undefined,
+        created_by: 'App User', // Should come from auth store ideally
+      }),
+    {
+      queryKey: [`/kasbon/customers/${id}/summary`], // Update summary immediately?
+      // Also invalidate history
+      invalidates: true,
+      // additionalInvalidations removed as it's not supported.
+      // We use queryClient.invalidateQueries in onSuccess instead.
+      updater: (old: KasbonSummary | undefined, payAmount: number) => {
+        if (!old) return old;
+        return {
+          ...old,
+          current_balance: old.current_balance - payAmount,
+          remaining_credit: old.remaining_credit + payAmount, // Assuming limit static
+          total_payment: (old.total_payment || 0) + payAmount,
+        };
+      },
+      onSuccess: () => {
+        // Invalidate other related queries
+        queryClient.invalidateQueries({
+          queryKey: [`/kasbon/customers/${id}/history`],
+        });
+        queryClient.invalidateQueries({ queryKey: [`/customers/${id}`] });
+        queryClient.invalidateQueries({ queryKey: ['/customers'] });
+
+        Alert.alert('SUCCESS', 'Payment recorded successfully');
+        router.back();
+      },
+      onError: (err: Error) => {
+        Alert.alert('ERROR', err.message || 'Failed to record payment');
+      },
+    },
   );
-  const { execute: fetchSummary } = useApi(() => getKasbonSummary(id!));
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    const [cust, sum] = await Promise.all([fetchCustomer(), fetchSummary()]);
-    if (cust) setCustomer(cust);
-    if (sum) setSummary(sum);
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(value);
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     const amountNum = Number(amount);
-
     if (!amountNum || amountNum <= 0) {
-      Alert.alert('Error', 'Masukkan jumlah pembayaran yang valid');
+      Alert.alert('Error', 'Invalid amount');
       return;
     }
 
     if (summary && amountNum > summary.current_balance) {
       Alert.alert(
-        'Peringatan',
-        `Pembayaran melebihi hutang. Hutang saat ini: ${formatCurrency(
-          summary.current_balance,
-        )}`,
+        'WARNING',
+        `Payment exceeds debt ${formatCurrency(summary.current_balance)}. Continue?`,
         [
-          { text: 'Batal', style: 'cancel' },
-          {
-            text: 'Lanjutkan',
-            onPress: () => submitPayment(amountNum),
-          },
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Pay Anyway', onPress: () => mutatePayment(amountNum) },
         ],
       );
       return;
     }
 
-    await submitPayment(amountNum);
+    mutatePayment(amountNum);
   };
 
-  const submitPayment = async (amountNum: number) => {
-    try {
-      setIsSubmitting(true);
-
-      await recordKasbonPayment(id!, {
-        amount: amountNum,
-        notes: notes || undefined,
-        created_by: user?.name || 'System',
-      });
-
-      Alert.alert('Berhasil', 'Pembayaran berhasil dicatat', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch (error) {
-      Alert.alert(
-        'Gagal',
-        error instanceof Error ? error.message : 'Gagal mencatat pembayaran',
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(val);
   };
 
   const setFullPayment = () => {
@@ -113,144 +115,97 @@ export default function RecordPaymentScreen() {
     }
   };
 
-  if (isLoading && !customer) {
-    return <Loading fullScreen message="Memuat..." />;
+  if (!customer || !summary) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center">
+        <Loading />
+      </View>
+    );
   }
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Catat Pembayaran" onBack={() => router.back()} />
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+      {/* Swiss Header */}
+      <View
+        className="px-6 pb-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          PAY DEBT
+        </Text>
+        <Text className="text-secondary-500 text-xs font-bold mt-1 uppercase tracking-wide">
+          {customer.name}
+        </Text>
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <ScrollView
-          contentContainerStyle={{
-            padding: 16,
-            paddingBottom: insets.bottom + 100,
-          }}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Customer Info */}
-          {customer && summary && (
-            <Card className="mb-4">
-              <View className="flex-row items-center">
-                <View className="w-12 h-12 bg-primary-100 rounded-full items-center justify-center mr-3">
-                  <Text className="text-2xl">👤</Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-xl font-heading font-black text-secondary-900 mb-0.5">
-                    {customer.name}
-                  </Text>
-                  <Text className="text-xs text-secondary-500 font-body">
-                    {customer.phone || 'No phone'}
-                  </Text>
-                </View>
-              </View>
+        <ScrollView contentContainerStyle={{ padding: 24 }}>
+          <View className="bg-secondary-50 p-6 mb-8 border border-secondary-100">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+              Current Outstanding
+            </Text>
+            <Text className="text-4xl font-black text-red-600 tracking-tighter">
+              {formatCurrency(summary.current_balance)}
+            </Text>
+          </View>
 
-              <View className="mt-4 bg-danger-50 rounded-lg p-4">
-                <Text className="text-center text-xs text-secondary-500 mb-1 font-bold uppercase tracking-widest font-body">
-                  Total Hutang Saat Ini
-                </Text>
-                <Text className="text-center text-3xl font-heading font-black text-danger-600 tracking-tight">
-                  {formatCurrency(summary.current_balance)}
-                </Text>
-              </View>
-            </Card>
-          )}
-
-          {/* Payment Form */}
-          <Card title="Detail Pembayaran" className="mb-4">
-            <View className="mb-4">
-              <Text className="text-sm font-medium text-secondary-700 mb-2">
-                Jumlah Pembayaran *
-              </Text>
-              <View className="flex-row items-center">
-                <View className="flex-1 flex-row items-center bg-white border border-secondary-300 rounded-lg px-4 mr-2">
-                  <Text className="text-secondary-400 mr-2">Rp</Text>
-                  <TextInput
-                    className="flex-1 py-3 text-lg font-heading font-bold text-primary-900"
-                    placeholder="0"
-                    value={amount}
-                    onChangeText={setAmount}
-                    keyboardType="numeric"
-                  />
-                </View>
-                <Button
-                  title="Lunas"
-                  size="sm"
-                  variant="outline"
-                  onPress={setFullPayment}
+          <View className="mb-6">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+              Payment Amount
+            </Text>
+            <View className="flex-row items-center gap-2">
+              <View className="flex-1 border border-secondary-200 p-4">
+                <TextInput
+                  className="font-black text-2xl text-primary-900"
+                  placeholder="0"
+                  keyboardType="numeric"
+                  value={amount}
+                  onChangeText={setAmount}
                 />
               </View>
-              {amount && (
-                <Text className="text-sm text-secondary-500 mt-2">
-                  Terbilang: {formatCurrency(Number(amount) || 0)}
+              <TouchableOpacity
+                onPress={setFullPayment}
+                className="bg-black px-4 py-4 justify-center"
+              >
+                <Text className="text-white font-bold uppercase tracking-widest text-xs">
+                  Full
                 </Text>
-              )}
+              </TouchableOpacity>
             </View>
+          </View>
 
-            <View>
-              <Text className="text-sm font-medium text-secondary-700 mb-2">
-                Catatan
-              </Text>
-              <TextInput
-                className="border border-secondary-200 rounded-lg px-4 py-3 bg-white text-base"
-                placeholder="cth: Bayar via transfer BCA"
-                value={notes}
-                onChangeText={setNotes}
-                multiline
-                numberOfLines={2}
-              />
-            </View>
-          </Card>
+          <View className="mb-8">
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+              Notes (Optional)
+            </Text>
+            <TextInput
+              className="border border-secondary-200 p-4 font-bold text-primary-900 h-24"
+              multiline
+              textAlignVertical="top"
+              placeholder="e.g. Bank Transfer"
+              value={notes}
+              onChangeText={setNotes}
+            />
+          </View>
 
-          {/* Summary Preview */}
-          {summary && amount && (
-            <Card title="Ringkasan" className="mb-4">
-              <View className="flex-row justify-between items-center py-2 border-b border-secondary-100">
-                <Text className="text-secondary-500">Hutang Saat Ini</Text>
-                <Text className="text-danger-600">
-                  {formatCurrency(summary.current_balance)}
-                </Text>
-              </View>
-              <View className="flex-row justify-between items-center py-2 border-b border-secondary-100">
-                <Text className="text-secondary-500">Pembayaran</Text>
-                <Text className="text-green-600 font-medium">
-                  - {formatCurrency(Number(amount) || 0)}
-                </Text>
-              </View>
-              <View className="flex-row justify-between items-center py-2">
-                <Text className="text-secondary-700 font-bold font-body uppercase tracking-wide text-xs">
-                  Sisa Hutang
-                </Text>
-                <Text className="text-xl font-heading font-black text-secondary-900 tracking-tight">
-                  {formatCurrency(
-                    Math.max(
-                      0,
-                      summary.current_balance - (Number(amount) || 0),
-                    ),
-                  )}
-                </Text>
-              </View>
-            </Card>
-          )}
-        </ScrollView>
-
-        {/* Submit Button */}
-        <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-4 py-3"
-          style={{ paddingBottom: insets.bottom + 12 }}
-        >
           <Button
-            title="Simpan Pembayaran"
+            title="CONFIRM PAYMENT"
+            size="lg"
             fullWidth
             onPress={handleSubmit}
-            isLoading={isSubmitting}
+            isLoading={isPending}
             disabled={!amount || Number(amount) <= 0}
           />
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );

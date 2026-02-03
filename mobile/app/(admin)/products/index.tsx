@@ -10,8 +10,11 @@ import {
   Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useFocusEffect } from 'expo-router'; // Corrected import
-import { useApi } from '@/hooks/useApi';
+import { useRouter, useFocusEffect } from 'expo-router';
+// import { useApi } from '@/hooks/useApi'; // Deprecated for GET
+import { useApi } from '@/hooks/useApi'; // Keeping for search/actions
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import apiClient, { fetcher, fetchWithCache } from '@/api/client';
 import {
   getProducts,
   getCategories,
@@ -31,9 +34,7 @@ export default function ProductsScreen() {
 
   // State
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [hasMore, setHasMore] = useState(true);
+  // page, products, hasMore removed (handled by useInfiniteQuery)
   const [selectedCategory, setSelectedCategory] = useState<
     string | undefined
   >();
@@ -48,67 +49,117 @@ export default function ProductsScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
-  // API hooks
-  const { isLoading, execute: fetchProducts } = useApi(
-    (params: ProductListParams) => getProducts(params),
-  );
+  // React Query with useInfiniteQuery
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isRefetching,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: [
+      '/products',
+      {
+        per_page: 20,
+        search: search || undefined,
+        category_id: selectedCategory,
+        low_stock_only: showLowStock || undefined,
+        sort_by: sortBy,
+        sort_order: 'asc',
+        is_active: statusFilter === 'all' ? 'all' : statusFilter === 'active',
+      },
+    ],
+    queryFn: async ({ queryKey, pageParam = 1 }) => {
+      const [url, params] = queryKey as [string, any];
+      // Use fetchWithCache to handle 304s correctly while getting full body
+      const response = await fetchWithCache<any>({
+        queryKey: [url, { ...params, page: pageParam }],
+      });
 
-  const { execute: fetchCategories } = useApi(getCategories);
+      // response is full body { success, message, data: [...], meta: ... }
+      // We need to return the inner data object because the next step expects { data, meta }
+      // The backend response wrapper puts the list inside "data".
+      // Wait, if response is { data: [...] }, then response.data is the list.
+      // Let's check docs again. Response is { data: [...], meta: ... } WRAPPED inside { success: true, data: ..., meta: ... } ?
+      // Docs say:
+      // {
+      //   "success": true,
+      //   "data": [ ... ],
+      //   "meta": { ... }
+      // }
+      // So response itself IS the object we want, if type 'any' covers it.
+      return response;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      const currentPage = lastPage.meta?.current_page || allPages.length;
+      const totalPages = lastPage.meta?.total_pages || 1;
+      return currentPage < totalPages ? currentPage + 1 : undefined;
+    },
+  });
+
+  // Flatten data
+  // queryFn returns the full API response object: { success, data: Array, meta: Object }
+  // So "page" is that object. page.data is the array.
+  const products = data?.pages.flatMap((page) => page?.data || []) || [];
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ['/categories'],
+    queryFn: ({ queryKey }) => fetcher<Category[]>({ queryKey }),
+  });
+
+  // Derived state
+  // Derived state effects removed as we use data directly
+  // ...
+
+  useEffect(() => {
+    if (categoriesData) {
+      setCategories(categoriesData);
+    }
+  }, [categoriesData]);
+
+  // Barcode search manually triggered
   const { isLoading: isSearchingBarcode, execute: searchByBarcode } = useApi(
     (barcode: string) => searchProductByBarcode(barcode),
   );
 
   // Load categories on mount
   useEffect(() => {
-    loadCategories();
-    // loadProducts is now handled by useFocusEffect below
+    // Categories loaded via useQuery above
+    // loadProducts is now handled by useQuery and focus effect
   }, []);
 
-  const loadCategories = async () => {
-    try {
-      const cats = await fetchCategories();
-      if (cats) setCategories(cats);
-    } catch {}
+  // Removed loadCategories function as it is replaced by useQuery
+
+  // Load products is now handled automatically by useQuery via queryKey dependencies.
+  // We just need to manage the 'page' state.
+
+  const handleSearch = () => {
+    // Search update triggers refetch automatically via key change
   };
 
-  const loadProducts = useCallback(
-    async (searchTerm = search, pageNum = 1, append = false) => {
-      const params: ProductListParams = {
-        page: pageNum,
-        per_page: 20,
-        search: searchTerm || undefined,
-        category_id: selectedCategory,
-        low_stock_only: showLowStock || undefined,
-        sort_by: sortBy,
-        sort_order: 'asc',
-        // is_active mapping:
-        // 'active' -> true
-        // 'inactive' -> false
-        // 'all' -> 'all' (backend requirement)
-        is_active: statusFilter === 'all' ? 'all' : statusFilter === 'active',
-      };
+  const applyFilters = () => {
+    setShowFilters(false);
+    // Filter update triggers refetch automatically via key change
+  };
 
-      try {
-        const result = await fetchProducts(params);
-        if (result && result.success) {
-          if (append) {
-            setProducts((prev) => [...prev, ...(result.data || [])]);
-          } else {
-            setProducts(result.data || []);
-          }
-          setHasMore(pageNum < result.meta.total_pages);
-        }
-      } catch {}
-    },
-    [search, selectedCategory, showLowStock, sortBy, statusFilter],
-  );
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  // Determine if we are loading initial data or refreshing
+  const isListLoading = isLoading;
+
+  // useFocusEffect to refetch on focus (optional // Removed manual loadProducts as useQuery handles it
 
   // Reload products whenever screen comes into focus
-  // Placed AFTER loadProducts definition
+  // Placed AFTER definition
   useFocusEffect(
     useCallback(() => {
-      loadProducts(search, 1, false);
-    }, [loadProducts, search]),
+      // Optional: refetch() if we want strict freshness
+    }, []),
   );
 
   const handleBarcodeScanned = async (barcode: string, type: string) => {
@@ -136,28 +187,13 @@ export default function ProductsScreen() {
     }
   };
 
-  const handleSearch = () => {
-    setPage(1);
-    loadProducts(search, 1, false);
-  };
-
-  const handleRefresh = () => {
-    setPage(1);
-    loadProducts(search, 1, false);
-  };
+  // handleSearch defined earlier with useQuery state updates
+  // handleRefresh defined earlier with refetch
 
   const handleLoadMore = () => {
-    if (!isLoading && hasMore) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      loadProducts(search, nextPage, true);
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-  };
-
-  const applyFilters = () => {
-    setShowFilters(false);
-    setPage(1);
-    loadProducts(search, 1, false);
   };
 
   const formatCurrency = (amount: number) => {
@@ -392,11 +428,11 @@ export default function ProductsScreen() {
       <FlatList
         data={products}
         renderItem={renderProduct}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item?.id || Math.random().toString()}
         contentContainerStyle={{ padding: 24, paddingBottom: 120 }}
         refreshControl={
           <RefreshControl
-            refreshing={isLoading && page === 1}
+            refreshing={isRefetching && !isFetchingNextPage}
             onRefresh={handleRefresh}
             tintColor="#000"
           />
@@ -404,7 +440,7 @@ export default function ProductsScreen() {
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.3}
         ListEmptyComponent={
-          !isLoading ? (
+          !isListLoading && !isRefetching ? (
             <View className="items-center py-20 opacity-50">
               <Text className="text-lg font-medium text-primary-900">
                 NO PRODUCTS FOUND
@@ -430,11 +466,7 @@ export default function ProductsScreen() {
           ) : null
         }
         ListFooterComponent={
-          isLoading && products && products.length > 0 ? (
-            <View className="py-8">
-              <Loading />
-            </View>
-          ) : null
+          isFetchingNextPage ? <Loading /> : isLoading ? <Loading /> : null
         }
       />
     </View>

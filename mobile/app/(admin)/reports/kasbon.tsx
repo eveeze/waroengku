@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -9,14 +9,11 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useApi } from '@/hooks/useApi';
-import { getKasbonReport } from '@/api/endpoints/reports';
-import { KasbonCustomerSummary } from '@/api/types';
+import { useQuery } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
+import { KasbonCustomerSummary, KasbonReportData } from '@/api/types';
+import { Loading } from '@/components/ui';
 
-/**
- * Kasbon Report Screen
- * Swiss Minimalist Refactor
- */
 export default function KasbonReportScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -24,13 +21,12 @@ export default function KasbonReportScreen() {
   const {
     data: report,
     isLoading,
+    refetch,
     error,
-    execute: fetchReport,
-  } = useApi(getKasbonReport);
-
-  useEffect(() => {
-    fetchReport();
-  }, []);
+  } = useQuery({
+    queryKey: ['/reports/kasbon'],
+    queryFn: ({ queryKey }) => fetchWithCache<KasbonReportData>({ queryKey }),
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -97,7 +93,7 @@ export default function KasbonReportScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
-            onRefresh={fetchReport}
+            onRefresh={refetch}
             tintColor="#000"
           />
         }
@@ -105,7 +101,7 @@ export default function KasbonReportScreen() {
         {error && (
           <View className="bg-black p-4 mb-6 mx-6 mt-6">
             <Text className="text-white font-bold uppercase tracking-wide text-xs">
-              Error: {error}
+              Error loading kasbon report
             </Text>
           </View>
         )}

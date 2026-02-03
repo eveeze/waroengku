@@ -8,201 +8,263 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Switch,
+  StatusBar,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Header } from '@/components/shared';
-import { Button, Card, Input, Loading } from '@/components/ui';
+import { useQuery } from '@tanstack/react-query';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { fetchWithCache } from '@/api/client';
 import { getCustomerById, updateCustomer } from '@/api/endpoints/customers';
 import { Customer } from '@/api/types';
-import { useApi } from '@/hooks/useApi';
+import { Button, Input, Loading } from '@/components/ui';
+import { useOptimisticMutation } from '@/hooks';
 
-/**
- * Edit Customer Screen
- */
+const schema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  notes: z.string().optional(),
+  credit_limit: z.string().optional(), // We'll parse to number
+  is_active: z.boolean(),
+});
+
+type FormData = z.infer<typeof schema>;
+
 export default function EditCustomerScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
-  const [notes, setNotes] = useState('');
-  const [creditLimit, setCreditLimit] = useState('');
-  const [isActive, setIsActive] = useState(true);
+  const { data: customer, isLoading } = useQuery({
+    queryKey: [`/customers/${id}`],
+    queryFn: ({ queryKey }) => fetchWithCache<Customer>({ queryKey }),
+    enabled: !!id,
+  });
 
-  const { isLoading, execute: fetchCustomer } = useApi(() =>
-    getCustomerById(id!),
-  );
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: '',
+      phone: '',
+      address: '',
+      notes: '',
+      credit_limit: '',
+      is_active: true,
+    },
+  });
 
   useEffect(() => {
-    loadCustomer();
-  }, []);
-
-  const loadCustomer = async () => {
-    const customer = await fetchCustomer();
     if (customer) {
-      setName(customer.name);
-      setPhone(customer.phone || '');
-      setAddress(customer.address || '');
-      setNotes(customer.notes || '');
-      setCreditLimit(
-        customer.credit_limit > 0 ? String(customer.credit_limit) : '',
-      );
-      setIsActive(customer.is_active);
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!name.trim()) {
-      Alert.alert('Error', 'Nama pelanggan wajib diisi');
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-
-      await updateCustomer(id!, {
-        name: name.trim(),
-        phone: phone.trim() || undefined,
-        address: address.trim() || undefined,
-        notes: notes.trim() || undefined,
-        credit_limit: Number(creditLimit) || 0,
-        is_active: isActive,
+      reset({
+        name: customer.name,
+        phone: customer.phone || '',
+        address: customer.address || '',
+        notes: customer.notes || '',
+        credit_limit:
+          customer.credit_limit > 0 ? String(customer.credit_limit) : '',
+        is_active: customer.is_active,
       });
-
-      Alert.alert('Berhasil', 'Pelanggan berhasil diperbarui', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch (error) {
-      Alert.alert(
-        'Gagal',
-        error instanceof Error ? error.message : 'Gagal memperbarui pelanggan',
-      );
-    } finally {
-      setIsSubmitting(false);
     }
+  }, [customer, reset]);
+
+  const { mutate: mutateUpdate, isPending: isUpdating } = useOptimisticMutation(
+    async (data: FormData) =>
+      updateCustomer(id!, {
+        name: data.name,
+        phone: data.phone || undefined,
+        address: data.address || undefined,
+        notes: data.notes || undefined,
+        credit_limit: Number(data.credit_limit) || 0,
+        is_active: data.is_active,
+      }),
+    {
+      queryKey: [`/customers/${id}`],
+      updater: (old: Customer | undefined, newData: FormData) => {
+        if (!old) return undefined; // Should not happen if data loaded
+        return {
+          ...old,
+          name: newData.name,
+          phone: newData.phone || undefined,
+          address: newData.address || undefined,
+          notes: newData.notes || undefined,
+          credit_limit: Number(newData.credit_limit) || 0,
+          is_active: newData.is_active,
+        } as Customer;
+      },
+      onSuccess: () => {
+        Alert.alert('SUCCESS', 'Customer updated successfully');
+        router.back();
+      },
+      onError: (err: Error) => {
+        Alert.alert('ERROR', err.message || 'Failed to update customer');
+      },
+    },
+  );
+
+  const onSubmit = (data: FormData) => {
+    mutateUpdate(data);
   };
 
-  if (isLoading) {
-    return <Loading fullScreen message="Memuat..." />;
+  const currentIsActive = watch('is_active');
+
+  if (isLoading || !customer) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center">
+        <Loading />
+      </View>
+    );
   }
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Edit Pelanggan" onBack={() => router.back()} />
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+      {/* Swiss Header */}
+      <View
+        className="px-6 pb-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          EDIT CUSTOMER
+        </Text>
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <ScrollView
-          contentContainerStyle={{
-            padding: 16,
-            paddingBottom: insets.bottom + 100,
-          }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Card title="Informasi Pelanggan" className="mb-4">
-            <Input
-              label="Nama Pelanggan *"
-              placeholder="Masukkan nama pelanggan"
-              value={name}
-              onChangeText={setName}
-            />
-
-            <Input
-              label="No. Telepon"
-              placeholder="08xxxxxxxxxx"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-            />
-
-            <View>
-              <Text className="text-sm font-bold text-secondary-700 mb-1.5 font-heading">
-                Alamat
-              </Text>
-              <TextInput
-                className="border border-secondary-200 rounded-lg px-4 py-3 bg-white text-base"
-                placeholder="Alamat pelanggan (opsional)"
-                value={address}
-                onChangeText={setAddress}
-                multiline
-                numberOfLines={2}
+        <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }}>
+          <Controller
+            control={control}
+            name="name"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="FULL NAME *"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                error={errors.name?.message}
               />
-            </View>
-          </Card>
+            )}
+          />
 
-          <Card title="Pengaturan Kredit" className="mb-4">
-            <Input
-              label="Limit Kredit (Kasbon)"
-              placeholder="0"
-              value={creditLimit}
-              onChangeText={setCreditLimit}
-              keyboardType="numeric"
-              leftIcon={
-                <Text className="text-secondary-400 font-heading font-bold">
-                  Rp
-                </Text>
-              }
-              helperText="Batas maksimal hutang pelanggan"
-            />
-          </Card>
+          <View className="h-4" />
 
-          <Card title="Catatan" className="mb-4">
-            <TextInput
-              className="border border-secondary-200 rounded-lg px-4 py-3 bg-white text-base"
-              placeholder="Catatan tambahan (opsional)"
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={3}
-            />
-          </Card>
+          <Controller
+            control={control}
+            name="phone"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="PHONE NUMBER"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                keyboardType="phone-pad"
+              />
+            )}
+          />
 
-          <Card title="Status" className="mb-4">
-            <TouchableOpacity
-              onPress={() => setIsActive(!isActive)}
-              className="flex-row items-center justify-between"
-            >
-              <View>
-                <Text className="text-secondary-900 font-heading font-bold">
-                  Pelanggan Aktif
+          <View className="h-4" />
+
+          <Controller
+            control={control}
+            name="address"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <View className="mb-4">
+                <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+                  Address
                 </Text>
-                <Text className="text-secondary-500 text-xs font-body mt-1">
-                  Nonaktifkan jika pelanggan sudah tidak berlangganan
-                </Text>
-              </View>
-              <View
-                className={`w-12 h-6 rounded-full p-1 ${
-                  isActive ? 'bg-primary-600' : 'bg-secondary-300'
-                }`}
-              >
-                <View
-                  className={`w-4 h-4 rounded-full bg-white ${
-                    isActive ? 'ml-auto' : ''
-                  }`}
+                <TextInput
+                  className="border border-secondary-200 bg-secondary-50 p-4 font-bold text-primary-900 rounded-none h-24"
+                  multiline
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  textAlignVertical="top"
                 />
               </View>
-            </TouchableOpacity>
-          </Card>
-        </ScrollView>
-
-        {/* Submit Button */}
-        <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-4 py-3"
-          style={{ paddingBottom: insets.bottom + 90 }}
-        >
-          <Button
-            title="Simpan Perubahan"
-            fullWidth
-            onPress={handleSubmit}
-            isLoading={isSubmitting}
+            )}
           />
-        </View>
+
+          <View className="h-4" />
+
+          <Controller
+            control={control}
+            name="credit_limit"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <Input
+                label="CREDIT LIMIT (RP)"
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+                keyboardType="numeric"
+                helperText="Maximum allowed debt (Kasbon)"
+              />
+            )}
+          />
+
+          <View className="h-4" />
+
+          <Controller
+            control={control}
+            name="notes"
+            render={({ field: { onChange, onBlur, value } }) => (
+              <View className="mb-4">
+                <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+                  Notes
+                </Text>
+                <TextInput
+                  className="border border-secondary-200 bg-secondary-50 p-4 font-bold text-primary-900 rounded-none h-24"
+                  multiline
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  textAlignVertical="top"
+                  placeholder="Additional notes..."
+                />
+              </View>
+            )}
+          />
+
+          <View className="h-4" />
+
+          {/* Active Status Switch */}
+          <View className="flex-row justify-between items-center py-4 border-t border-b border-secondary-100">
+            <Text className="text-sm font-bold uppercase tracking-wide text-secondary-900">
+              Customer Active
+            </Text>
+            <Switch
+              value={currentIsActive}
+              onValueChange={(val) => setValue('is_active', val)}
+              trackColor={{ false: '#e5e7eb', true: '#16a34a' }}
+            />
+          </View>
+
+          <View className="h-8" />
+
+          <Button
+            title="SAVE CHANGES"
+            fullWidth
+            size="lg"
+            onPress={handleSubmit(onSubmit)}
+            isLoading={isUpdating}
+          />
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );

@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useApi } from '@/hooks/useApi';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
 import { getCurrentSession } from '@/api/endpoints';
 import { DrawerSession } from '@/api/types';
 import { Loading, Button } from '@/components/ui';
@@ -17,18 +18,24 @@ import { Loading, Button } from '@/components/ui';
 export default function CashFlowScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [session, setSession] = useState<DrawerSession | null>(null);
 
-  const { isLoading, execute: fetchSession } = useApi(getCurrentSession);
+  const {
+    data: session,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['/cash-flow/session/current'],
+    queryFn: ({ queryKey }) => fetchWithCache<DrawerSession>({ queryKey }),
+  });
 
-  const loadData = async () => {
-    const data = await fetchSession();
-    setSession(data);
-  };
-
+  // Removed manual loadData and useFocusEffect in favor of useQuery
+  // useQuery will auto-refetch on focus by default in React Query v5 (if configured)
+  // or we can use useFocusEffect to refetch if needed, but standard query is usually enough.
+  // Actually, for React Native, focus refetching often needs setup or useFocusEffect + refetch.
+  // Let's add explicit refetch on focus for safety.
   useFocusEffect(
     useCallback(() => {
-      loadData();
+      refetch();
     }, []),
   );
 
@@ -71,8 +78,8 @@ export default function CashFlowScreen() {
               ← Back
             </Text>
           </TouchableOpacity>
-          <Text className="text-4xl font-heading uppercase tracking-tighter text-black">
-            Cash Register
+          <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-black">
+            CASH REGISTER
           </Text>
         </View>
         <TouchableOpacity
@@ -88,7 +95,7 @@ export default function CashFlowScreen() {
       <ScrollView
         contentContainerStyle={{ padding: 24 }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={loadData} />
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
         }
       >
         {/* Status Card */}

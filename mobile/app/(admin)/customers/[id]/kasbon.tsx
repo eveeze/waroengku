@@ -1,89 +1,91 @@
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   FlatList,
   RefreshControl,
   TouchableOpacity,
+  StatusBar,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useApi } from '@/hooks/useApi';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
 import { getKasbonHistory, getKasbonSummary } from '@/api/endpoints/kasbon';
 import { getCustomerById } from '@/api/endpoints/customers';
-import { Header } from '@/components/shared';
 import { Card, Button, Loading } from '@/components/ui';
-import { KasbonEntry, KasbonSummary, Customer } from '@/api/types';
+import {
+  KasbonEntry,
+  KasbonSummary,
+  Customer,
+  PaginatedResponse,
+} from '@/api/types';
 
-/**
- * Kasbon History Screen
- */
 export default function KasbonHistoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [summary, setSummary] = useState<KasbonSummary | null>(null);
-  const [entries, setEntries] = useState<KasbonEntry[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+
   const [filter, setFilter] = useState<'all' | 'debt' | 'payment'>('all');
 
-  const { isLoading, execute: fetchHistory } = useApi(
-    (params: { page?: number; per_page?: number; type?: 'debt' | 'payment' }) =>
-      getKasbonHistory(id!, params),
-  );
-  const { execute: fetchSummary } = useApi(() => getKasbonSummary(id!));
-  const { execute: fetchCustomer } = useApi(() => getCustomerById(id!));
+  const { data: customer } = useQuery({
+    queryKey: [`/customers/${id}`],
+    queryFn: ({ queryKey }) => fetchWithCache<Customer>({ queryKey }),
+    enabled: !!id,
+  });
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const { data: summary } = useQuery({
+    queryKey: [`/kasbon/customers/${id}/summary`],
+    queryFn: ({ queryKey }) => fetchWithCache<KasbonSummary>({ queryKey }),
+    enabled: !!id,
+  });
 
-  const loadData = async () => {
-    const [cust, sum] = await Promise.all([fetchCustomer(), fetchSummary()]);
-    if (cust) setCustomer(cust);
-    if (sum) setSummary(sum);
-    loadEntries(1, false);
-  };
-
-  const loadEntries = async (pageNum = 1, append = false) => {
-    const params = {
-      page: pageNum,
-      per_page: 20,
-      type: filter === 'all' ? undefined : filter,
-    };
-
-    try {
-      const result = await fetchHistory(params);
-      if (result) {
-        if (append) {
-          setEntries((prev) => [...prev, ...result.data]);
-        } else {
-          setEntries(result.data);
-        }
-        setHasMore(pageNum < result.meta.total_pages);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    refetch,
+    isLoading,
+  } = useInfiniteQuery({
+    queryKey: [`/kasbon/customers/${id}/history`, { filter }],
+    queryFn: async ({ pageParam = 1, queryKey }) => {
+      const [_, params] = queryKey as [
+        string,
+        { filter?: 'all' | 'debt' | 'payment' },
+      ];
+      // Assuming getKasbonHistory handles params correctly
+      return getKasbonHistory(id!, {
+        page: pageParam as number,
+        per_page: 20,
+        type: params?.filter === 'all' ? undefined : params?.filter,
+      });
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: PaginatedResponse<KasbonEntry>) => {
+      if (lastPage.meta.page < lastPage.meta.total_pages) {
+        return lastPage.meta.page + 1;
       }
-    } catch {}
-  };
+      return undefined;
+    },
+    enabled: !!id,
+  });
+
+  const entries = data?.pages.flatMap((page) => page.data) || [];
 
   const handleRefresh = () => {
-    setPage(1);
-    loadEntries(1, false);
+    refetch();
   };
 
   const handleLoadMore = () => {
-    if (!isLoading && hasMore) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      loadEntries(nextPage, true);
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
   };
 
   const handleFilterChange = (newFilter: 'all' | 'debt' | 'payment') => {
     setFilter(newFilter);
-    setPage(1);
-    setTimeout(() => loadEntries(1, false), 100);
   };
 
   const formatCurrency = (amount: number) => {
@@ -106,102 +108,98 @@ export default function KasbonHistoryScreen() {
 
   const renderEntry = ({ item }: { item: KasbonEntry }) => {
     const isDebt = item.type === 'debt';
-
     return (
-      <Card className="mb-3">
+      <View className="mb-3 p-4 bg-white border border-secondary-100 rounded-xl">
         <View className="flex-row items-center">
           <View
             className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${
-              isDebt ? 'bg-danger-100' : 'bg-green-100'
+              isDebt ? 'bg-red-50' : 'bg-green-50'
             }`}
           >
             <Text className="text-lg">{isDebt ? '📤' : '📥'}</Text>
           </View>
           <View className="flex-1">
-            <Text className="font-heading font-bold text-secondary-900 text-base">
-              {isDebt ? 'Kasbon' : 'Pembayaran'}
+            <Text className="font-heading font-bold text-secondary-900 text-base uppercase">
+              {isDebt ? 'KASBON' : 'PAYMENT'}
             </Text>
-            <Text className="text-[10px] text-secondary-500 font-body font-medium mt-0.5">
+            <Text className="text-[10px] text-secondary-500 font-bold mt-0.5">
               {formatDate(item.created_at)}
             </Text>
             {item.notes && (
-              <Text className="text-sm text-secondary-600 mt-1">
+              <Text className="text-xs text-secondary-600 mt-1 italic">
                 {item.notes}
               </Text>
             )}
           </View>
           <Text
-            className={`text-base font-heading font-black tracking-tight ${
-              isDebt ? 'text-danger-600' : 'text-green-600'
+            className={`text-base font-black tracking-tight ${
+              isDebt ? 'text-red-600' : 'text-green-600'
             }`}
           >
-            {isDebt ? '+' : '-'}
-            {formatCurrency(item.amount)}
+            {isDebt ? '+' : '-'} {formatCurrency(item.amount)}
           </Text>
         </View>
-      </Card>
+      </View>
     );
   };
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Riwayat Kasbon" onBack={() => router.back()} />
-
-      <View className="px-4 pt-4">
-        {/* Customer & Summary Card */}
-        {customer && summary && (
-          <Card className="mb-4">
-            <View className="flex-row items-center mb-3">
-              <View className="w-10 h-10 bg-primary-100 rounded-full items-center justify-center mr-3">
-                <Text className="text-lg">👤</Text>
-              </View>
-              <View className="flex-1">
-                <Text className="font-heading font-black text-lg text-secondary-900 mb-0.5">
-                  {customer.name}
-                </Text>
-                <Text className="text-xs text-secondary-500 font-body">
-                  {customer.phone || 'No phone'}
-                </Text>
-              </View>
-              <View className="items-end">
-                <Text className="text-xl font-heading font-black text-danger-600 tracking-tight">
-                  {formatCurrency(summary.current_balance)}
-                </Text>
-                <Text className="text-xs text-secondary-500 font-bold uppercase tracking-widest font-body">
-                  Total Hutang
-                </Text>
-              </View>
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+      {/* Swiss Header */}
+      <View
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <View className="flex-row justify-between items-end">
+          <View>
+            <Text className="text-xl font-bold uppercase tracking-widest text-secondary-500 mb-1">
+              HISTORY
+            </Text>
+            <Text className="text-3xl font-black uppercase tracking-tighter text-black">
+              {customer?.name || 'Loading...'}
+            </Text>
+          </View>
+          {summary && (
+            <View className="items-end">
+              <Text className="text-xs font-bold uppercase text-secondary-500 mb-1">
+                Outstanding
+              </Text>
+              <Text
+                className={`text-xl font-black ${summary.current_balance > 0 ? 'text-red-600' : 'text-green-600'}`}
+              >
+                {formatCurrency(summary.current_balance)}
+              </Text>
             </View>
+          )}
+        </View>
+      </View>
 
-            {summary.current_balance > 0 && (
-              <Button
-                title="Catat Pembayaran"
-                size="sm"
-                fullWidth
-                onPress={() => router.push(`/(admin)/customers/${id}/payment`)}
-              />
-            )}
-          </Card>
-        )}
-
-        {/* Filter Tabs */}
-        <View className="flex-row mb-4">
+      <View className="px-6 py-4 bg-secondary-50 border-b border-secondary-100">
+        <View className="flex-row">
           {[
-            { key: 'all', label: 'Semua' },
-            { key: 'debt', label: 'Kasbon' },
-            { key: 'payment', label: 'Pembayaran' },
+            { key: 'all', label: 'ALL' },
+            { key: 'debt', label: 'DEBT' },
+            { key: 'payment', label: 'PAYMENT' },
           ].map((item) => (
             <TouchableOpacity
               key={item.key}
-              onPress={() =>
-                handleFilterChange(item.key as 'all' | 'debt' | 'payment')
-              }
-              className={`px-4 py-2 rounded-full mr-2 ${
-                filter === item.key ? 'bg-primary-600' : 'bg-white'
+              onPress={() => handleFilterChange(item.key as any)}
+              className={`mr-2 px-4 py-2 rounded-full border ${
+                filter === item.key
+                  ? 'bg-black border-black'
+                  : 'bg-white border-secondary-200'
               }`}
             >
               <Text
-                className={`font-bold text-xs uppercase tracking-wider font-body ${filter === item.key ? 'text-white' : 'text-secondary-700'}`}
+                className={`text-[10px] font-bold uppercase tracking-widest ${
+                  filter === item.key ? 'text-white' : 'text-secondary-500'
+                }`}
               >
                 {item.label}
               </Text>
@@ -210,35 +208,29 @@ export default function KasbonHistoryScreen() {
         </View>
       </View>
 
-      {/* Entries List */}
       <FlatList
         data={entries}
         renderItem={renderEntry}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingBottom: insets.bottom + 16,
-        }}
+        contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
         refreshControl={
-          <RefreshControl
-            refreshing={isLoading && page === 1}
-            onRefresh={handleRefresh}
-          />
+          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
         }
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.3}
+        onEndReachedThreshold={0.5}
         ListEmptyComponent={
           !isLoading ? (
-            <View className="items-center py-12">
-              <Text className="text-4xl mb-4">📋</Text>
-              <Text className="text-secondary-500">Belum ada riwayat</Text>
+            <View className="items-center mt-10">
+              <Text className="text-secondary-500 font-bold">
+                No history found.
+              </Text>
             </View>
           ) : null
         }
         ListFooterComponent={
-          isLoading && entries.length > 0 ? (
-            <View className="py-4">
-              <Loading message="Memuat..." />
+          isFetchingNextPage ? (
+            <View className="py-6">
+              <Loading message="Loading more..." />
             </View>
           ) : null
         }

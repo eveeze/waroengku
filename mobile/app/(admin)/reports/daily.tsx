@@ -13,13 +13,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-import { useApi } from '@/hooks/useApi';
-import { getDailyReport } from '@/api/endpoints/reports';
+import { useQuery } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
+import { DailyReportData } from '@/api/types';
+import { Loading } from '@/components/ui';
 
-/**
- * Daily Report Screen
- * Swiss Minimalist Refactor
- */
 export default function DailyReportScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -31,13 +29,12 @@ export default function DailyReportScreen() {
   const {
     data: report,
     isLoading,
+    refetch,
     error,
-    execute: fetchReport,
-  } = useApi(() => getDailyReport({ date: dateString }));
-
-  useEffect(() => {
-    fetchReport();
-  }, [dateString]);
+  } = useQuery({
+    queryKey: ['/reports/daily', dateString],
+    queryFn: ({ queryKey }) => fetchWithCache<DailyReportData>({ queryKey }),
+  });
 
   const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
     setShowDatePicker(Platform.OS === 'ios');
@@ -147,7 +144,7 @@ export default function DailyReportScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
-            onRefresh={fetchReport}
+            onRefresh={refetch}
             tintColor="#000"
           />
         }
@@ -155,7 +152,7 @@ export default function DailyReportScreen() {
         {error && (
           <View className="bg-black p-4 mb-6">
             <Text className="text-white font-bold uppercase tracking-wide text-xs">
-              Error: {error}
+              Error loading report
             </Text>
           </View>
         )}

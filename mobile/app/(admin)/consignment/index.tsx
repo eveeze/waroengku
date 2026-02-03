@@ -1,38 +1,37 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useApi } from '@/hooks/useApi';
-import { getConsignors } from '@/api/endpoints';
+import { useQuery } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
 import { Consignor } from '@/api/types';
 import { Loading, Button } from '@/components/ui';
 
 export default function ConsignorListScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [consignors, setConsignors] = useState<Consignor[]>([]);
 
-  const { isLoading, execute: fetchConsignors } = useApi(getConsignors);
-
-  const loadData = async () => {
-    const data = await fetchConsignors();
-    if (data) setConsignors(data);
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, []),
-  );
+  const {
+    data: consignors = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['/consignors'],
+    queryFn: ({ queryKey }) => fetchWithCache<Consignor[]>({ queryKey }),
+  });
 
   const renderItem = ({ item }: { item: Consignor }) => (
-    <View className="bg-secondary-50 p-4 rounded-xl mb-3 border border-secondary-100">
+    <TouchableOpacity
+      onPress={() => router.push(`/(admin)/consignment/${item.id}`)}
+      className="bg-secondary-50 p-4 rounded-xl mb-3 border border-secondary-100"
+    >
       <View className="flex-row justify-between items-start">
         <View>
           <Text className="font-heading text-xl text-primary-900 uppercase tracking-tight">
@@ -59,11 +58,12 @@ export default function ConsignorListScreen() {
           </Text>
         </View>
       )}
-    </View>
+    </TouchableOpacity>
   );
 
   return (
     <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
       {/* Header */}
       <View
         className="px-6 py-6 border-b border-secondary-100 bg-white flex-row justify-between items-end"
@@ -75,10 +75,10 @@ export default function ConsignorListScreen() {
               ← Back
             </Text>
           </TouchableOpacity>
-          <Text className="text-4xl font-heading uppercase tracking-tighter text-black">
-            Consignment
+          <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-black">
+            CONSIGNMENT
           </Text>
-          <Text className="text-secondary-500 text-xs font-bold mt-1">
+          <Text className="text-secondary-500 text-xs font-bold mt-1 uppercase tracking-wide">
             Manage Suppliers (Titip Jual)
           </Text>
         </View>
@@ -95,7 +95,7 @@ export default function ConsignorListScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 24 }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={loadData} />
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
         }
         ListEmptyComponent={
           !isLoading ? (

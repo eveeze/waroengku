@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   ScrollView,
@@ -11,44 +11,125 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useApi } from '@/hooks/useApi';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
 import {
-  getTransaction,
   cancelTransaction,
   generateSnapToken,
   manualVerifyPayment,
 } from '@/api/endpoints';
-import { Transaction } from '@/api/types';
+import { Transaction, PaginatedResponse, TransactionItem } from '@/api/types';
 import { Button, Loading } from '@/components/ui';
+import { useOptimisticMutation } from '@/hooks';
 
 export default function TransactionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const queryClient = useQueryClient();
 
-  const { isLoading, execute: fetchTransaction } = useApi(() =>
-    getTransaction(id!),
-  );
-  const { isLoading: isCancelling, execute: doCancel } = useApi(() =>
-    cancelTransaction(id!),
-  );
-  const { isLoading: isRetrying, execute: getSnapToken } =
-    useApi(generateSnapToken);
-  const { isLoading: isVerifying, execute: doVerify } = useApi((data: any) =>
-    manualVerifyPayment(id!, data),
-  );
+  const {
+    data: transaction,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: [`/transactions/${id}`],
+    queryFn: ({ queryKey }) => fetchWithCache<Transaction>({ queryKey }),
+    enabled: !!id,
+    initialData: () => {
+      // Search in infinite query cache
+      const queries = queryClient
+        .getQueryCache()
+        .findAll({ queryKey: ['/transactions'] });
+      for (const query of queries) {
+        const state = query.state.data as any; // InfiniteData<PaginatedResponse>
+        if (state?.pages) {
+          for (const page of state.pages) {
+            const found = page.data.find((t: Transaction) => t.id === id);
+            if (found) return found;
+          }
+        }
+      }
+      return undefined;
+    },
+  });
 
-  useEffect(() => {
-    loadTransaction();
-  }, [id]);
+  // Optimistic Cancel
+  const { mutate: mutateCancel, isPending: isCancelling } =
+    useOptimisticMutation(async () => cancelTransaction(id!), {
+      queryKey: [`/transactions/${id}`],
+      updater: (old: Transaction | undefined) => {
+        if (!old) return old;
+        return { ...old, status: 'cancelled' };
+      },
+      onSuccess: () => {
+        Alert.alert('SUCCESS', 'Transaction cancelled.');
+        queryClient.invalidateQueries({ queryKey: ['/transactions'] }); // Invalidate list
+      },
+      onError: (err: Error) => Alert.alert('FAILED', err.message),
+    });
 
-  const loadTransaction = () => {
-    if (id) {
-      fetchTransaction().then((data) => {
-        if (data) setTransaction(data);
+  // Retry Payment (Not optimistic usually, as it returns a token)
+  // We'll keep standard logic for this
+  const [isRetrying, setIsRetrying] = useState(false);
+  const handleRetryPayment = async () => {
+    if (!transaction) return;
+    setIsRetrying(true);
+    try {
+      // Assuming generateSnapToken is an async function returning { redirect_url ... }
+      // Ideally we should import useApi or just call it directly since we don't need caching for this action
+      // But standard way is to just call the function.
+      const token = await generateSnapToken({
+        order_id: transaction.invoice_number,
+        gross_amount: transaction.final_amount,
       });
+
+      if (token && token.redirect_url) {
+        Linking.openURL(token.redirect_url);
+      } else {
+        Alert.alert('Error', 'Could not generate payment link');
+      }
+    } catch {
+      Alert.alert('Error', 'Failed to initiate payment');
+    } finally {
+      setIsRetrying(false);
     }
+  };
+
+  // Manual Verify (Optimistic?)
+  // Yes, we can optimistically update status to 'settlement' (completed)
+  const { mutate: mutateVerify, isPending: isVerifying } =
+    useOptimisticMutation(
+      async (notes: string) => manualVerifyPayment(id!, { notes }),
+      {
+        queryKey: [`/transactions/${id}`],
+        updater: (old: Transaction | undefined) => {
+          if (!old) return old;
+          return { ...old, status: 'completed' }; // settlement maps to completed usually
+        },
+        onSuccess: () => {
+          Alert.alert('Success', 'Payment verified manually.');
+          queryClient.invalidateQueries({ queryKey: ['/transactions'] });
+        },
+        onError: (err: Error) =>
+          Alert.alert('Error', 'Failed to verify payment.'),
+      },
+    );
+
+  const handleManualVerify = () => {
+    Alert.prompt(
+      'MANUAL VERIFY',
+      'Enter notes/ref number for verification:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Verify',
+          onPress: (notes?: string) =>
+            mutateVerify(notes || 'Manual verification by admin'),
+        },
+      ],
+      'plain-text',
+    );
   };
 
   const handleCancel = () => {
@@ -60,68 +141,25 @@ export default function TransactionDetailScreen() {
         {
           text: 'Confirm Void',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await doCancel();
-              Alert.alert('SUCCESS', 'Transaction cancelled.');
-              loadTransaction();
-            } catch (err) {
-              Alert.alert('FAILED', (err as Error).message);
-            }
-          },
+          onPress: () => mutateCancel(),
         },
       ],
     );
   };
 
-  const handleRetryPayment = async () => {
-    if (!transaction) return;
-    try {
-      const token = await getSnapToken({
-        order_id: transaction.invoice_number, // Use invoice number as order_id
-        gross_amount: transaction.final_amount,
-      });
-
-      if (token && token.redirect_url) {
-        Linking.openURL(token.redirect_url);
-      } else {
-        Alert.alert('Error', 'Could not generate payment link');
-      }
-    } catch {
-      Alert.alert('Error', 'Failed to initiate payment');
-    }
-  };
-
-  const handleManualVerify = () => {
-    Alert.prompt(
-      'MANUAL VERIFY',
-      'Enter notes/ref number for verification:',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Verify',
-          onPress: async (notes?: string) => {
-            try {
-              await doVerify({
-                notes: notes || 'Manual verification by admin',
-                status: 'settlement',
-              });
-              Alert.alert('Success', 'Payment verified manually.');
-              loadTransaction();
-            } catch {
-              Alert.alert('Error', 'Failed to verify payment.');
-            }
-          },
-        },
-      ],
-      'plain-text',
-    );
-  };
-
-  if (isLoading || !transaction) {
+  if (isLoading && !transaction) {
     return (
       <View className="flex-1 bg-white items-center justify-center">
         <Loading message="Fetching Receipt..." />
+      </View>
+    );
+  }
+
+  if (!transaction) {
+    return (
+      <View className="flex-1 bg-white items-center justify-center">
+        <Text>Transaction not found</Text>
+        <Button title="Back" onPress={() => router.back()} />
       </View>
     );
   }
@@ -169,8 +207,7 @@ export default function TransactionDetailScreen() {
           paddingBottom: insets.bottom + 100,
         }}
         refreshControl={
-          // Refresh by pulling down
-          <RefreshControl refreshing={isLoading} onRefresh={loadTransaction} />
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
         }
       >
         {/* Status Badge */}
@@ -212,25 +249,26 @@ export default function TransactionDetailScreen() {
             Purchased Items
           </Text>
 
-          {transaction.items.map((item, index) => (
-            <View
-              key={index}
-              className="flex-row justify-between py-3 border-b border-secondary-100 last:border-0"
-            >
-              <View className="flex-1 pr-4">
-                <Text className="font-bold text-primary-900 text-sm uppercase mb-1">
-                  {item.product_name}
-                </Text>
-                <Text className="text-xs text-secondary-500 font-medium">
-                  {item.quantity} {item.unit} x{' '}
-                  {formatCurrency(item.unit_price || 0)}
+          {transaction.items &&
+            transaction.items.map((item: TransactionItem, index: number) => (
+              <View
+                key={index}
+                className="flex-row justify-between py-3 border-b border-secondary-100 last:border-0"
+              >
+                <View className="flex-1 pr-4">
+                  <Text className="font-bold text-primary-900 text-sm uppercase mb-1">
+                    {item.product_name}
+                  </Text>
+                  <Text className="text-xs text-secondary-500 font-medium">
+                    {item.quantity} {item.unit} x{' '}
+                    {formatCurrency(item.unit_price || 0)}
+                  </Text>
+                </View>
+                <Text className="font-bold text-primary-900 text-sm">
+                  {formatCurrency(item.subtotal || 0)}
                 </Text>
               </View>
-              <Text className="font-bold text-primary-900 text-sm">
-                {formatCurrency(item.subtotal || 0)}
-              </Text>
-            </View>
-          ))}
+            ))}
         </View>
 
         {/* Totals Section */}

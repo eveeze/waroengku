@@ -1,4 +1,5 @@
 import { UserRole } from './common';
+import { PaginatedResponse } from './common';
 
 /**
  * User Management Types (Admin)
@@ -17,6 +18,8 @@ export interface UserInfo {
 
 // Alias for UserInfo
 export type User = UserInfo;
+
+export type UserListResponse = PaginatedResponse<User>;
 
 // User list query params
 export interface UserListParams {

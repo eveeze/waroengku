@@ -4,27 +4,24 @@ import {
   Text,
   ScrollView,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   TouchableOpacity,
+  Platform,
   ToastAndroid,
+  StatusBar,
 } from 'react-native';
-import { useProductStore } from '@/stores/productStore';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useApi } from '@/hooks/useApi';
-import {
-  restockProduct,
-  searchProductByBarcode,
-  getProductById,
-} from '@/api/endpoints';
-import { Button, Input, Loading } from '@/components/ui';
+import { useQueryClient } from '@tanstack/react-query';
+import { restockProduct, searchProductByBarcode } from '@/api/endpoints';
+import { Button, Input } from '@/components/ui';
 import { BarcodeScanner } from '@/components/shared';
 import { Product } from '@/api/types';
+import { useOptimisticMutation } from '@/hooks';
 
 export default function RestockScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState('');
@@ -33,109 +30,104 @@ export default function RestockScreen() {
   const [notes, setNotes] = useState('');
   const [showScanner, setShowScanner] = useState(false);
   const [barcodeInput, setBarcodeInput] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
-  const { execute: submitRestock, isLoading: isSubmitting } =
-    useApi(restockProduct);
-  const { execute: searchProduct, isLoading: isSearching } = useApi(
-    searchProductByBarcode,
-  );
+  const handleSearch = async (code: string = barcodeInput) => {
+    if (!code) return;
+    setIsSearching(true);
+    try {
+      const found = await searchProductByBarcode(code);
+      if (found) {
+        setProduct(found);
+        setCostPrice(String(found.cost_price));
+      } else {
+        Alert.alert('Not Found', 'Product not found');
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Failed to search product');
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
-  const handleScan = async (code: string) => {
+  const handleScan = (code: string) => {
     if (!showScanner) return;
     setShowScanner(false);
     setBarcodeInput(code);
-    const found = await searchProduct(code);
-    if (found) {
-      setProduct(found);
-      setCostPrice(String(found.cost_price)); // Pre-fill with current cost
-    } else {
-      Alert.alert('Not Found', 'Product not found');
-    }
+    handleSearch(code);
   };
 
-  const handleSearch = async () => {
-    if (!barcodeInput) return;
-    const found = await searchProduct(barcodeInput);
-    if (found) {
-      setProduct(found);
-      setCostPrice(String(found.cost_price));
-    } else {
-      Alert.alert('Not Found', 'Product not found');
-    }
-  };
-
-  /* OPTIMISTIC UI IMPLEMENTATION */
-  const { optimisticUpdateStock, rollbackStock, products, setProducts } =
-    useProductStore();
-
-  const handleSubmit = async () => {
-    if (!product || !quantity) return;
-
-    const oldStock = product.current_stock;
-    const addedQty = Number(quantity);
-    const newStock = oldStock + addedQty;
-
-    // 1. OPTIMISTIC UPDATE
-    if (products.length === 0) {
-      // If store is empty, initializing it with current product is a bit weak but better than nothing
-      // Ideally ProductList populates this.
-      // For now we just update:
-      setProducts([product]);
-    }
-    optimisticUpdateStock(product.id, newStock);
-
-    // Immediate feedback
-    if (Platform.OS === 'android') {
-      import('react-native').then(({ ToastAndroid }) =>
-        ToastAndroid.show(
-          `Restocked! Stock is now ${newStock}`,
-          ToastAndroid.SHORT,
-        ),
-      );
-    }
-    router.back();
-
-    try {
-      // 2. API CALL (Background)
-      await submitRestock({
-        product_id: product.id,
-        quantity: addedQty,
+  const { mutate: mutateRestock, isPending } = useOptimisticMutation(
+    async () => {
+      return restockProduct({
+        product_id: product!.id,
+        quantity: Number(quantity),
         cost_per_unit: Number(costPrice),
         supplier: supplier || undefined,
         notes: notes || undefined,
       });
+    },
+    {
+      queryKey: ['/products'],
+      updater: (old: Product[] | undefined) => {
+        return old;
+      },
+      onSuccess: () => {
+        if (product) {
+          queryClient.invalidateQueries({
+            queryKey: [`/products/${product.id}`],
+          });
+        }
 
-      // Success - Silent revalidation or do nothing
-    } catch (e) {
-      // 3. ROLLBACK
-      rollbackStock(product.id, oldStock);
-      Alert.alert('Error', 'Restock failed - rolled back stock');
+        if (Platform.OS === 'android') {
+          ToastAndroid.show('Restock successful', ToastAndroid.SHORT);
+        } else {
+          Alert.alert('Success', 'Restock successful');
+        }
+        router.back();
+      },
+      onError: (err: Error) => {
+        Alert.alert('Error', err.message || 'Failed to restock');
+      },
+    },
+  );
+
+  const handleSubmit = () => {
+    if (!product || !quantity) {
+      Alert.alert('Error', 'Please fill all required fields');
+      return;
     }
+    mutateRestock(undefined);
   };
 
   return (
     <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
       <BarcodeScanner
         visible={showScanner}
         onClose={() => setShowScanner(false)}
         onScan={handleScan}
       />
 
+      {/* Swiss Header */}
       <View
-        className="px-6 py-4 border-b border-secondary-100 flex-row items-center justify-between"
-        style={{ paddingTop: insets.top + 10 }}
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
       >
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text className="font-bold text-lg">Close</Text>
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
         </TouchableOpacity>
-        <Text className="font-bold text-lg">RESTOCK</Text>
-        <View className="w-10" />
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          RESTOCK
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         {/* Product Selection */}
-        <View className="mb-6">
-          <Text className="text-xs font-bold uppercase text-secondary-500 mb-2">
+        <View className="mb-8">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
             Target Product
           </Text>
 
@@ -143,35 +135,43 @@ export default function RestockScreen() {
             <View className="flex-row gap-2">
               <View className="flex-1">
                 <Input
-                  placeholder="Scan/Type Barcode"
+                  placeholder="Scan or Type Barcode"
                   value={barcodeInput}
                   onChangeText={setBarcodeInput}
-                  onSubmitEditing={handleSearch}
+                  onSubmitEditing={() => handleSearch(barcodeInput)}
                 />
               </View>
               <TouchableOpacity
                 onPress={() => setShowScanner(true)}
-                className="w-12 h-12 bg-black rounded-lg items-center justify-center"
+                className="w-12 h-12 bg-black items-center justify-center border border-black"
               >
                 <Text className="text-white text-xl">📷</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <View className="bg-secondary-50 p-4 rounded-lg flex-row justify-between items-center">
-              <View>
-                <Text className="font-bold text-lg">{product.name}</Text>
-                <Text className="text-secondary-500">
-                  Current Stock: {product.current_stock}
-                </Text>
+            <View className="bg-secondary-50 p-6 border border-secondary-100">
+              <View className="flex-row justify-between items-start">
+                <View className="flex-1 pr-4">
+                  <Text className="font-heading font-black text-2xl uppercase text-primary-900 leading-tight mb-1">
+                    {product.name}
+                  </Text>
+                  <Text className="text-secondary-500 font-bold uppercase text-xs tracking-wider">
+                    Current: {product.current_stock}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    setProduct(null);
+                    setBarcodeInput('');
+                    setQuantity('');
+                  }}
+                  className="bg-secondary-200 px-3 py-1.5"
+                >
+                  <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-900">
+                    CHANGE
+                  </Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                onPress={() => {
-                  setProduct(null);
-                  setBarcodeInput('');
-                }}
-              >
-                <Text className="text-danger-600 font-bold">CHANGE</Text>
-              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -179,7 +179,7 @@ export default function RestockScreen() {
         {product && (
           <View className="animate-fade-in-down">
             <Input
-              label="QUANTITY ADDED"
+              label="QUANTITY ADDED *"
               placeholder="0"
               keyboardType="numeric"
               value={quantity}
@@ -187,43 +187,44 @@ export default function RestockScreen() {
               autoFocus
             />
 
+            <View className="h-4" />
+
             <Input
               label="UNIT COST (IDR)"
               placeholder="0"
               keyboardType="numeric"
               value={costPrice}
               onChangeText={setCostPrice}
+              helperText="Cost per item"
             />
 
+            <View className="h-4" />
+
             <Input
-              label="SUPPLIER (Optional)"
-              placeholder="e.g. Toko Sebelah"
+              label="SUPPLIER (OPTIONAL)"
+              placeholder="Store Name"
               value={supplier}
               onChangeText={setSupplier}
             />
 
+            <View className="h-4" />
+
             <Input
-              label="NOTES (Optional)"
+              label="NOTES"
               placeholder="Additional info..."
               value={notes}
               onChangeText={setNotes}
             />
 
-            <TouchableOpacity
+            <View className="h-8" />
+
+            <Button
+              title="CONFIRM RESTOCK"
+              size="lg"
+              fullWidth
               onPress={handleSubmit}
-              disabled={isSubmitting}
-              className={`mt-4 py-4 rounded-xl items-center justify-center bg-primary-900 ${
-                isSubmitting ? 'opacity-50' : ''
-              }`}
-            >
-              {isSubmitting ? (
-                <Text className="text-white font-bold">LOADING...</Text>
-              ) : (
-                <Text className="text-white font-bold text-lg tracking-tight">
-                  CONFIRM RESTOCK
-                </Text>
-              )}
-            </TouchableOpacity>
+              isLoading={isPending}
+            />
           </View>
         )}
       </ScrollView>

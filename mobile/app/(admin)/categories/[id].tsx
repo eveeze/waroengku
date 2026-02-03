@@ -7,18 +7,17 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Header } from '@/components/shared';
 import { Button, Card, Input, Loading } from '@/components/ui';
-import {
-  getCategoryById,
-  updateCategory,
-  deleteCategory,
-} from '@/api/endpoints/categories';
-import { Category } from '@/api/types';
-import { useApi } from '@/hooks/useApi';
+import { updateCategory, deleteCategory } from '@/api/endpoints/categories';
+import { Category, ApiResponse } from '@/api/types';
+import { useOptimisticMutation } from '@/hooks';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
 
 /**
  * Category Detail/Edit Screen
@@ -27,53 +26,106 @@ export default function CategoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<Category | null>(null);
 
-  const { isLoading, execute: fetchCategory } = useApi(() =>
-    getCategoryById(id!),
-  );
+  // useQuery
+  // Fix: Use ApiResponse wrapper and initialData from list cache
+  const { data: response, isLoading } = useQuery({
+    queryKey: [`/categories/${id}`],
+    queryFn: ({ queryKey }) =>
+      fetchWithCache<ApiResponse<Category>>({ queryKey }),
+    enabled: !!id,
+    initialData: () => {
+      // Try to find category in the list cache
+      const listResponse = queryClient.getQueryData<ApiResponse<Category[]>>([
+        '/categories',
+      ]);
+      const found = listResponse?.data?.find((c) => c.id === id);
+      if (found) {
+        return {
+          success: true,
+          data: found,
+        };
+      }
+      return undefined;
+    },
+  });
+
+  const categoryData = response?.data;
 
   useEffect(() => {
-    loadCategory();
-  }, []);
-
-  const loadCategory = async () => {
-    const result = await fetchCategory();
-    if (result) {
-      setCategory(result);
-      setName(result.name);
-      setDescription(result.description || '');
+    if (categoryData) {
+      setCategory(categoryData);
+      setName(categoryData.name);
+      setDescription(categoryData.description || '');
     }
-  };
+  }, [categoryData]);
 
-  const handleSubmit = async () => {
+  // Optimistic Update
+  const { mutate: mutateUpdate, isPending: isUpdating } = useOptimisticMutation(
+    async () =>
+      updateCategory(id!, {
+        name: name.trim(),
+        description: description.trim() || undefined,
+      }),
+    {
+      queryKey: [`/categories/${id}`],
+      updater: (old: ApiResponse<Category> | undefined) => {
+        if (!old) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            name: name.trim(),
+            description: description.trim() || undefined,
+            updated_at: new Date().toISOString(),
+          },
+        };
+      },
+      onSuccess: () => {
+        Alert.alert('Berhasil', 'Kategori berhasil diperbarui', [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+        // Invalidate list to ensure consistency
+        queryClient.invalidateQueries({ queryKey: ['/categories'] });
+      },
+      onError: (error: Error) => {
+        Alert.alert('Gagal', error.message || 'Gagal memperbarui kategori');
+      },
+    },
+  );
+
+  // Optimistic Delete
+  const { mutate: mutateDelete } = useOptimisticMutation(
+    async () => deleteCategory(id!),
+    {
+      queryKey: ['/categories'],
+      updater: (old: ApiResponse<Category[]> | undefined) => {
+        if (!old) return old;
+        return {
+          ...old,
+          data: old.data.filter((c) => c.id !== id),
+        };
+      },
+      onSuccess: () => {
+        Alert.alert('Berhasil', 'Kategori berhasil dihapus');
+        router.back();
+      },
+      onError: (err: Error) => {
+        Alert.alert('Gagal', err.message || 'Gagal menghapus kategori');
+      },
+    },
+  );
+
+  const handleSubmit = () => {
     if (!name.trim()) {
       Alert.alert('Error', 'Nama kategori wajib diisi');
       return;
     }
-
-    try {
-      setIsSubmitting(true);
-
-      await updateCategory(id!, {
-        name: name.trim(),
-        description: description.trim() || undefined,
-      });
-
-      Alert.alert('Berhasil', 'Kategori berhasil diperbarui', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch (error) {
-      Alert.alert(
-        'Gagal',
-        error instanceof Error ? error.message : 'Gagal memperbarui kategori',
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    mutateUpdate();
   };
 
   const handleDelete = () => {
@@ -90,18 +142,7 @@ export default function CategoryDetailScreen() {
       {
         text: 'Hapus',
         style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteCategory(id!);
-            Alert.alert('Berhasil', 'Kategori berhasil dihapus');
-            router.back();
-          } catch (err) {
-            Alert.alert(
-              'Gagal',
-              err instanceof Error ? err.message : 'Gagal menghapus kategori',
-            );
-          }
-        },
+        onPress: () => mutateDelete(),
       },
     ]);
   };
@@ -112,7 +153,20 @@ export default function CategoryDetailScreen() {
 
   return (
     <View className="flex-1 bg-secondary-50">
-      <Header title="Edit Kategori" onBack={() => router.back()} />
+      {/* Swiss Header */}
+      <View
+        className="px-6 pb-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          EDIT CATEGORY
+        </Text>
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -176,7 +230,7 @@ export default function CategoryDetailScreen() {
             title="Simpan Perubahan"
             fullWidth
             onPress={handleSubmit}
-            isLoading={isSubmitting}
+            isLoading={isUpdating}
           />
         </View>
       </KeyboardAvoidingView>

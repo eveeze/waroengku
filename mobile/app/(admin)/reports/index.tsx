@@ -8,14 +8,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
-import { useApi } from '@/hooks/useApi';
+import { useQuery } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
 import { getDashboard } from '@/api/endpoints/reports';
+import { DashboardData } from '@/api/types';
+import { Loading } from '@/components/ui';
 
-/**
- * Reports Hub Screen
- * Swiss Minimalist Refactor
- */
 export default function ReportsHubScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -23,12 +21,11 @@ export default function ReportsHubScreen() {
   const {
     data: dashboard,
     isLoading,
-    execute: fetchDashboard,
-  } = useApi(getDashboard);
-
-  useEffect(() => {
-    fetchDashboard();
-  }, []);
+    refetch,
+  } = useQuery({
+    queryKey: ['/reports/dashboard'],
+    queryFn: ({ queryKey }) => fetchWithCache<DashboardData>({ queryKey }),
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -92,7 +89,7 @@ export default function ReportsHubScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
-            onRefresh={fetchDashboard}
+            onRefresh={refetch}
             tintColor="#000"
           />
         }

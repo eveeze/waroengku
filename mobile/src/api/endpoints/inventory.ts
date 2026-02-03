@@ -40,7 +40,7 @@ export async function getLowStockProducts(): Promise<LowStockProduct[]> {
  * Get Inventory Report
  * GET /api/v1/inventory/report
  */
-export async function getInventoryReport(): Promise<InventoryReport> {
+export async function getInventoryOverview(): Promise<InventoryReport> {
   return apiCall<InventoryReport>('get', '/inventory/report');
 }
 

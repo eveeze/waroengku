@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StatusBar,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card } from '@/components/ui';
@@ -27,7 +33,7 @@ export default function InventoryScreen() {
       title: 'Stock Opname',
       subtitle: 'Full inventory counting',
       icon: '📋',
-      route: '/(admin)/stock-opname', // This will be created in Phase 4, but linking it here is fine
+      route: '/(admin)/stock-opname',
       color: 'bg-purple-50',
     },
     {
@@ -41,16 +47,17 @@ export default function InventoryScreen() {
 
   return (
     <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
       <View
-        className="px-6 pb-6 border-b border-secondary-100"
-        style={{ paddingTop: insets.top + 24 }}
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
           <Text className="text-secondary-500 font-bold uppercase tracking-widest text-xs">
-            ← BACK TO DASHBOARD
+            ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black tracking-tighter text-primary-900">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
           INVENTORY
         </Text>
       </View>

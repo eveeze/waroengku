@@ -16,11 +16,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Input } from '@/components/ui';
 import { categorySchema, CategoryFormData } from '@/utils/validation';
 import { createCategory } from '@/api/endpoints/categories';
+import { Category, ApiResponse } from '@/api/types';
+import { useOptimisticMutation } from '@/hooks';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function CreateCategoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
 
   const {
     control,
@@ -34,27 +37,54 @@ export default function CreateCategoryScreen() {
     },
   });
 
-  const onSubmit = async (data: CategoryFormData) => {
-    try {
-      setIsSubmitting(true);
-
-      await createCategory({
+  const { mutate: mutateCreate, isPending: isCreating } = useOptimisticMutation(
+    async (data: CategoryFormData) =>
+      createCategory({
         name: data.name,
         description: data.description || undefined,
-      });
+      }),
+    {
+      queryKey: ['/categories'],
+      updater: (old: ApiResponse<Category[]> | undefined, newData) => {
+        const optimisticCategory: Category = {
+          id: 'temp-' + Date.now(),
+          name: newData.name,
+          description: newData.description || '',
+          product_count: 0,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          parent_id: undefined,
+        };
 
-      // Show success alert
-      Alert.alert('SUCCESS', 'Category has been created.', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch (error) {
-      Alert.alert(
-        'FAILED',
-        error instanceof Error ? error.message : 'Could not create category',
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+        // If query hasn't run yet, initialize structure
+        if (!old) {
+          return {
+            success: true,
+            data: [optimisticCategory],
+          };
+        }
+
+        // Append to existing data list
+        return {
+          ...old,
+          data: [...old.data, optimisticCategory],
+        };
+      },
+      invalidates: true,
+      onSuccess: () => {
+        Alert.alert('SUCCESS', 'Category has been created.', [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+      },
+      onError: (error: Error) => {
+        Alert.alert('FAILED', error.message || 'Could not create category');
+      },
+    },
+  );
+
+  const onSubmit = (data: CategoryFormData) => {
+    mutateCreate(data);
   };
 
   return (
@@ -138,7 +168,7 @@ export default function CreateCategoryScreen() {
             fullWidth
             size="lg"
             onPress={handleSubmit(onSubmit)}
-            isLoading={isSubmitting}
+            isLoading={isCreating}
           />
         </View>
       </KeyboardAvoidingView>

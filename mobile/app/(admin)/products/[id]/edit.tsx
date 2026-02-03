@@ -24,7 +24,9 @@ import {
 } from '@/components/ui';
 import { updateProduct, getProductById, getCategories } from '@/api/endpoints';
 import { Category, Product } from '@/api/types';
-import { useApi, ImageAsset } from '@/hooks';
+import { useApi, ImageAsset, useOptimisticMutation } from '@/hooks';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetcher } from '@/api/client';
 
 // Edit form schema (all optional except changed fields)
 const editProductSchema = z.object({
@@ -55,11 +57,81 @@ export default function EditProductScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [product, setProduct] = useState<Product | null>(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const queryClient = useQueryClient();
 
-  const { execute: fetchProduct, isLoading } = useApi(() =>
-    getProductById(id!),
-  );
-  const { execute: fetchCategories } = useApi(getCategories);
+  // useQuery for fetching product
+  const { data: productData, isLoading: isProductLoading } = useQuery({
+    queryKey: [`/products/${id}`],
+    queryFn: ({ queryKey }) => fetcher<Product>({ queryKey }),
+    enabled: !!id,
+    initialData: () => {
+      return queryClient.getQueryData<Product>([`/products/${id}`]);
+    },
+  });
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ['/categories'],
+    queryFn: ({ queryKey }) => fetcher<Category[]>({ queryKey }),
+  });
+
+  // Optimistic Mutation
+  const { mutate: mutateProduct, isPending: isUpdating } =
+    useOptimisticMutation<
+      Product,
+      Error,
+      EditProductFormData & { image?: any; deleteImage?: boolean },
+      { previousData: Product | undefined }
+    >(
+      async (variables) => {
+        // Prepare payload
+        const payload = {
+          name: variables.name,
+          barcode: variables.barcode || undefined,
+          sku: variables.sku || undefined,
+          description: variables.description || undefined,
+          category_id: variables.category_id || undefined,
+          unit: variables.unit,
+          base_price: variables.base_price,
+          cost_price: variables.cost_price,
+          min_stock_alert: variables.min_stock_alert,
+          max_stock: variables.max_stock,
+          is_active: variables.is_active,
+          is_refillable: variables.is_refillable,
+          image_url: variables.deleteImage ? '' : undefined,
+        };
+
+        const imagePayload = variables.image
+          ? {
+              uri: variables.image.uri,
+              type: variables.image.mimeType || 'image/jpeg',
+              name: variables.image.fileName || 'upload.jpg',
+            }
+          : undefined;
+
+        return updateProduct(id!, payload, imagePayload);
+      },
+      {
+        queryKey: [`/products/${id}`],
+        updater: (old: Product | undefined, variables) => {
+          if (!old) return old;
+          return {
+            ...old,
+            ...variables,
+            // Optimistically handle image? Tricky with file uploads.
+            // We'll trust the mutation result or refetch.
+            // For now, text fields update instantly.
+          };
+        },
+        onSuccess: () => {
+          Alert.alert('Success', 'Product updated successfully', [
+            { text: 'OK', onPress: () => router.back() },
+          ]);
+        },
+        onError: (error) => {
+          Alert.alert('Error', error.message || 'Failed to update product');
+        },
+      },
+    );
 
   const {
     control,
@@ -72,32 +144,32 @@ export default function EditProductScreen() {
   });
 
   useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    const [prod, cats] = await Promise.all([fetchProduct(), fetchCategories()]);
-
-    if (prod) {
-      setProduct(prod);
+    if (productData) {
+      setProduct(productData);
       reset({
-        name: prod.name,
-        barcode: prod.barcode || '',
-        sku: prod.sku || '',
-        description: prod.description || '',
-        category_id: prod.category_id || '',
-        unit: prod.unit,
-        base_price: prod.base_price,
-        cost_price: prod.cost_price,
-        min_stock_alert: prod.min_stock_alert,
-        max_stock: prod.max_stock,
-        is_active: prod.is_active,
-        is_refillable: prod.is_refillable,
+        name: productData.name,
+        barcode: productData.barcode || '',
+        sku: productData.sku || '',
+        description: productData.description || '',
+        category_id: productData.category_id || '',
+        unit: productData.unit,
+        base_price: productData.base_price,
+        cost_price: productData.cost_price,
+        min_stock_alert: productData.min_stock_alert,
+        max_stock: productData.max_stock,
+        is_active: productData.is_active,
+        is_refillable: productData.is_refillable,
       });
     }
+  }, [productData]);
 
-    if (cats) setCategories(cats);
-  };
+  useEffect(() => {
+    if (categoriesData) {
+      setCategories(categoriesData);
+    }
+  }, [categoriesData]);
+
+  // Removed manual loadData
 
   /* Logic for Image Handling */
   const [newImage, setNewImage] = useState<ImageAsset | null>(null);
@@ -124,51 +196,14 @@ export default function EditProductScreen() {
   };
 
   const onSubmit = async (data: EditProductFormData) => {
-    try {
-      setIsSubmitting(true);
-
-      await updateProduct(
-        id!,
-        {
-          name: data.name,
-          barcode: data.barcode || undefined,
-          sku: data.sku || undefined,
-          description: data.description || undefined,
-          category_id: data.category_id || undefined,
-          unit: data.unit,
-          base_price: data.base_price,
-          cost_price: data.cost_price,
-          min_stock_alert: data.min_stock_alert,
-          max_stock: data.max_stock,
-          is_active: data.is_active,
-          is_refillable: data.is_refillable,
-          // If we flagged deletion AND didn't provide a new image, send empty string to delete it.
-          image_url: isImageDeleted && !newImage ? '' : undefined,
-        },
-        // If we have a new image, pass it for upload (multipart)
-        newImage
-          ? {
-              uri: newImage.uri,
-              type: newImage.mimeType || 'image/jpeg',
-              name: newImage.fileName || 'upload.jpg',
-            }
-          : undefined,
-      );
-
-      Alert.alert('Success', 'Product updated successfully', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch (error) {
-      Alert.alert(
-        'Error',
-        error instanceof Error ? error.message : 'Failed to update product',
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    mutateProduct({
+      ...data,
+      image: newImage,
+      deleteImage: isImageDeleted && !newImage,
+    });
   };
 
-  if (isLoading && !product) {
+  if (isProductLoading && !product) {
     return <Loading fullScreen message="Loading product..." />;
   }
 
@@ -560,7 +595,7 @@ export default function EditProductScreen() {
             fullWidth
             size="lg"
             onPress={handleSubmit(onSubmit)}
-            isLoading={isSubmitting}
+            isLoading={isUpdating}
           />
         </View>
       </KeyboardAvoidingView>

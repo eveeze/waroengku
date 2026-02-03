@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,63 +6,80 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
+  StatusBar,
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useApi } from '@/hooks/useApi';
+import { useQuery } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
 import { getOpnameSessions, startOpnameSession } from '@/api/endpoints';
 import { OpnameSession } from '@/api/types';
 import { Loading, Button } from '@/components/ui';
+import { useOptimisticMutation } from '@/hooks';
 
 export default function StockOpnameListScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [sessions, setSessions] = useState<OpnameSession[]>([]);
 
-  const { isLoading, execute: fetchSessions } = useApi(getOpnameSessions);
-  const { isLoading: isCreating, execute: createSession } =
-    useApi(startOpnameSession);
+  const {
+    data: sessions = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['/opname-sessions'],
+    queryFn: ({ queryKey }) => fetchWithCache<OpnameSession[]>({ queryKey }),
+  });
 
-  const loadData = async () => {
-    const data = await fetchSessions();
-    if (data) setSessions(data);
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, []),
+  const { mutate: mutateCreate, isPending: isCreating } = useOptimisticMutation(
+    async (payload: any) => startOpnameSession(payload),
+    {
+      queryKey: ['/opname-sessions'],
+      updater: (old: OpnameSession[] | undefined, variables: any) => {
+        // Optimistic update
+        const optimisticSession: OpnameSession = {
+          id: 'optimistic-' + Date.now(),
+          session_number: 'PENDING',
+          status: 'active',
+          created_by: variables.created_by,
+          notes: variables.notes,
+          created_at: new Date().toISOString(),
+        };
+        if (!old) return [optimisticSession];
+        return [optimisticSession, ...old];
+      },
+      onSuccess: (data) => {
+        if (data) {
+          router.push(`/(admin)/stock-opname/${data.id}`);
+        }
+      },
+      onError: (err: Error) => {
+        Alert.alert('Error', err.message || 'Failed to start new session');
+      },
+    },
   );
 
-  const handleCreateSession = async () => {
-    try {
-      const newSession = await createSession({
-        created_by: 'Admin', // TODO: Auth
-        notes: 'Session started from mobile',
-      });
-      if (newSession) {
-        router.push(`/(admin)/stock-opname/${newSession.id}`);
-      }
-    } catch {
-      Alert.alert('Error', 'Failed to start new session');
-    }
+  const handleCreate = () => {
+    mutateCreate({
+      created_by: 'Admin', // TODO: Auth
+      notes: 'Session started from mobile',
+    });
   };
 
   const renderItem = ({ item }: { item: OpnameSession }) => (
     <TouchableOpacity
       onPress={() => router.push(`/(admin)/stock-opname/${item.id}`)}
-      className="bg-secondary-50 p-4 rounded-xl mb-3 border border-secondary-100 flex-row justify-between items-center"
+      className="bg-secondary-50 p-4 rounded-none mb-3 border border-secondary-100 flex-row justify-between items-center"
     >
       <View>
-        <Text className="font-heading font-black text-lg text-primary-900 uppercase tracking-tight">
-          {item.session_number}
+        <Text className="font-body font-black text-lg text-primary-900 uppercase tracking-tight">
+          Session #{item.session_number}
         </Text>
-        <Text className="text-secondary-500 font-body text-xs font-bold mt-1 tracking-wide">
+        <Text className="text-secondary-500 font-body text-xs font-bold mt-1 tracking-wide uppercase">
           {new Date(item.created_at).toLocaleDateString()} • {item.created_by}
         </Text>
       </View>
       <View
-        className={`px-3 py-1 rounded-full ${item.status === 'active' ? 'bg-green-500' : 'bg-secondary-300'}`}
+        className={`px-3 py-1 ${item.status === 'active' ? 'bg-black' : 'bg-secondary-300'}`}
       >
         <Text className="text-white text-[10px] font-bold uppercase tracking-widest font-body">
           {item.status}
@@ -73,27 +90,28 @@ export default function StockOpnameListScreen() {
 
   return (
     <View className="flex-1 bg-white">
-      {/* Header */}
+      <StatusBar barStyle="dark-content" />
+      {/* Swiss Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white flex-row justify-between items-end"
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
         style={{ paddingTop: insets.top + 16 }}
       >
-        <View>
-          <TouchableOpacity onPress={() => router.back()} className="mb-4">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
-              ← Back
-            </Text>
-          </TouchableOpacity>
-          <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-black">
-            Stock Opname
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
           </Text>
+        </TouchableOpacity>
+        <View className="flex-row justify-between items-end">
+          <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+            STOCK OPNAME
+          </Text>
+          <Button
+            title="NEW SESSION"
+            size="sm"
+            onPress={handleCreate}
+            isLoading={isCreating}
+          />
         </View>
-        <Button
-          title="NEW SESSION"
-          size="sm"
-          onPress={handleCreateSession}
-          isLoading={isCreating}
-        />
       </View>
 
       <FlatList
@@ -102,16 +120,17 @@ export default function StockOpnameListScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 24 }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={loadData} />
+          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
         }
         ListEmptyComponent={
           !isLoading ? (
-            <View className="items-center mt-10">
-              <Text className="text-secondary-500 font-bold">
-                No sessions found.
+            <View className="items-center mt-12 bg-secondary-50 p-8 border border-secondary-100">
+              <Text className="text-3xl mb-2">📋</Text>
+              <Text className="text-secondary-900 font-black uppercase tracking-wide mb-1">
+                No sessions found
               </Text>
-              <Text className="text-secondary-400 text-xs mt-1">
-                Start a new session to begin accounting.
+              <Text className="text-secondary-500 text-xs font-bold uppercase tracking-widest">
+                Start a new session to begin accounting
               </Text>
             </View>
           ) : null

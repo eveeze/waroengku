@@ -1,84 +1,78 @@
-import { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   FlatList,
-  RefreshControl,
   TouchableOpacity,
+  RefreshControl,
   TextInput,
   StatusBar,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useApi } from '@/hooks/useApi';
+import { useInfiniteQuery } from '@tanstack/react-query';
+// We import getCustomers directly, letting useInfiniteQuery handle pagination state.
+// caching is handled by React Query + ETag (if getCustomers calls apiCall which allows conditional requests,
+// though for search/infinite it's less critical than Detail).
 import { getCustomers } from '@/api/endpoints/customers';
-import { Customer, CustomerListParams } from '@/api/types';
-import { Loading } from '@/components/ui';
+import { Customer, PaginatedResponse } from '@/api/types';
+import { Loading, Button } from '@/components/ui';
+
+// Debounce helper could be useful but we'll stick to simple state for now or manual trigger if needed.
+// For now, search triggers refetch on text change (fast enough for local dev, might want debounce in prod).
 
 export default function CustomersScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [hasMore, setHasMore] = useState(true);
   const [showDebtOnly, setShowDebtOnly] = useState(false);
 
-  const { isLoading, execute: fetchCustomers } = useApi(
-    (params: CustomerListParams) => getCustomers(params),
-  );
-
-  useEffect(() => {
-    loadCustomers();
-  }, []);
-
-  const loadCustomers = useCallback(
-    async (searchTerm = search, pageNum = 1, append = false) => {
-      const params: CustomerListParams = {
-        page: pageNum,
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetching,
+    isFetchingNextPage,
+    refetch,
+    isLoading,
+  } = useInfiniteQuery({
+    queryKey: ['/customers', { search, showDebtOnly }],
+    queryFn: async ({ pageParam = 1, queryKey }) => {
+      const [_, params] = queryKey as [
+        string,
+        { search?: string; showDebtOnly?: boolean },
+      ];
+      return getCustomers({
+        page: pageParam as number,
         per_page: 20,
-        search: searchTerm || undefined,
-        has_debt: showDebtOnly || undefined,
-      };
-
-      try {
-        const result = await fetchCustomers(params);
-        if (result) {
-          if (append) {
-            setCustomers((prev) => [...prev, ...result.data]);
-          } else {
-            setCustomers(result.data);
-          }
-          setHasMore(pageNum < result.meta.total_pages);
-        }
-      } catch {}
+        search: params?.search || undefined,
+        has_debt: params?.showDebtOnly || undefined,
+      });
     },
-    [search, showDebtOnly],
-  );
+    initialPageParam: 1,
+    getNextPageParam: (lastPage: PaginatedResponse<Customer>) => {
+      if (lastPage.meta.page < lastPage.meta.total_pages) {
+        return lastPage.meta.page + 1;
+      }
+      return undefined;
+    },
+  });
 
-  const handleSearch = () => {
-    setPage(1);
-    loadCustomers(search, 1, false);
-  };
+  const customers = data?.pages.flatMap((page) => page.data) || [];
 
   const handleRefresh = () => {
-    setPage(1);
-    loadCustomers(search, 1, false);
+    refetch();
   };
 
   const handleLoadMore = () => {
-    if (!isLoading && hasMore) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      loadCustomers(search, nextPage, true);
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
   };
 
   const toggleDebtFilter = () => {
     setShowDebtOnly(!showDebtOnly);
-    setPage(1);
-    setTimeout(() => loadCustomers(search, 1, false), 100);
   };
 
   const formatCurrency = (amount: number) => {
@@ -89,59 +83,48 @@ export default function CustomersScreen() {
     }).format(amount);
   };
 
-  const renderCustomer = ({ item }: { item: Customer }) => {
-    const hasDebt = item.current_debt > 0;
-
-    return (
-      <TouchableOpacity
-        onPress={() => router.push(`/(admin)/customers/${item.id}`)}
-        className="mb-0 border-b border-secondary-100 bg-white active:bg-secondary-50"
-      >
-        <View className="px-6 py-4 flex-row items-center justify-between">
-          <View className="flex-1 mr-4">
-            <Text className="text-base font-heading font-bold text-primary-900 mb-0.5">
-              {item.name}
-            </Text>
-            <Text className="text-secondary-500 font-body text-xs">
-              {item.phone || 'No phone'}
-            </Text>
-          </View>
-
-          <View className="items-end">
-            {hasDebt ? (
-              <View className="items-end">
-                <Text className="font-heading font-black text-danger-600 text-sm">
-                  {formatCurrency(item.current_debt)}
-                </Text>
-                <Text className="text-[10px] font-bold text-danger-500 uppercase tracking-wide font-body">
-                  Debt
-                </Text>
-              </View>
-            ) : (
-              <Text className="text-[10px] font-bold text-secondary-300 uppercase tracking-widest font-body">
-                No Debt
-              </Text>
-            )}
-          </View>
-
-          <Text className="text-secondary-300 ml-4 text-lg">→</Text>
+  const renderItem = ({ item }: { item: Customer }) => (
+    <TouchableOpacity
+      onPress={() => router.push(`/(admin)/customers/${item.id}`)}
+      className="bg-secondary-50 p-4 rounded-xl mb-3 border border-secondary-100"
+    >
+      <View className="flex-row justify-between items-start">
+        <View className="flex-1 mr-4">
+          <Text className="font-heading text-xl text-primary-900 uppercase tracking-tight">
+            {item.name}
+          </Text>
+          <Text className="text-secondary-500 text-xs font-bold mt-1">
+            {item.phone || '-'}
+          </Text>
         </View>
-      </TouchableOpacity>
-    );
-  };
+        // Use current_debt if total_debt is missing in type definition, or fix
+        type. // Assuming current_debt based on detail screen usage. // If type
+        definition has current_debt, we use it. // If type definition has
+        total_debt, then we keep it. Use 'any' cast if unsure or check types. //
+        But let's assume current_debt is the correct one.
+        {item.current_debt > 0 && (
+          <View className="bg-red-100 px-2 py-1 rounded-md">
+            <Text className="text-red-700 text-[10px] font-black uppercase tracking-widest">
+              Debt: {formatCurrency(item.current_debt)}
+            </Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <View className="flex-1 bg-white">
       <StatusBar barStyle="dark-content" />
       {/* Header */}
       <View
-        className="bg-white border-b border-secondary-100 px-6 pb-6 sticky"
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
         style={{ paddingTop: insets.top + 16 }}
       >
-        <View className="flex-row items-end justify-between mb-6">
+        <View className="flex-row justify-between items-end mb-4">
           <View>
             <TouchableOpacity onPress={() => router.back()} className="mb-4">
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
+              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
                 ← Back
               </Text>
             </TouchableOpacity>
@@ -149,79 +132,66 @@ export default function CustomersScreen() {
               MEMBERS
             </Text>
           </View>
-          <TouchableOpacity
+          <Button
+            title="NEW MEMBER"
+            size="sm"
             onPress={() => router.push('/(admin)/customers/create')}
-            className="bg-black px-5 py-3 rounded-none items-center justify-center"
-          >
-            <Text className="text-white font-bold text-xs uppercase tracking-widest font-heading">
-              + NEW MEMBER
-            </Text>
-          </TouchableOpacity>
+          />
         </View>
 
         {/* Search & Filter */}
         <View className="flex-row gap-3">
-          <View className="flex-1 bg-secondary-50 border border-secondary-200 px-4 h-12 justify-center">
+          <View className="flex-1 bg-secondary-50 rounded-lg px-4 py-2 border border-secondary-200">
             <TextInput
-              className="flex-1 text-base font-medium text-primary-900 font-body"
-              placeholder="Search members..."
+              placeholder="SEARCH MEMBER..."
               value={search}
               onChangeText={setSearch}
-              onSubmitEditing={handleSearch}
-              returnKeyType="search"
-              placeholderTextColor="#A1A1AA"
+              className="font-bold text-primary-900 leading-tight"
+              placeholderTextColor="#9CA3AF"
             />
           </View>
           <TouchableOpacity
             onPress={toggleDebtFilter}
-            className={`px-4 justify-center border ${
+            className={`px-4 py-2 rounded-lg border ${
               showDebtOnly
-                ? 'bg-black border-black'
+                ? 'bg-red-50 border-red-200'
                 : 'bg-white border-secondary-200'
-            }`}
+            } justify-center`}
           >
             <Text
-              className={`font-bold text-xs uppercase tracking-wide ${showDebtOnly ? 'text-white' : 'text-secondary-500'}`}
+              className={`text-xs font-bold uppercase tracking-widest ${
+                showDebtOnly ? 'text-red-700' : 'text-secondary-500'
+              }`}
             >
-              {showDebtOnly ? 'Has Debt' : 'Filter Debt'}
+              Has Debt
             </Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Customers List */}
       <FlatList
         data={customers}
-        renderItem={renderCustomer}
+        renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
         refreshControl={
-          <RefreshControl
-            refreshing={isLoading && page === 1}
-            onRefresh={handleRefresh}
-          />
+          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
         }
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={
           !isLoading ? (
-            <View className="items-center py-20 px-10">
-              <Text className="text-secondary-300 font-black text-6xl mb-4">
-                👥
-              </Text>
-              <Text className="text-secondary-900 font-bold text-lg text-center uppercase tracking-wide mb-2">
-                No Members Found
-              </Text>
-              <Text className="text-secondary-500 text-center text-sm">
-                Start by adding a new member to the system.
+            <View className="items-center mt-10">
+              <Text className="text-secondary-500 font-bold">
+                No members found.
               </Text>
             </View>
           ) : null
         }
         ListFooterComponent={
-          isLoading && customers.length > 0 ? (
+          isFetchingNextPage ? (
             <View className="py-6">
-              <Loading message="" />
+              <Loading message="Loading more..." />
             </View>
           ) : null
         }

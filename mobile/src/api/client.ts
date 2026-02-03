@@ -137,61 +137,155 @@ apiClient.interceptors.response.use(
 
 export default apiClient;
 
-// Helper for making API calls with proper typing AND caching support
+/**
+ * Helper to make API calls with consistent error handling
+ * (Restored for backward compatibility with endpoints)
+ */
 export async function apiCall<T>(
-  method: 'get' | 'post' | 'put' | 'patch' | 'delete',
+  method: 'get' | 'post' | 'put' | 'delete' | 'patch',
   url: string,
-  data?: unknown,
-  params?: Record<string, unknown>,
+  data?: any,
+  params?: any,
 ): Promise<T> {
-  // Check network status
-  const networkState = await NetInfo.fetch();
-  const isConnected =
-    networkState.isConnected && networkState.isInternetReachable !== false;
-
-  // Create cache key for GET requests
-  const cacheKey = method === 'get' ? apiCache.getKey(url, params) : '';
-
-  // 1. Offline Strategy: Try cache first if offline
-  if (!isConnected && method === 'get') {
-    const cachedData = await apiCache.get<T>(cacheKey);
-    if (cachedData) {
-      console.log(`[Offline] Serving ${url} from cache`);
-      return cachedData;
-    }
-    throw new Error('Tidak ada koneksi internet. Data belum tersedia offline.');
-  }
-
-  // 2. Online Strategy: Try fetch, cache on success, fallback to cache on network error
   try {
-    const response = await apiClient.request<{ data: T }>({
+    const response = await apiClient.request<any, { data: { data: T } }>({
       method,
       url,
       data,
       params,
     });
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+}
 
-    // Save to cache if GET and successful
-    if (method === 'get') {
-      // Note: We only cache the 'data' part, which is T
-      apiCache.set(cacheKey, response.data.data);
+// ETag Cache Map
+export const etagCache = new Map<string, string>();
+
+/**
+ * Generic Fetcher for React Query with ETag support
+ * @param url - The endpoint URL
+ * @param params - Optional query parameters
+ */
+export async function fetcher<T>({
+  queryKey,
+}: {
+  queryKey: readonly unknown[];
+}): Promise<T> {
+  const [url, params] = queryKey as [string, Record<string, unknown>?];
+  const cacheKey = apiCache.getKey(url, params);
+  const existingEtag = etagCache.get(cacheKey);
+
+  const headers: Record<string, string> = {};
+  if (existingEtag) {
+    headers['If-None-Match'] = existingEtag;
+  }
+
+  try {
+    const response = await apiClient.get<{ data: T }>(url, {
+      params,
+      headers,
+      validateStatus: (status) =>
+        (status >= 200 && status < 300) || status === 304,
+    });
+
+    // Handle 304 Not Modified
+    if (response.status === 304) {
+      // In a real browser this is handled automatically, but with Axios/RN
+      // we might need to rely on our own cache or let React Query handle existing data.
+      // However, React Query expects data to be returned.
+      // If we used a custom cache for *offline*, we could fetch from there.
+      // But typically React Query "staleTime" handles the "don't fetch if fresh" part.
+      // 304 is for "Server says it hasn't changed".
+
+      // If we get 304, we should ideally return the *currently cached data*.
+      // Since we don't have easy access to React Query's internal cache here *inside* the fetcher
+      // (circular dependency if we import queryClient), strictly speaking,
+      // we can throw a specific error or signal to React Query to keep using previous data.
+      // BUT, Axios often treats 304 as success if validateStatus allows it.
+
+      // OPTION: We rely on `apiCache` (from existing code) as our "Persistent Store" for 304 fallbacks.
+      const cachedData = await apiCache.get<T>(cacheKey);
+      if (cachedData) {
+        return cachedData;
+      }
+      // If no cache but 304? Should not happen if logic is correct.
+      // If it happens, we return 'undefined' or throw?
+      // Let's return the response.data.data (which might be empty?).
+      // Usually 304 body is empty.
+      // Fallback: throw to trigger retry? No.
+      throw new Error('Data unmodified but no local cache found.');
     }
+
+    // Success (200) - Update ETag
+    const newEtag = response.headers['etag'];
+    if (newEtag) {
+      etagCache.set(cacheKey, newEtag);
+    }
+
+    // Also update our offline cache
+    apiCache.set(cacheKey, response.data.data);
 
     return response.data.data;
   } catch (error) {
-    // If network error (not 4xx/5xx response, but actual connection error), try fallback to cache
-    if (method === 'get') {
-      const isNetworkError = !axios.isAxiosError(error) || !error.response;
-      if (isNetworkError) {
-        const cachedData = await apiCache.get<T>(cacheKey);
-        if (cachedData) {
-          console.log(`[Network Error] Fallback serving ${url} from cache`);
-          return cachedData;
-        }
+    if (axios.isAxiosError(error) && error.response?.status === 304) {
+      // Just in case axios throws on 304 despite validateStatus
+      const cachedData = await apiCache.get<T>(cacheKey);
+      if (cachedData) return cachedData;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Fetcher that returns the FULL response body (not just .data.data).
+ * Essential for endpoints with pagination metadata.
+ */
+export async function fetchWithCache<T>({
+  queryKey,
+}: {
+  queryKey: readonly unknown[];
+}): Promise<T> {
+  const [url, params] = queryKey as [string, Record<string, unknown>?];
+  const cacheKey = apiCache.getKey(url, params);
+  const existingEtag = etagCache.get(cacheKey);
+
+  const headers: Record<string, string> = {};
+  if (existingEtag) {
+    headers['If-None-Match'] = existingEtag;
+  }
+
+  try {
+    const response = await apiClient.get<T>(url, {
+      params,
+      headers,
+      validateStatus: (status) =>
+        (status >= 200 && status < 300) || status === 304,
+    });
+
+    if (response.status === 304) {
+      const cachedData = await apiCache.get<T>(cacheKey);
+      if (cachedData) {
+        return cachedData;
       }
+      throw new Error('Cache mismatch: 304 received but no local data.');
     }
 
-    // Re-throw if no cache fallback available
+    const newEtag = response.headers['etag'];
+    if (newEtag) {
+      etagCache.set(cacheKey, newEtag);
+    }
+
+    // Cache the FULL response data (including meta etc)
+    apiCache.set(cacheKey, response.data);
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 304) {
+      const cachedData = await apiCache.get<T>(cacheKey);
+      if (cachedData) return cachedData;
+    }
     throw error;
   }
 }

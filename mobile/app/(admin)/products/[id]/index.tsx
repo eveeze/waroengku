@@ -13,7 +13,9 @@ import * as Clipboard from 'expo-clipboard';
 const { setStringAsync } = Clipboard;
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useApi } from '@/hooks/useApi';
+import { useApi, useOptimisticMutation } from '@/hooks'; // useApi still used? Maybe generic one.
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetcher } from '@/api/client';
 import {
   getProductById,
   deleteProduct,
@@ -24,6 +26,7 @@ import { Header } from '@/components/shared';
 import { Card, Button, Loading } from '@/components/ui';
 import { Product, PricingTier } from '@/api/types';
 import { getCleanImageUrl } from '@/utils/image';
+// import { useApi } from '@/hooks/useApi'; // Removed generic useApi for fetching
 
 /**
  * Product Detail Screen
@@ -32,26 +35,76 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [product, setProduct] = useState<Product | null>(null);
+  // Removed local state 'product' as we use useQuery 'product' data
+  // Renaming useQuery data to 'product' in destructuring is correct, but we need to remove the useState.
+  // const [product, setProduct] = useState<Product | null>(null);
 
   const {
+    data: product,
     isLoading,
     error,
-    execute: fetchProduct,
-  } = useApi(() => getProductById(id!));
+  } = useQuery({
+    queryKey: [`/products/${id}`],
+    queryFn: ({ queryKey }) => fetcher<Product>({ queryKey }),
+    enabled: !!id,
+  });
 
-  useEffect(() => {
-    if (id) {
-      loadProduct();
-    }
-  }, [id]);
+  const { mutate: mutateDeleteProduct } = useOptimisticMutation(
+    async () => deleteProduct(id!),
+    {
+      queryKey: ['/products'], // Invalidate list
+      updater: (old: any) => old, // No optimistic update on list needed, actually we can filter it out but validation is cleaner.
+      // Actually we want to remove from LIST on delete.
+      // But we are redirecting back. So simple invalidation is enough.
+      onSuccess: () => {
+        Alert.alert('Success', 'Product deleted successfully', [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+      },
+      onError: (err: Error) => {
+        Alert.alert('Error', err.message || 'Failed to delete product');
+      },
+    },
+  );
 
-  const loadProduct = async () => {
-    const result = await fetchProduct();
-    if (result) {
-      setProduct(result);
-    }
-  };
+  const { mutate: mutateToggleActive } = useOptimisticMutation(
+    async () => toggleProductActive(product!.id),
+    {
+      queryKey: [`/products/${id}`],
+      updater: (old: Product | undefined) => {
+        if (!old) return old;
+        return { ...old, is_active: !old.is_active };
+      },
+      onSuccess: (data) => {
+        // Optional toast
+      },
+      onError: (err) => {
+        Alert.alert('Error', 'Failed to update status');
+      },
+    },
+  );
+
+  const { mutate: mutateDeleteTier } = useOptimisticMutation(
+    async (tierId: string) => deletePricingTier(id!, tierId),
+    {
+      queryKey: [`/products/${id}`],
+      updater: (old: Product | undefined, tierId: string) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pricing_tiers:
+            old.pricing_tiers?.filter((t) => t.id !== tierId) || [],
+        };
+      },
+      onSuccess: () => {
+        Alert.alert('Success', 'Tier deleted successfully');
+      },
+      onError: (err: Error) => {
+        Alert.alert('Error', err.message || 'Failed to delete tier');
+      },
+    },
+  );
+  // loadProduct is removed as useQuery handles data fetching
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -70,18 +123,7 @@ export default function ProductDetailScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteProduct(id!);
-              Alert.alert('Success', 'Product deleted successfully');
-              router.back();
-            } catch (err) {
-              Alert.alert(
-                'Error',
-                err instanceof Error ? err.message : 'Failed to delete product',
-              );
-            }
-          },
+          onPress: () => mutateDeleteProduct(),
         },
       ],
     );
@@ -93,18 +135,7 @@ export default function ProductDetailScreen() {
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: async () => {
-          try {
-            await deletePricingTier(id!, tier.id);
-            Alert.alert('Success', 'Tier deleted successfully');
-            loadProduct();
-          } catch (err) {
-            Alert.alert(
-              'Error',
-              err instanceof Error ? err.message : 'Failed to delete tier',
-            );
-          }
-        },
+        onPress: () => mutateDeleteTier(tier.id),
       },
     ]);
   };
@@ -154,18 +185,7 @@ export default function ProductDetailScreen() {
             {product.name}
           </Text>
           <TouchableOpacity
-            onPress={async () => {
-              try {
-                const updated = await toggleProductActive(product.id);
-                setProduct(updated);
-                Alert.alert(
-                  'Success',
-                  `Product is now ${updated.is_active ? 'ACTIVE' : 'INACTIVE'}`,
-                );
-              } catch {
-                Alert.alert('Error', 'Failed to update status');
-              }
-            }}
+            onPress={() => mutateToggleActive()}
             className={`px-3 py-1 rounded-full border ${
               product.is_active
                 ? 'bg-primary-900 border-primary-900'
@@ -195,29 +215,11 @@ export default function ProductDetailScreen() {
           style={{ height: 300 }} // Explicit height
         >
           {product.image_url ? (
-            <View className="w-full h-full relative">
-              <Image
-                source={{ uri: getCleanImageUrl(product.image_url) }}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  backgroundColor: '#f0f0f0',
-                }}
-                resizeMode="contain"
-                onError={(e) => {
-                  Alert.alert(
-                    'Load Error',
-                    `Native Image Failed:\n${getCleanImageUrl(product.image_url)}\n\nError: ${e.nativeEvent.error}`,
-                  );
-                }}
-              />
-              {/* DEBUG INFO */}
-              <View className="absolute bottom-0 left-0 right-0 bg-black/70 p-2">
-                <Text className="text-white text-[10px] font-mono">
-                  Src: {getCleanImageUrl(product.image_url)}
-                </Text>
-              </View>
-            </View>
+            <Image
+              source={{ uri: getCleanImageUrl(product.image_url) }}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="contain"
+            />
           ) : (
             <View className="items-center">
               <Text className="text-6xl mb-2 opacity-20">📦</Text>

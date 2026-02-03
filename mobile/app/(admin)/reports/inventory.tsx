@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -9,14 +9,16 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useApi } from '@/hooks/useApi';
-import { getInventoryReport } from '@/api/endpoints/reports';
-import { LowStockItem, OutOfStockItem, StockByCategory } from '@/api/types';
+import { useQuery } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
+import {
+  InventoryReportData,
+  LowStockItem,
+  OutOfStockItem,
+  StockByCategory,
+} from '@/api/types';
+import { Loading } from '@/components/ui';
 
-/**
- * Inventory Report Screen
- * Swiss Minimalist Refactor
- */
 export default function InventoryReportScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -28,12 +30,12 @@ export default function InventoryReportScreen() {
     data: report,
     isLoading,
     error,
-    execute: fetchReport,
-  } = useApi(getInventoryReport);
-
-  useEffect(() => {
-    fetchReport();
-  }, []);
+    refetch,
+  } = useQuery({
+    queryKey: ['/reports/inventory'],
+    queryFn: ({ queryKey }) =>
+      fetchWithCache<InventoryReportData>({ queryKey }),
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -183,7 +185,7 @@ export default function InventoryReportScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
-            onRefresh={fetchReport}
+            onRefresh={refetch}
             tintColor="#000"
           />
         }
@@ -191,7 +193,7 @@ export default function InventoryReportScreen() {
         {error && (
           <View className="bg-black p-4 mb-6 mx-6 mt-6">
             <Text className="text-white font-bold uppercase tracking-wide text-xs">
-              Error: {error}
+              Error loading inventory report
             </Text>
           </View>
         )}

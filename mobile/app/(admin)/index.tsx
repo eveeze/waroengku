@@ -12,8 +12,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
-import { useApi } from '@/hooks/useApi';
-import { getDashboard } from '@/api/endpoints/reports';
+import { useQuery } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
+import { DashboardData } from '@/api/types';
 import { Loading } from '@/components/ui';
 
 /**
@@ -25,16 +26,17 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { user, userName, logout } = useAuth();
 
-  const {
-    data: dashboard,
-    isLoading,
-    error,
-    execute: fetchDashboard,
-  } = useApi(getDashboard);
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['/reports/dashboard'],
+    queryFn: ({ queryKey }) => fetchWithCache<any>({ queryKey }),
+  });
 
-  useEffect(() => {
-    fetchDashboard();
-  }, []);
+  // Data structure might be { success: true, data: {...} } or just {...} depending on backend.
+  // fetchWithCache returns response.data (full body).
+  // Docs for dashboard: { success: true, message: "...", data: { ... } }
+  const dashboard = data?.data as DashboardData | undefined;
+
+  // No useEffect needed for initial fetch with useQuery
 
   const handleLogout = async () => {
     Alert.alert('LOGOUT', 'Are you sure you want to exit?', [
@@ -79,7 +81,7 @@ export default function DashboardScreen() {
           paddingBottom: insets.bottom + 20,
         }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={fetchDashboard} />
+          <RefreshControl refreshing={isLoading} onRefresh={() => refetch()} />
         }
       >
         {/* Header Section */}
@@ -110,8 +112,10 @@ export default function DashboardScreen() {
               <Text className="text-red-600 font-bold mb-2">
                 FAILED TO LOAD DATA
               </Text>
-              <Text className="text-red-800 text-xs mb-3">{error}</Text>
-              <TouchableOpacity onPress={fetchDashboard}>
+              <Text className="text-red-800 text-xs mb-3">
+                {(error as Error)?.message || 'Unknown error'}
+              </Text>
+              <TouchableOpacity onPress={() => refetch()}>
                 <Text className="font-bold underline text-red-900">RETRY</Text>
               </TouchableOpacity>
             </View>

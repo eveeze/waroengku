@@ -10,10 +10,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useApi } from '@/hooks/useApi';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
 import { getUsers, deleteUser } from '@/api/endpoints/users';
-import { User } from '@/api/types';
+import { User, UserListResponse } from '@/api/types';
 import { Loading } from '@/components/ui';
+import { useOptimisticMutation } from '@/hooks';
 
 // Minimalist role labels
 const roleConfig: Record<string, string> = {
@@ -29,42 +31,60 @@ const roleConfig: Record<string, string> = {
 export default function UsersScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const [users, setUsers] = useState<User[]>([]);
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
 
-  const { isLoading, execute: fetchUsers } = useApi(
-    (params?: { page?: number }) => getUsers(params),
-  );
+  // Query key must follow [url, params] pattern for fetchWithCache
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['/users', { page }],
+    queryFn: ({ queryKey }) => fetchWithCache<UserListResponse>({ queryKey }),
+  });
 
   useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async (pageNum = 1, append = false) => {
-    try {
-      const result = await fetchUsers({ page: pageNum });
-      if (result && result.success) {
-        if (append) {
-          setUsers((prev) => [...prev, ...result.data]);
-        } else {
-          setUsers(result.data);
-        }
-        setHasMore(pageNum < result.meta.total_pages);
+    if (data?.data) {
+      if (page === 1) {
+        setAllUsers(data.data);
+      } else {
+        // Append unique users
+        setAllUsers((prev) => {
+          const existingIds = new Set(prev.map((u) => u.id));
+          const newUsers = data.data.filter((u) => !existingIds.has(u.id));
+          return [...prev, ...newUsers];
+        });
       }
-    } catch {}
-  };
+    }
+  }, [data, page]);
+
+  const { mutate: mutateDelete } = useOptimisticMutation(
+    async (id: string) => deleteUser(id),
+    {
+      queryKey: ['/users', { page: 1 }], // Invalidate page 1 primarily
+      updater: (old: UserListResponse | undefined, deletedId: string) => {
+        if (!old) return old;
+        return {
+          ...old,
+          data: old.data.filter((u: User) => u.id !== deletedId),
+        };
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['/users'] });
+        setPage(1);
+      },
+      onError: (err: Error) => {
+        Alert.alert('Error', err.message || 'Failed to delete user');
+      },
+    },
+  );
 
   const handleRefresh = () => {
     setPage(1);
-    loadUsers(1, false);
+    refetch();
   };
 
   const handleLoadMore = () => {
-    if (!isLoading && hasMore && users.length > 0) {
-      const nextPage = page + 1;
-      setPage(nextPage);
-      loadUsers(nextPage, true);
+    if (!isLoading && data && page < data.meta.total_pages) {
+      setPage((prev) => prev + 1);
     }
   };
 
@@ -74,9 +94,9 @@ export default function UsersScreen() {
       {
         text: 'Delete',
         style: 'destructive',
-        onPress: async () => {
-          await deleteUser(user.id);
-          loadUsers();
+        onPress: () => {
+          setAllUsers((prev) => prev.filter((u) => u.id !== user.id));
+          mutateDelete(user.id);
         },
       },
     ]);
@@ -147,7 +167,7 @@ export default function UsersScreen() {
 
       {/* Content */}
       <FlatList
-        data={users}
+        data={allUsers}
         renderItem={renderUser}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -176,7 +196,7 @@ export default function UsersScreen() {
           ) : null
         }
         ListFooterComponent={
-          users.length > 0 ? (
+          allUsers.length > 0 ? (
             <View className="py-6 items-center border-t border-secondary-50 mt-4">
               <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest font-body">
                 Long press to delete user

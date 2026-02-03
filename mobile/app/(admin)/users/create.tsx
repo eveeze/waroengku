@@ -14,19 +14,20 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Input } from '@/components/ui';
 import { registerUserSchema, RegisterUserFormData } from '@/utils/validation';
-// PASTIKAN IMPORT INI KE users.ts YANG BARU
 import { createUser } from '@/api/endpoints/users';
+import { useOptimisticMutation } from '@/hooks';
+import { User, UserListResponse } from '@/api/types';
 
 const roles = [
   { value: 'admin', label: 'Admin', description: 'Full access + Management' },
   { value: 'cashier', label: 'Cashier', description: 'POS & Transactions' },
   { value: 'inventory', label: 'Inventory', description: 'Stock & Products' },
+  { value: 'kitchen', label: 'Kitchen', description: 'Order Prep' },
 ];
 
 export default function CreateUserScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     control,
@@ -42,29 +43,48 @@ export default function CreateUserScreen() {
     },
   });
 
-  const onSubmit = async (data: RegisterUserFormData) => {
-    try {
-      setIsSubmitting(true);
+  const { mutate: mutateCreate, isPending: isSubmitting } =
+    useOptimisticMutation(
+      async (data: RegisterUserFormData) => createUser(data),
+      {
+        queryKey: ['/users', { page: 1 }],
+        updater: (
+          old: UserListResponse | undefined,
+          newData: RegisterUserFormData,
+        ) => {
+          // Optimistic update for list
+          const optimisticUser: User = {
+            id: 'temp-' + Date.now(),
+            name: newData.name,
+            email: newData.email,
+            role: newData.role,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          if (!old)
+            return {
+              data: [optimisticUser],
+              meta: { total: 1, page: 1, limit: 10, total_pages: 1 },
+            };
+          return {
+            ...old,
+            data: [optimisticUser, ...old.data],
+          };
+        },
+        onSuccess: () => {
+          Alert.alert('BERHASIL', 'Akun user berhasil dibuat.', [
+            { text: 'OK', onPress: () => router.back() },
+          ]);
+        },
+        onError: (error: Error) => {
+          Alert.alert('GAGAL', error.message || 'Gagal membuat user');
+        },
+      },
+    );
 
-      // Nembak ke POST /api/v1/users lewat function createUser
-      await createUser({
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        role: data.role,
-      });
-
-      Alert.alert('BERHASIL', 'Akun user berhasil dibuat.', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    } catch (error) {
-      Alert.alert(
-        'GAGAL',
-        error instanceof Error ? error.message : 'Gagal membuat user',
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+  const onSubmit = (data: RegisterUserFormData) => {
+    mutateCreate(data);
   };
 
   return (

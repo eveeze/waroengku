@@ -1,217 +1,271 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   Alert,
+  StatusBar,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Header } from '@/components/shared';
-import { Button, Card, Loading } from '@/components/ui';
-import { getUserById, updateUser, deleteUser } from '@/api/endpoints/users';
-import { User } from '@/api/types';
-import { useApi } from '@/hooks/useApi';
-
-const roleLabels: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  admin: { label: 'Admin', color: 'text-purple-700', bg: 'bg-purple-100', icon: '👑' },
-  cashier: { label: 'Kasir', color: 'text-blue-700', bg: 'bg-blue-100', icon: '💵' },
-  inventory: { label: 'Gudang', color: 'text-green-700', bg: 'bg-green-100', icon: '📦' },
-};
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchWithCache } from '@/api/client';
+import { Button, Loading } from '@/components/ui';
+import { updateUser, deleteUser } from '@/api/endpoints/users';
+import { User, ApiResponse, UserListResponse } from '@/api/types';
+import { useOptimisticMutation } from '@/hooks';
 
 const roles = [
-  { value: 'admin', label: 'Admin' },
-  { value: 'cashier', label: 'Kasir' },
-  { value: 'inventory', label: 'Gudang' },
+  { value: 'admin', label: 'ADMIN' },
+  { value: 'cashier', label: 'CASHIER' },
+  { value: 'inventory', label: 'INVENTORY' },
+  { value: 'kitchen', label: 'GKITCHEN' },
 ];
 
 /**
  * User Detail Screen
+ * Swiss Minimalist Design
  */
 export default function UserDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [user, setUser] = useState<User | null>(null);
+  const queryClient = useQueryClient();
   const [selectedRole, setSelectedRole] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { isLoading, execute: fetchUser } = useApi(() => getUserById(id!));
+  const { data: response, isLoading } = useQuery({
+    queryKey: ['/users', id],
+    queryFn: ({ queryKey }) => fetchWithCache<ApiResponse<User>>({ queryKey }),
+    initialData: () => {
+      // Find in list cache
+      const queries = queryClient
+        .getQueryCache()
+        .findAll({ queryKey: ['/users'] });
+      for (const query of queries) {
+        const state = query.state.data as UserListResponse | undefined;
+        if (state && Array.isArray(state.data)) {
+          const found = state.data.find((u: User) => u.id === id);
+          if (found) return { success: true, data: found };
+        }
+      }
+      return undefined;
+    },
+  });
 
-  useEffect(() => {
-    loadUser();
-  }, []);
+  const user = response?.data;
 
-  const loadUser = async () => {
-    const result = await fetchUser();
-    if (result) {
-      setUser(result);
-      setSelectedRole(result.role);
-    }
-  };
+  const { mutate: mutateUpdate, isPending: isUpdating } = useOptimisticMutation(
+    async (payload: any) => updateUser(id!, payload),
+    {
+      queryKey: ['/users', id],
+      updater: (old: ApiResponse<User> | undefined, variables: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          data: { ...old.data, ...variables },
+        };
+      },
+      onSuccess: () => {
+        Alert.alert('SUCCESS', 'User role updated.');
+        queryClient.invalidateQueries({ queryKey: ['/users'] });
+      },
+      onError: (err: Error) => {
+        Alert.alert('ERROR', err.message || 'Failed to update role');
+      },
+    },
+  );
 
-  const handleUpdateRole = async () => {
+  const { mutate: mutateDelete, isPending: isDeleting } = useOptimisticMutation(
+    async () => deleteUser(id!),
+    {
+      queryKey: ['/users'],
+      updater: (old: any) => old,
+      onSuccess: () => {
+        Alert.alert('SUCCESS', 'User deleted.');
+        router.back();
+      },
+      onError: (err: Error) => {
+        Alert.alert('ERROR', err.message || 'Failed to delete user');
+      },
+    },
+  );
+
+  const handleUpdateRole = () => {
     if (selectedRole === user?.role) {
-      Alert.alert('Info', 'Role tidak berubah');
       return;
     }
-
-    try {
-      setIsSubmitting(true);
-      await updateUser(id!, { role: selectedRole as 'admin' | 'cashier' | 'inventory' });
-      Alert.alert('Berhasil', 'Role user berhasil diperbarui');
-      loadUser();
-    } catch (error) {
-      Alert.alert(
-        'Gagal',
-        error instanceof Error ? error.message : 'Gagal memperbarui role'
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    mutateUpdate({ role: selectedRole });
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Hapus User',
-      `Yakin ingin menghapus "${user?.name}"?`,
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Hapus',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteUser(id!);
-              Alert.alert('Berhasil', 'User berhasil dihapus');
-              router.back();
-            } catch (err) {
-              Alert.alert(
-                'Gagal',
-                err instanceof Error ? err.message : 'Gagal menghapus user'
-              );
-            }
-          },
-        },
-      ]
-    );
+    Alert.alert('DELETE USER', `Permanently delete "${user?.name}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => mutateDelete(),
+      },
+    ]);
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
+    return new Date(dateStr)
+      .toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      })
+      .toUpperCase();
   };
 
   if (isLoading && !user) {
-    return <Loading fullScreen message="Memuat..." />;
+    return (
+      <View className="flex-1 bg-white items-center justify-center">
+        <Loading message="LOADING PROFILE..." />
+      </View>
+    );
   }
 
   if (!user) {
     return (
-      <View className="flex-1 bg-secondary-50 items-center justify-center">
+      <View className="flex-1 bg-white items-center justify-center">
         <Text className="text-4xl mb-4">❌</Text>
-        <Text className="text-secondary-500">User tidak ditemukan</Text>
+        <Text className="font-bold uppercase tracking-widest text-secondary-500 mb-6">
+          User Not Found
+        </Text>
         <Button
-          title="Kembali"
+          title="BACK TO LIST"
           variant="outline"
           onPress={() => router.back()}
-          className="mt-4"
         />
       </View>
     );
   }
 
-  const roleInfo = roleLabels[user.role] || roleLabels.cashier;
+  // Use a derived variable for display if selectedRole is empty
+  const currentSelectedRole = selectedRole || user.role;
 
   return (
-    <View className="flex-1 bg-secondary-50">
-      <Header title="Detail User" onBack={() => router.back()} />
+    <View className="flex-1 bg-white">
+      <StatusBar barStyle="dark-content" />
+
+      {/* Swiss Header */}
+      <View
+        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        style={{ paddingTop: insets.top + 16 }}
+      >
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            ← Back
+          </Text>
+        </TouchableOpacity>
+        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          USER PROFILE
+        </Text>
+        <Text className="text-secondary-400 font-bold uppercase tracking-widest text-xs mt-1">
+          {user.id.substring(0, 8)}...
+        </Text>
+      </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 16 }}
+        contentContainerStyle={{
+          padding: 24,
+          paddingBottom: insets.bottom + 40,
+        }}
       >
-        {/* User Profile */}
-        <Card className="mb-4">
-          <View className="items-center py-4">
-            <View className="w-20 h-20 bg-primary-100 rounded-full items-center justify-center mb-3">
-              <Text className="text-4xl">{roleInfo.icon}</Text>
+        {/* User Info Block */}
+        <View className="mb-10">
+          <View className="w-24 h-24 bg-black rounded-full items-center justify-center mb-6">
+            <Text className="text-4xl text-white">👤</Text>
+          </View>
+
+          <Text className="text-3xl font-black text-primary-900 tracking-tight uppercase mb-1">
+            {user.name}
+          </Text>
+          <Text className="text-secondary-500 font-medium text-sm uppercase tracking-wide mb-6">
+            {user.email}
+          </Text>
+
+          <View className="flex-row gap-8 py-4 border-y border-secondary-200">
+            <View>
+              <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest mb-1">
+                Joined
+              </Text>
+              <Text className="text-sm font-bold text-primary-900 uppercase">
+                {formatDate(user.created_at)}
+              </Text>
             </View>
-            <Text className="text-xl font-bold text-secondary-900">
-              {user.name}
-            </Text>
-            <Text className="text-secondary-500">{user.email}</Text>
-            <View className={`px-4 py-1 rounded-full mt-2 ${roleInfo.bg}`}>
-              <Text className={`text-sm font-medium ${roleInfo.color}`}>
-                {roleInfo.label}
+            <View>
+              <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest mb-1">
+                Updated
+              </Text>
+              <Text className="text-sm font-bold text-primary-900 uppercase">
+                {formatDate(user.updated_at)}
               </Text>
             </View>
           </View>
-        </Card>
+        </View>
 
-        {/* Info */}
-        <Card title="Informasi" className="mb-4">
-          <View className="flex-row justify-between items-center py-2 border-b border-secondary-100">
-            <Text className="text-secondary-500">Dibuat</Text>
-            <Text className="text-secondary-900">
-              {formatDate(user.created_at)}
-            </Text>
-          </View>
-          <View className="flex-row justify-between items-center py-2">
-            <Text className="text-secondary-500">Diperbarui</Text>
-            <Text className="text-secondary-900">
-              {formatDate(user.updated_at)}
-            </Text>
-          </View>
-        </Card>
+        {/* Role Selection */}
+        <View className="mb-12">
+          <Text className="text-xs font-bold uppercase tracking-widest text-black mb-6">
+            ASSIGN ROLE
+          </Text>
 
-        {/* Change Role */}
-        <Card title="Ubah Role" className="mb-4">
-          <View className="flex-row flex-wrap">
-            {roles.map((role) => (
-              <TouchableOpacity
-                key={role.value}
-                onPress={() => setSelectedRole(role.value)}
-                className={`px-4 py-2 rounded-lg mr-2 mb-2 ${
-                  selectedRole === role.value
-                    ? 'bg-primary-600'
-                    : 'bg-secondary-100'
-                }`}
-              >
-                <Text
-                  className={
-                    selectedRole === role.value
-                      ? 'text-white font-medium'
-                      : 'text-secondary-700'
-                  }
+          <View className="flex-row flex-wrap gap-3">
+            {roles.map((role) => {
+              const isActive = currentSelectedRole === role.value;
+              return (
+                <TouchableOpacity
+                  key={role.value}
+                  onPress={() => setSelectedRole(role.value)}
+                  className={`px-5 py-3 border ${
+                    isActive
+                      ? 'bg-black border-black'
+                      : 'bg-white border-secondary-200'
+                  }`}
                 >
-                  {role.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Text
+                    className={`text-xs font-bold uppercase tracking-widest ${
+                      isActive ? 'text-white' : 'text-secondary-400'
+                    }`}
+                  >
+                    {role.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
-          {selectedRole !== user.role && (
-            <Button
-              title="Simpan Perubahan Role"
-              size="sm"
-              onPress={handleUpdateRole}
-              isLoading={isSubmitting}
-              className="mt-3"
-            />
+          {currentSelectedRole !== user.role && (
+            <View className="mt-6">
+              <Button
+                title="SAVE NEW ROLE"
+                onPress={handleUpdateRole}
+                isLoading={isUpdating}
+              />
+              <Text className="text-center text-[10px] text-secondary-400 mt-2 font-bold uppercase tracking-widest">
+                This update will be applied immediately
+              </Text>
+            </View>
           )}
-        </Card>
+        </View>
 
-        {/* Actions */}
-        <Button
-          title="Hapus User"
-          variant="danger"
-          fullWidth
-          onPress={handleDelete}
-        />
+        {/* Danger Zone */}
+        <View className="border-t border-secondary-200 pt-8">
+          <Text className="text-[10px] font-bold uppercase tracking-widest text-red-500 mb-4">
+            Danger Zone
+          </Text>
+          <Button
+            title="DELETE USER PERMANENTLY"
+            variant="outline"
+            className="border-red-500"
+            textClassName="text-red-500"
+            onPress={handleDelete}
+            isLoading={isDeleting}
+          />
+        </View>
       </ScrollView>
     </View>
   );
