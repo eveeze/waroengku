@@ -6,6 +6,8 @@ import {
   CashFlowCategory,
   RecordCashFlowRequest,
   CashFlowEntry,
+  GetCashFlowsParams,
+  PaginatedResponse,
 } from '../types';
 
 /**
@@ -72,9 +74,8 @@ export async function recordCashFlow(
  * Get Cash Flows
  * GET /api/v1/cashflow
  */
-export async function getCashFlows(): Promise<CashFlowEntry[]> {
-  const response = await apiClient.get<CashFlowEntry[]>('/cashflow');
-  return Array.isArray(response.data)
-    ? response.data
-    : (response.data as any).data || [];
+export async function getCashFlows(
+  params?: GetCashFlowsParams,
+): Promise<PaginatedResponse<CashFlowEntry>> {
+  return apiCall<PaginatedResponse<CashFlowEntry>>('get', '/cashflow', params);
 }

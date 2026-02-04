@@ -6,8 +6,8 @@ export default function InventoryLayout() {
       screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
     >
       <Stack.Screen name="index" />
-      <Stack.Screen name="restock" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="adjust" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="restock" options={{ headerShown: false }} />
+      <Stack.Screen name="adjust" options={{ headerShown: false }} />
     </Stack>
   );
 }

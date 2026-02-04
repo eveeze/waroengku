@@ -360,7 +360,17 @@ export default function TransactionDetailScreen() {
           )}
 
           {transaction.status === 'completed' && (
-            <View className="">
+            <View className="gap-3">
+              <Button
+                title="REFUND ITEMS"
+                variant="outline"
+                onPress={() =>
+                  router.push({
+                    pathname: '/(admin)/pos/refunds',
+                    params: { transactionId: id },
+                  })
+                }
+              />
               <Button
                 title="VOID TRANSACTION"
                 variant="outline"

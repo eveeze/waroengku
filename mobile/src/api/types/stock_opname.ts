@@ -54,3 +54,13 @@ export interface NearExpiryItem {
   expiry_date: string;
   days_remaining: number;
 }
+
+export interface GetOpnameSessionsParams {
+  page?: number;
+  per_page?: number;
+  status?: 'draft' | 'in_progress' | 'completed' | 'cancelled';
+}
+
+export interface GetNearExpiryParams {
+  days?: number;
+}

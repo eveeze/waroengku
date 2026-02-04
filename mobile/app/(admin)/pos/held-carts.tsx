@@ -41,25 +41,25 @@ export default function HeldCartsScreen() {
   const handleResume = async (cartId: string) => {
     try {
       const cart = await resume(cartId);
-      if (cart) {
+      if (cart && cart.items) {
         clearCart();
 
+        // Fetch all products in parallel
+        const productPromises = cart.items.map((item) =>
+          getProductById(item.product_id)
+            .then((product) => ({ product, quantity: item.quantity }))
+            .catch(() => null),
+        );
+
+        const results = await Promise.all(productPromises);
         let successCount = 0;
-        // Ideally we should do parallel requests
-        for (const item of cart.items) {
-          try {
-            const product = await getProductById(item.product_id); // we need to import this or useApi
-            if (product) {
-              addItem(product, item.quantity);
-              successCount++;
-            }
-          } catch (e) {
-            console.error(
-              'Failed to fetch product for resume',
-              item.product_id,
-            );
+
+        results.forEach((result) => {
+          if (result && result.product) {
+            addItem(result.product, result.quantity);
+            successCount++;
           }
-        }
+        });
 
         if (successCount > 0) {
           router.back();

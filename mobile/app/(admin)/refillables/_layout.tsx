@@ -6,7 +6,9 @@ export default function RefillablesLayout() {
       screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
     >
       <Stack.Screen name="index" />
-      <Stack.Screen name="adjust" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="create" options={{ headerShown: false }} />
+      <Stack.Screen name="adjust" options={{ headerShown: false }} />
+      <Stack.Screen name="[id]/movements" />
     </Stack>
   );
 }

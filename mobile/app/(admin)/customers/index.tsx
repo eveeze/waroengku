@@ -59,7 +59,9 @@ export default function CustomersScreen() {
     },
   });
 
-  const customers = data?.pages.flatMap((page) => page.data) || [];
+  const customers = (data?.pages.flatMap((page) => page.data) || []).filter(
+    (c) => !!c,
+  );
 
   const handleRefresh = () => {
     refetch();
@@ -168,7 +170,7 @@ export default function CustomersScreen() {
       <FlatList
         data={customers}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item?.id || Math.random().toString()}
         contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />

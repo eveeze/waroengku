@@ -51,6 +51,7 @@ export interface SalesSummary {
   total_sales: number;
   total_transactions: number;
   total_profit: number;
+  estimated_profit?: number; // legacy/alternative field
   average_transaction: number;
 }
 

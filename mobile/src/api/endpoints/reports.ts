@@ -1,7 +1,7 @@
 import { apiCall } from '../client';
 import {
   DashboardData,
-  DailyReportData,
+  DailyReportDetailData,
   DailyReportParams,
   KasbonReportData,
   InventoryReportData,
@@ -26,8 +26,8 @@ export async function getDashboard(): Promise<DashboardData> {
  */
 export async function getDailyReport(
   params?: DailyReportParams,
-): Promise<DailyReportData> {
-  return apiCall<DailyReportData>('get', '/reports/daily', undefined, {
+): Promise<DailyReportDetailData> {
+  return apiCall<DailyReportDetailData>('get', '/reports/daily', undefined, {
     ...params,
   });
 }

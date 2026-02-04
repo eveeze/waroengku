@@ -21,8 +21,8 @@ export default function CashFlowHistoryScreen() {
   const { isLoading, execute: fetchHistory } = useApi(getCashFlows);
 
   const loadData = async () => {
-    const data = await fetchHistory();
-    if (data) setEntries(data);
+    const response = await fetchHistory();
+    if (response?.data) setEntries(response.data);
   };
 
   useFocusEffect(

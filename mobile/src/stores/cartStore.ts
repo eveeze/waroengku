@@ -21,6 +21,7 @@ interface CartState {
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   setCustomer: (customer: Customer | null) => void;
+  setItems: (items: CartItem[]) => void;
   clearCart: () => void;
 
   // Computed getters (helper)
@@ -86,17 +87,33 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   clearCart: () => set({ items: [], customer: null, validationResult: null }),
 
+  setItems: (items) => set({ items, validationResult: null }),
+
   getTotal: () => {
     const { items, validationResult } = get();
     // If we have server calculation, use it (handles tiers/discounts)
     if (validationResult) {
       return validationResult.subtotal;
     }
-    // Fallback to local calculation
-    return items.reduce(
-      (sum, item) => sum + item.product.base_price * item.quantity,
-      0,
-    );
+    // Fallback to local calculation with Pricing Tiers
+    return items.reduce((sum, item) => {
+      let price = item.product.base_price;
+      const quantity = item.quantity;
+
+      // Check for pricing tiers
+      if (item.product.pricing_tiers && item.product.pricing_tiers.length > 0) {
+        const applicableTier = item.product.pricing_tiers.find(
+          (tier) =>
+            quantity >= tier.min_quantity &&
+            (!tier.max_quantity || quantity <= tier.max_quantity),
+        );
+        if (applicableTier) {
+          price = applicableTier.price;
+        }
+      }
+
+      return sum + price * quantity;
+    }, 0);
   },
 
   getItemCount: () => {
@@ -129,7 +146,7 @@ export const useCartStore = create<CartState>((set, get) => ({
               ...item,
               serverPrice: serverItem.unit_price,
               tierName: serverItem.tier_name,
-              subtotal: serverItem.subtotal,
+              subtotal: serverItem.total_amount,
             };
           }
           return item;

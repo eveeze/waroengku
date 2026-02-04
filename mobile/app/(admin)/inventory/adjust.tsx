@@ -4,7 +4,7 @@ import {
   Text,
   ScrollView,
   Alert,
-  TouchableOpacity,
+  Pressable,
   Platform,
   ToastAndroid,
   StatusBar,
@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
 import { adjustStock, searchProductByBarcode } from '@/api/endpoints';
-import { Button, Input } from '@/components/ui';
+import { Input } from '@/components/ui';
 import { BarcodeScanner } from '@/components/shared';
 import { Product } from '@/api/types';
 import { useOptimisticMutation } from '@/hooks';
@@ -112,11 +112,11 @@ export default function AdjustScreen() {
         className="px-6 py-6 border-b border-secondary-100 bg-white"
         style={{ paddingTop: insets.top + 16 }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+        <Pressable onPress={() => router.back()} className="mb-4">
           <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
             ← Back
           </Text>
-        </TouchableOpacity>
+        </Pressable>
         <Text className="text-4xl font-black uppercase tracking-tighter text-black">
           ADJUST STOCK
         </Text>
@@ -139,12 +139,12 @@ export default function AdjustScreen() {
                   onSubmitEditing={() => handleSearch(barcodeInput)}
                 />
               </View>
-              <TouchableOpacity
+              <Pressable
                 onPress={() => setShowScanner(true)}
                 className="w-12 h-12 bg-black items-center justify-center border border-black"
               >
                 <Text className="text-white text-xl">📷</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           ) : (
             <View className="bg-secondary-50 p-6 border border-secondary-100">
@@ -157,7 +157,7 @@ export default function AdjustScreen() {
                     Current: {product.current_stock}
                   </Text>
                 </View>
-                <TouchableOpacity
+                <Pressable
                   onPress={() => {
                     setProduct(null);
                     setBarcodeInput('');
@@ -168,7 +168,7 @@ export default function AdjustScreen() {
                   <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-900">
                     CHANGE
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             </View>
           )}
@@ -181,9 +181,9 @@ export default function AdjustScreen() {
                 Action
               </Text>
               <View className="flex-row gap-4">
-                <TouchableOpacity
+                <Pressable
                   onPress={() => setType('decrease')}
-                  className={`flex-1 py-4 border-2 items-center justify-center ${
+                  className={`flex-1 py-4 border-2 items-center justify-center rounded-lg ${
                     type === 'decrease'
                       ? 'bg-red-50 border-red-500'
                       : 'bg-white border-secondary-100'
@@ -198,10 +198,10 @@ export default function AdjustScreen() {
                   >
                     REMOVE (-)
                   </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
+                </Pressable>
+                <Pressable
                   onPress={() => setType('increase')}
-                  className={`flex-1 py-4 border-2 items-center justify-center ${
+                  className={`flex-1 py-4 border-2 items-center justify-center rounded-lg ${
                     type === 'increase'
                       ? 'bg-green-50 border-green-500'
                       : 'bg-white border-secondary-100'
@@ -216,7 +216,7 @@ export default function AdjustScreen() {
                   >
                     ADD (+)
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               </View>
             </View>
 
@@ -240,14 +240,17 @@ export default function AdjustScreen() {
 
             <View className="h-8" />
 
-            <Button
-              title="CONFIRM ADJUSTMENT"
-              size="lg"
-              fullWidth
+            <Pressable
               onPress={handleSubmit}
-              isLoading={isPending}
-              variant={type === 'decrease' ? 'danger' : 'primary'}
-            />
+              disabled={isPending}
+              className={`py-4 items-center justify-center rounded-xl bg-primary-900 ${
+                isPending ? 'opacity-50' : ''
+              }`}
+            >
+              <Text className="text-white font-bold text-lg uppercase tracking-widest">
+                {isPending ? 'Saving...' : 'Confirm Adjustment'}
+              </Text>
+            </Pressable>
           </View>
         )}
       </ScrollView>

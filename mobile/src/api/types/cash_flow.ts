@@ -48,3 +48,12 @@ export interface RecordCashFlowRequest {
   description?: string;
   created_by: string;
 }
+
+export interface GetCashFlowsParams {
+  page?: number;
+  per_page?: number;
+  session_id?: string;
+  category_id?: string;
+  type?: 'income' | 'expense';
+  date_from?: string;
+}

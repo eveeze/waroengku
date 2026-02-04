@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Platform,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,7 +16,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import { useQuery } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
-import { DailyReportData, ApiResponse } from '@/api/types';
+import { DailyReportDetailData, ApiResponse } from '@/api/types';
 import { Loading } from '@/components/ui';
 
 export default function DailyReportScreen() {
@@ -32,12 +33,13 @@ export default function DailyReportScreen() {
     refetch,
     error,
   } = useQuery({
-    queryKey: ['/reports/daily', dateString],
+    queryKey: ['/reports/daily', { date: dateString }],
     queryFn: ({ queryKey }) =>
-      fetchWithCache<ApiResponse<DailyReportData>>({ queryKey }),
+      fetchWithCache<ApiResponse<DailyReportDetailData>>({ queryKey }),
   });
 
   const report = response?.data;
+  const summary = report?.summary;
 
   const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
     setShowDatePicker(Platform.OS === 'ios');
@@ -46,12 +48,13 @@ export default function DailyReportScreen() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | undefined | null) => {
+    const val = amount || 0;
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0,
-    }).format(amount);
+    }).format(val);
   };
 
   const formatDate = (dateStr: string) => {
@@ -78,6 +81,36 @@ export default function DailyReportScreen() {
   };
 
   const isToday = dateString === new Date().toISOString().split('T')[0];
+
+  // Simple Chart Logic
+  const ChartBar = ({
+    hour,
+    amount,
+    max,
+  }: {
+    hour: number;
+    amount: number;
+    max: number;
+  }) => {
+    const heightPercentage = max > 0 ? (amount / max) * 100 : 0;
+    return (
+      <View className="items-center mr-4" style={{ width: 30 }}>
+        <View className="h-32 w-2 bg-secondary-100 rounded-full justify-end overflow-hidden">
+          <View
+            className="w-full bg-primary-900 rounded-full"
+            style={{ height: `${heightPercentage}%` }}
+          />
+        </View>
+        <Text className="text-[10px] text-secondary-500 font-bold mt-2">
+          {hour}:00
+        </Text>
+      </View>
+    );
+  };
+
+  const maxHourlySales = report?.hourly_sales
+    ? Math.max(...report.hourly_sales.map((h) => h.sales))
+    : 0;
 
   return (
     <View className="flex-1 bg-white">
@@ -136,6 +169,8 @@ export default function DailyReportScreen() {
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={handleDateChange}
           maximumDate={new Date()}
+          themeVariant="light"
+          textColor="black"
         />
       )}
 
@@ -161,7 +196,7 @@ export default function DailyReportScreen() {
         )}
 
         {/* Summary Cards */}
-        {report && (
+        {summary && (
           <>
             <View className="flex-row mb-6">
               <View className="flex-1 mr-3 p-4 border border-secondary-200 bg-white">
@@ -172,7 +207,7 @@ export default function DailyReportScreen() {
                   className="text-primary-900 text-lg font-black tracking-tight"
                   numberOfLines={1}
                 >
-                  {formatCurrency(report.total_sales)}
+                  {formatCurrency(summary.total_sales)}
                 </Text>
               </View>
               <View className="flex-1 ml-3 p-4 border border-secondary-200 bg-white">
@@ -180,9 +215,34 @@ export default function DailyReportScreen() {
                   Transactions
                 </Text>
                 <Text className="text-primary-900 text-lg font-black tracking-tight">
-                  {report.total_transactions}
+                  {summary.total_transactions}
                 </Text>
               </View>
+            </View>
+
+            {/* Hourly Sales Chart */}
+            <View className="border border-secondary-200 bg-white p-6 mb-6">
+              <Text className="text-xs font-bold uppercase tracking-widest text-primary-900 mb-6 border-b border-secondary-100 pb-2">
+                Hourly Performance
+              </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View className="flex-row items-end">
+                  {report?.hourly_sales?.map((hourData) => (
+                    <ChartBar
+                      key={hourData.hour}
+                      hour={hourData.hour}
+                      amount={hourData.sales}
+                      max={maxHourlySales}
+                    />
+                  ))}
+                  {(!report?.hourly_sales ||
+                    report.hourly_sales.length === 0) && (
+                    <Text className="text-secondary-400 italic text-xs">
+                      No data available
+                    </Text>
+                  )}
+                </View>
+              </ScrollView>
             </View>
 
             <View className="border border-secondary-200 bg-white p-6 mb-6">
@@ -195,7 +255,7 @@ export default function DailyReportScreen() {
                   Est. Profit
                 </Text>
                 <Text className="text-xl font-black text-primary-900">
-                  {formatCurrency(report.estimated_profit)}
+                  {formatCurrency(summary.estimated_profit)}
                 </Text>
               </View>
 
@@ -204,10 +264,8 @@ export default function DailyReportScreen() {
                   Avg. Transaction
                 </Text>
                 <Text className="text-sm font-bold text-secondary-700">
-                  {report.total_transactions > 0
-                    ? formatCurrency(
-                        report.total_sales / report.total_transactions,
-                      )
+                  {summary.average_transaction
+                    ? formatCurrency(summary.average_transaction)
                     : '-'}
                 </Text>
               </View>
@@ -217,17 +275,52 @@ export default function DailyReportScreen() {
                   Profit Margin
                 </Text>
                 <Text className="text-sm font-black text-black bg-secondary-100 px-2 py-1">
-                  {report.total_sales > 0
-                    ? `${((report.estimated_profit / report.total_sales) * 100).toFixed(1)}%`
+                  {summary.total_sales > 0
+                    ? `${((((summary.total_profit ?? summary.estimated_profit) || 0) / summary.total_sales) * 100).toFixed(1)}%`
                     : '0%'}
                 </Text>
               </View>
+            </View>
+
+            {/* Top Products */}
+            <View className="border border-secondary-200 bg-white p-6 mb-6">
+              <Text className="text-xs font-bold uppercase tracking-widest text-primary-900 mb-6 border-b border-secondary-100 pb-2">
+                Top Selling Products
+              </Text>
+              {report?.top_products?.map((product, index) => (
+                <View
+                  key={product.product_id}
+                  className="flex-row justify-between items-center mb-4 last:mb-0"
+                >
+                  <View className="flex-row items-center flex-1 mr-4">
+                    <Text className="font-black text-secondary-300 mr-3 text-lg">
+                      {index + 1}
+                    </Text>
+                    <View>
+                      <Text className="font-bold text-primary-900">
+                        {product.product_name}
+                      </Text>
+                      <Text className="text-[10px] text-secondary-500">
+                        {product.total_quantity} sold
+                      </Text>
+                    </View>
+                  </View>
+                  <Text className="font-bold text-primary-900">
+                    {formatCurrency(product.total_sales)}
+                  </Text>
+                </View>
+              ))}
+              {(!report?.top_products || report.top_products.length === 0) && (
+                <Text className="text-secondary-400 italic text-xs">
+                  No products sold yet
+                </Text>
+              )}
             </View>
           </>
         )}
 
         {/* Empty State */}
-        {!isLoading && !report && !error && (
+        {!isLoading && !summary && !error && (
           <View className="items-center py-20 opacity-50">
             <Text className="text-lg font-medium text-primary-900 uppercase tracking-widest">
               No Data
@@ -236,7 +329,7 @@ export default function DailyReportScreen() {
         )}
 
         {/* No Sales */}
-        {report && report.total_transactions === 0 && (
+        {summary && summary.total_transactions === 0 && (
           <View className="items-center py-20 px-10 border border-dashed border-secondary-300">
             <Text className="text-secondary-900 font-bold text-lg text-center uppercase tracking-wide mb-2">
               Quiet Day

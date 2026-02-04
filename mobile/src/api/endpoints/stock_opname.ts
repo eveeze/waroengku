@@ -7,6 +7,9 @@ import {
   FinalizeSessionRequest,
   ShoppingListItem,
   NearExpiryItem,
+  GetOpnameSessionsParams,
+  GetNearExpiryParams,
+  PaginatedResponse,
 } from '../types';
 
 /**
@@ -18,14 +21,14 @@ import {
  * List Sessions
  * GET /api/v1/stock-opname/sessions
  */
-export async function getOpnameSessions(): Promise<OpnameSession[]> {
-  const response = await apiClient.get<OpnameSession[]>(
+export async function getOpnameSessions(
+  params?: GetOpnameSessionsParams,
+): Promise<PaginatedResponse<OpnameSession>> {
+  return apiCall<PaginatedResponse<OpnameSession>>(
+    'get',
     '/stock-opname/sessions',
+    params,
   );
-  // Handle array response directly if backend returns pure array, or check structure
-  return Array.isArray(response.data)
-    ? response.data
-    : (response.data as any).data;
 }
 
 /**
@@ -101,6 +104,8 @@ export async function getShoppingList(): Promise<ShoppingListItem[]> {
  * Get Near Expiry Report
  * GET /api/v1/stock-opname/near-expiry
  */
-export async function getNearExpiryReport(): Promise<NearExpiryItem[]> {
-  return apiCall<NearExpiryItem[]>('get', '/stock-opname/near-expiry');
+export async function getNearExpiryReport(
+  params?: GetNearExpiryParams,
+): Promise<NearExpiryItem[]> {
+  return apiCall<NearExpiryItem[]>('get', '/stock-opname/near-expiry', params);
 }

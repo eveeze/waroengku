@@ -10,7 +10,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
-import { fetchWithCache } from '@/api/client';
+import { fetcher } from '@/api/client';
 import { RefillableContainer } from '@/api/types';
 import { Loading, Button } from '@/components/ui';
 
@@ -24,21 +24,27 @@ export default function RefillablesScreen() {
     refetch,
   } = useQuery({
     queryKey: ['/refillables'],
-    queryFn: ({ queryKey }) =>
-      fetchWithCache<RefillableContainer[]>({ queryKey }),
+    queryFn: ({ queryKey }) => fetcher<RefillableContainer[]>({ queryKey }),
   });
 
   const renderItem = ({ item }: { item: RefillableContainer }) => (
     <View className="bg-secondary-50 p-5 rounded-none mb-4 border border-secondary-100">
       <View className="flex-row justify-between items-start mb-6">
-        <View>
+        <TouchableOpacity
+          onPress={() =>
+            router.push({
+              pathname: '/(admin)/refillables/[id]/movements',
+              params: { id: item.id, name: item.container_type },
+            })
+          }
+        >
           <Text className="font-heading text-2xl text-primary-900 uppercase tracking-tighter font-black">
             {item.container_type}
           </Text>
           <Text className="text-secondary-400 text-[10px] font-bold mt-1 uppercase tracking-widest">
-            Ref: {item.id.substring(0, 8)}
+            Ref: {item.id.substring(0, 8)} • Tap for History
           </Text>
-        </View>
+        </TouchableOpacity>
         <Button
           title="ADJUST STOCK"
           size="sm"
@@ -86,11 +92,18 @@ export default function RefillablesScreen() {
         className="px-6 py-6 border-b border-secondary-100 bg-white"
         style={{ paddingTop: insets.top + 16 }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
-            ← Back
-          </Text>
-        </TouchableOpacity>
+        <View className="flex-row justify-between items-center mb-4">
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+              ← Back
+            </Text>
+          </TouchableOpacity>
+          <Button
+            title="+ NEW CONTAINER"
+            size="sm"
+            onPress={() => router.push('/(admin)/refillables/create')}
+          />
+        </View>
         <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-black">
           REFILLABLES
         </Text>

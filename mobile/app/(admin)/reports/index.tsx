@@ -11,7 +11,7 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
 import { getDashboard } from '@/api/endpoints/reports';
-import { DashboardData } from '@/api/types';
+import { DashboardData, ApiResponse } from '@/api/types';
 import { Loading } from '@/components/ui';
 
 export default function ReportsHubScreen() {
@@ -19,13 +19,16 @@ export default function ReportsHubScreen() {
   const router = useRouter();
 
   const {
-    data: dashboard,
+    data: response,
     isLoading,
     refetch,
   } = useQuery({
     queryKey: ['/reports/dashboard'],
-    queryFn: ({ queryKey }) => fetchWithCache<DashboardData>({ queryKey }),
+    queryFn: ({ queryKey }) =>
+      fetchWithCache<ApiResponse<DashboardData>>({ queryKey }),
   });
+
+  const dashboard = response?.data;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {

@@ -6,6 +6,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +15,8 @@ import { adjustRefillableStock } from '@/api/endpoints';
 import { RefillableContainer } from '@/api/types';
 import { Button, Input } from '@/components/ui';
 import { useOptimisticMutation } from '@/hooks';
+
+type AdjustMode = 'add' | 'reduce';
 
 export default function AdjustRefillableScreen() {
   const router = useRouter();
@@ -26,8 +29,9 @@ export default function AdjustRefillableScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
-  const [emptyChange, setEmptyChange] = useState('');
-  const [fullChange, setFullChange] = useState('');
+  const [mode, setMode] = useState<AdjustMode>('add');
+  const [emptyAmount, setEmptyAmount] = useState('');
+  const [fullAmount, setFullAmount] = useState('');
   const [notes, setNotes] = useState('');
 
   const { mutate: mutateAdjust, isPending: isLoading } = useOptimisticMutation(
@@ -59,32 +63,35 @@ export default function AdjustRefillableScreen() {
   );
 
   const handleAdjust = () => {
-    const eChange = Number(emptyChange || 0);
-    const fChange = Number(fullChange || 0);
+    const eAmount = Number(emptyAmount || 0);
+    const fAmount = Number(fullAmount || 0);
 
-    if (eChange === 0 && fChange === 0) {
-      Alert.alert('Error', 'Please enter at least one change value');
+    if (eAmount === 0 && fAmount === 0) {
+      Alert.alert('Error', 'Please enter at least one amount');
       return;
     }
 
+    const multiplier = mode === 'reduce' ? -1 : 1;
+
     mutateAdjust({
       container_id: params.id!,
-      empty_change: eChange,
-      full_change: fChange,
+      empty_change: eAmount * multiplier,
+      full_change: fAmount * multiplier,
       notes,
     });
   };
 
-  const getPreview = (current: string, change: string) => {
+  const getPreview = (current: string, amount: string) => {
     const curr = Number(current || 0);
-    const chg = Number(change || 0);
-    const result = curr + chg;
+    const amt = Number(amount || 0);
+    const multiplier = mode === 'reduce' ? -1 : 1;
+    const result = curr + amt * multiplier;
     return result < 0 ? 0 : result;
   };
 
   return (
     <View className="flex-1 bg-white">
-      {/* Header (Minimal) */}
+      {/* Header */}
       <View
         className="px-6 py-6 border-b border-secondary-100 bg-white"
         style={{ paddingTop: insets.top + 16 }}
@@ -107,6 +114,23 @@ export default function AdjustRefillableScreen() {
         className="flex-1"
       >
         <ScrollView contentContainerStyle={{ padding: 24 }}>
+          {/* Mode Toggle */}
+          {/* Mode Toggle */}
+          <View className="flex-row gap-4 mb-6">
+            <Button
+              title="+ Add Stock"
+              variant={mode === 'add' ? 'primary' : 'outline'}
+              onPress={() => setMode('add')}
+              className="flex-1"
+            />
+            <Button
+              title="- Reduce Stock"
+              variant={mode === 'reduce' ? 'danger' : 'outline'}
+              onPress={() => setMode('reduce')}
+              className="flex-1"
+            />
+          </View>
+
           <View className="flex-row gap-4 mb-4">
             {/* Empty Column */}
             <View className="flex-1">
@@ -120,14 +144,16 @@ export default function AdjustRefillableScreen() {
               </View>
               <View>
                 <Input
-                  placeholder="+/-"
+                  placeholder="0"
                   keyboardType="numeric"
-                  value={emptyChange}
-                  onChangeText={setEmptyChange}
-                  className="text-center font-bold text-lg"
+                  value={emptyAmount}
+                  onChangeText={setEmptyAmount}
+                  className={`text-center font-bold text-lg ${
+                    mode === 'reduce' ? 'text-red-600' : 'text-green-600'
+                  }`}
                 />
                 <Text className="text-center text-[10px] text-secondary-500 mt-1 font-bold uppercase tracking-wide">
-                  New: {getPreview(params.current_empty!, emptyChange)}
+                  New: {getPreview(params.current_empty!, emptyAmount)}
                 </Text>
               </View>
             </View>
@@ -144,14 +170,16 @@ export default function AdjustRefillableScreen() {
               </View>
               <View>
                 <Input
-                  placeholder="+/-"
+                  placeholder="0"
                   keyboardType="numeric"
-                  value={fullChange}
-                  onChangeText={setFullChange}
-                  className="text-center font-bold text-lg"
+                  value={fullAmount}
+                  onChangeText={setFullAmount}
+                  className={`text-center font-bold text-lg ${
+                    mode === 'reduce' ? 'text-red-600' : 'text-green-600'
+                  }`}
                 />
                 <Text className="text-center text-[10px] text-secondary-500 mt-1 font-bold uppercase tracking-wide">
-                  New: {getPreview(params.current_full!, fullChange)}
+                  New: {getPreview(params.current_full!, fullAmount)}
                 </Text>
               </View>
             </View>
@@ -166,21 +194,16 @@ export default function AdjustRefillableScreen() {
 
           <View className="gap-3 mt-8">
             <Button
-              title="CONFIRM ADJUSTMENT"
+              title={
+                mode === 'add' ? 'ADD SELECTED STOCK' : 'REDUCE SELECTED STOCK'
+              }
+              variant={mode === 'reduce' ? 'danger' : 'primary'}
               onPress={handleAdjust}
               isLoading={isLoading}
             />
           </View>
-
-          <Text className="text-center text-secondary-400 text-[10px] mt-6 px-8 font-bold uppercase tracking-wide leading-relaxed">
-            Use negative numbers (e.g. -5) to reduce stock. Positive numbers add
-            stock.
-          </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
 }
-
-// Helper for header back button
-import { TouchableOpacity } from 'react-native';
