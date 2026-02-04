@@ -234,10 +234,10 @@ export default function ProductsScreen() {
         className="mb-4"
         activeOpacity={0.7}
       >
-        <Card className="rounded-none border-x-0 border-t-0 border-b border-secondary-200 shadow-none bg-transparent px-0 py-2">
+        <Card className="rounded-none border-x-0 border-t-0 border-b border-border shadow-none bg-transparent px-0 py-2">
           <View className="flex-row">
             {/* Image placeholder */}
-            <View className="w-16 h-16 bg-secondary-50 border border-secondary-200 rounded-md overflow-hidden mr-4">
+            <View className="w-16 h-16 bg-muted border border-border rounded-none overflow-hidden mr-4">
               {item.image_url ? (
                 <Image
                   source={{ uri: getCleanImageUrl(item.image_url) }}
@@ -246,7 +246,7 @@ export default function ProductsScreen() {
                 />
               ) : (
                 <View className="w-full h-full items-center justify-center">
-                  <Text className="text-xl text-secondary-300">#</Text>
+                  <Text className="text-xl text-muted-foreground">#</Text>
                 </View>
               )}
             </View>
@@ -256,41 +256,41 @@ export default function ProductsScreen() {
               <View className="flex-row justify-between items-start">
                 <View className="flex-1 pr-2">
                   <Text
-                    className="text-lg font-heading font-bold text-primary-900 tracking-tight leading-6"
+                    className="text-lg font-heading font-bold text-foreground tracking-tight leading-6"
                     numberOfLines={2}
                   >
                     {item.name}
                   </Text>
                   {item.category_name && (
-                    <Text className="text-xs font-body font-bold text-secondary-500 uppercase tracking-widest mt-1">
+                    <Text className="text-xs font-body font-bold text-muted-foreground uppercase tracking-widest mt-1">
                       {item.category_name}
                     </Text>
                   )}
                 </View>
-                <Text className="text-lg font-heading font-bold text-primary-900 tracking-tight">
+                <Text className="text-lg font-heading font-bold text-foreground tracking-tight">
                   {formatCurrency(item.base_price)}
                 </Text>
               </View>
 
               <View className="flex-row items-center mt-2">
                 <View
-                  className={`px-2 py-0.5 rounded mr-2 border ${isLowStock ? 'bg-danger-50 border-danger-200' : 'bg-secondary-50 border-secondary-200'}`}
+                  className={`px-2 py-0.5 rounded mr-2 border ${isLowStock ? 'bg-destructive/10 border-destructive' : 'bg-muted border-border'}`}
                 >
                   <Text
-                    className={`text-xs font-bold ${isLowStock ? 'text-danger-700' : 'text-primary-900'}`}
+                    className={`text-xs font-bold ${isLowStock ? 'text-destructive' : 'text-foreground'}`}
                   >
                     STOCK: {item.current_stock}
                   </Text>
                 </View>
                 {!item.is_active && (
-                  <View className="px-2 py-0.5 rounded mr-2 border bg-gray-100 border-gray-300">
-                    <Text className="text-xs font-bold text-gray-500">
+                  <View className="px-2 py-0.5 rounded mr-2 border bg-muted border-border">
+                    <Text className="text-xs font-bold text-muted-foreground">
                       INACTIVE
                     </Text>
                   </View>
                 )}
                 {item.pricing_tiers && item.pricing_tiers.length > 0 && (
-                  <Text className="text-xs text-secondary-400 font-medium">
+                  <Text className="text-xs text-muted-foreground font-medium">
                     +{item.pricing_tiers.length} TIERS
                   </Text>
                 )}
@@ -303,7 +303,7 @@ export default function ProductsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       <BarcodeScanner
         visible={showBarcodeScanner}
         onClose={() => setShowBarcodeScanner(false)}
@@ -313,23 +313,23 @@ export default function ProductsScreen() {
 
       {/* Header */}
       <View
-        className="px-6 pb-6 border-b border-secondary-200"
+        className="px-6 pb-6 border-b border-border"
         style={{ paddingTop: insets.top + 24 }}
       >
         <View className="mb-6">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-1 font-body">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1 font-body">
             INVENTORY
           </Text>
           <View className="flex-row items-end justify-between">
-            <Text className="text-4xl font-heading font-bold tracking-tighter text-primary-900 uppercase">
+            <Text className="text-4xl font-heading font-bold tracking-tighter text-foreground uppercase">
               PRODUCTS
             </Text>
             <View className="flex-row gap-2">
               <TouchableOpacity
                 onPress={() => setShowBarcodeScanner(true)}
-                className="w-10 h-10 items-center justify-center bg-secondary-50 border border-secondary-200 rounded-lg"
+                className="w-10 h-10 items-center justify-center bg-muted border border-border rounded-lg"
               >
-                <Text className="text-lg">📷</Text>
+                <Text className="text-lg text-foreground">📷</Text>
               </TouchableOpacity>
               <Button
                 title="NEW"
@@ -342,11 +342,11 @@ export default function ProductsScreen() {
 
         {/* Search */}
         <View className="flex-row gap-3">
-          <View className="flex-1 bg-secondary-50 border border-secondary-200 rounded-lg px-4 flex-row items-center h-12">
+          <View className="flex-1 bg-muted border border-border rounded-lg px-4 flex-row items-center h-12">
             <TextInput
-              className="flex-1 text-base font-medium text-primary-900 h-full"
+              className="flex-1 text-base font-medium text-foreground h-full"
               placeholder="Search products..."
-              placeholderTextColor="#a1a1aa"
+              placeholderTextColor="hsl(var(--muted-foreground))"
               value={search}
               onChangeText={setSearch}
               onSubmitEditing={handleSearch}
@@ -357,11 +357,13 @@ export default function ProductsScreen() {
             onPress={() => setShowFilters(!showFilters)}
             className={`w-12 h-12 rounded-lg items-center justify-center border ${
               showFilters
-                ? 'bg-primary-900 border-primary-900'
-                : 'bg-white border-secondary-200'
+                ? 'bg-foreground border-foreground'
+                : 'bg-background border-border'
             }`}
           >
-            <Text className={showFilters ? 'text-white' : 'text-primary-900'}>
+            <Text
+              className={showFilters ? 'text-background' : 'text-foreground'}
+            >
               F
             </Text>
           </TouchableOpacity>
@@ -369,9 +371,9 @@ export default function ProductsScreen() {
 
         {/* Filters */}
         {showFilters && (
-          <View className="mt-4 pt-4 border-t border-secondary-100 animate-fade-in-down">
+          <View className="mt-4 pt-4 border-t border-border animate-fade-in-down">
             {/* Status Filter */}
-            <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500 mb-2">
+            <Text className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
               Status
             </Text>
             <View className="flex-row mb-4 gap-2">
@@ -381,15 +383,15 @@ export default function ProductsScreen() {
                   onPress={() => setStatusFilter(status)}
                   className={`px-4 py-2 rounded-md border ${
                     statusFilter === status
-                      ? 'bg-primary-900 border-primary-900'
-                      : 'bg-white border-secondary-200'
+                      ? 'bg-foreground border-foreground'
+                      : 'bg-background border-border'
                   }`}
                 >
                   <Text
                     className={`text-xs font-bold uppercase tracking-wide ${
                       statusFilter === status
-                        ? 'text-white'
-                        : 'text-primary-900'
+                        ? 'text-background'
+                        : 'text-foreground'
                     }`}
                   >
                     {status}
@@ -399,7 +401,7 @@ export default function ProductsScreen() {
             </View>
 
             {/* Category Filter */}
-            <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500 mb-2">
+            <Text className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
               Category
             </Text>
             <View className="flex-row flex-wrap mb-4 gap-2">
@@ -407,12 +409,12 @@ export default function ProductsScreen() {
                 onPress={() => setSelectedCategory(undefined)}
                 className={`px-4 py-2 rounded-md border ${
                   !selectedCategory
-                    ? 'bg-primary-900 border-primary-900'
-                    : 'bg-white border-secondary-200'
+                    ? 'bg-foreground border-foreground'
+                    : 'bg-background border-border'
                 }`}
               >
                 <Text
-                  className={`text-xs font-bold uppercase tracking-wide ${!selectedCategory ? 'text-white' : 'text-primary-900'}`}
+                  className={`text-xs font-bold uppercase tracking-wide ${!selectedCategory ? 'text-background' : 'text-foreground'}`}
                 >
                   ALL
                 </Text>
@@ -423,12 +425,12 @@ export default function ProductsScreen() {
                   onPress={() => setSelectedCategory(cat.id)}
                   className={`px-4 py-2 rounded-md border ${
                     selectedCategory === cat.id
-                      ? 'bg-primary-900 border-primary-900'
-                      : 'bg-white border-secondary-200'
+                      ? 'bg-foreground border-foreground'
+                      : 'bg-background border-border'
                   }`}
                 >
                   <Text
-                    className={`text-xs font-bold uppercase tracking-wide ${selectedCategory === cat.id ? 'text-white' : 'text-primary-900'}`}
+                    className={`text-xs font-bold uppercase tracking-wide ${selectedCategory === cat.id ? 'text-background' : 'text-foreground'}`}
                   >
                     {cat.name}
                   </Text>
@@ -437,7 +439,7 @@ export default function ProductsScreen() {
             </View>
 
             {/* Consignor Filter */}
-            <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500 mb-2">
+            <Text className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
               Consignor
             </Text>
             <View className="flex-row flex-wrap mb-4 gap-2">
@@ -445,12 +447,12 @@ export default function ProductsScreen() {
                 onPress={() => setSelectedConsignor(undefined)}
                 className={`px-4 py-2 rounded-md border ${
                   !selectedConsignor
-                    ? 'bg-primary-900 border-primary-900'
-                    : 'bg-white border-secondary-200'
+                    ? 'bg-foreground border-foreground'
+                    : 'bg-background border-border'
                 }`}
               >
                 <Text
-                  className={`text-xs font-bold uppercase tracking-wide ${!selectedConsignor ? 'text-white' : 'text-primary-900'}`}
+                  className={`text-xs font-bold uppercase tracking-wide ${!selectedConsignor ? 'text-background' : 'text-foreground'}`}
                 >
                   ALL
                 </Text>
@@ -461,12 +463,12 @@ export default function ProductsScreen() {
                   onPress={() => setSelectedConsignor(cons.id)}
                   className={`px-4 py-2 rounded-md border ${
                     selectedConsignor === cons.id
-                      ? 'bg-primary-900 border-primary-900'
-                      : 'bg-white border-secondary-200'
+                      ? 'bg-foreground border-foreground'
+                      : 'bg-background border-border'
                   }`}
                 >
                   <Text
-                    className={`text-xs font-bold uppercase tracking-wide ${selectedConsignor === cons.id ? 'text-white' : 'text-primary-900'}`}
+                    className={`text-xs font-bold uppercase tracking-wide ${selectedConsignor === cons.id ? 'text-background' : 'text-foreground'}`}
                   >
                     {cons.name}
                   </Text>
@@ -493,7 +495,7 @@ export default function ProductsScreen() {
           <RefreshControl
             refreshing={isRefetching && !isFetchingNextPage}
             onRefresh={handleRefresh}
-            tintColor="#000"
+            tintColor="#888"
           />
         }
         onEndReached={handleLoadMore}
@@ -501,10 +503,10 @@ export default function ProductsScreen() {
         ListEmptyComponent={
           !isListLoading && !isRefetching ? (
             <View className="items-center py-20 opacity-50">
-              <Text className="text-lg font-medium text-primary-900">
+              <Text className="text-lg font-medium text-foreground">
                 NO PRODUCTS FOUND
               </Text>
-              <Text className="text-sm text-secondary-500 mt-2 text-center mb-4 px-8">
+              <Text className="text-sm text-muted-foreground mt-2 text-center mb-4 px-8">
                 {statusFilter === 'active'
                   ? 'Your seeded products might be set to Inactive.'
                   : 'Try adjusting filters or search terms.'}
@@ -514,9 +516,9 @@ export default function ProductsScreen() {
                   onPress={() => {
                     setStatusFilter('inactive');
                   }}
-                  className="bg-primary-900 px-6 py-3 rounded-lg"
+                  className="bg-foreground px-6 py-3 rounded-lg"
                 >
-                  <Text className="text-white font-bold text-xs uppercase tracking-widest">
+                  <Text className="text-background font-bold text-xs uppercase tracking-widest">
                     Show Inactive Products
                   </Text>
                 </TouchableOpacity>

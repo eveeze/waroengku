@@ -110,22 +110,22 @@ export default function UsersScreen() {
       <TouchableOpacity
         onPress={() => router.push(`/(admin)/users/${item.id}`)}
         onLongPress={() => handleDelete(item)}
-        className="mb-0 border-b border-secondary-100 bg-white active:bg-secondary-50"
+        className="mb-0 border-b border-border bg-background active:bg-muted"
       >
         <View className="px-6 py-5 flex-row items-center justify-between">
           <View>
-            <Text className="text-lg font-bold text-primary-900 tracking-tight mb-0.5 font-heading">
+            <Text className="text-lg font-bold text-foreground tracking-tight mb-0.5 font-heading">
               {item.name}
             </Text>
-            <Text className="text-xs font-medium text-secondary-500 uppercase tracking-wider font-body">
+            <Text className="text-xs font-medium text-muted-foreground uppercase tracking-wider font-body">
               {item.email}
             </Text>
           </View>
           <View
-            className={`px-2 py-1 border ${isAdmin ? 'border-primary-900' : 'border-secondary-300'}`}
+            className={`px-2 py-1 border ${isAdmin ? 'border-foreground' : 'border-border'}`}
           >
             <Text
-              className={`text-[10px] font-bold uppercase tracking-widest font-heading ${isAdmin ? 'text-primary-900' : 'text-secondary-500'}`}
+              className={`text-[10px] font-bold uppercase tracking-widest font-heading ${isAdmin ? 'text-foreground' : 'text-muted-foreground'}`}
             >
               {roleLabel}
             </Text>
@@ -136,29 +136,29 @@ export default function UsersScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
       {/* Swiss Header */}
       <View
-        className="px-6 pb-6 border-b border-secondary-200"
+        className="px-6 pb-6 border-b border-border"
         style={{ paddingTop: insets.top + 24 }}
       >
         <View className="flex-row items-end justify-between">
           <View>
             <TouchableOpacity onPress={() => router.back()} className="mb-4">
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
+              <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-body">
                 ← Back
               </Text>
             </TouchableOpacity>
-            <Text className="text-4xl font-black tracking-tighter text-primary-900 uppercase font-heading">
+            <Text className="text-4xl font-black tracking-tighter text-foreground uppercase font-heading">
               USERS
             </Text>
           </View>
           <TouchableOpacity
             onPress={() => router.push('/(admin)/users/create')}
-            className="bg-black px-5 py-3 items-center justify-center"
+            className="bg-foreground px-5 py-3 items-center justify-center"
           >
-            <Text className="text-white font-bold text-xs uppercase tracking-widest font-heading">
+            <Text className="text-background font-bold text-xs uppercase tracking-widest font-heading">
               + NEW USER
             </Text>
           </TouchableOpacity>
@@ -183,13 +183,13 @@ export default function UsersScreen() {
         ListEmptyComponent={
           !isLoading ? (
             <View className="items-center py-20 px-10">
-              <Text className="text-secondary-300 font-black text-6xl mb-4">
+              <Text className="text-muted-foreground font-black text-6xl mb-4">
                 👥
               </Text>
-              <Text className="text-secondary-900 font-bold text-lg text-center uppercase tracking-wide mb-2">
+              <Text className="text-foreground font-bold text-lg text-center uppercase tracking-wide mb-2">
                 No Users Found
               </Text>
-              <Text className="text-secondary-500 text-center text-sm">
+              <Text className="text-muted-foreground text-center text-sm">
                 Create users to manage your store.
               </Text>
             </View>
@@ -197,8 +197,8 @@ export default function UsersScreen() {
         }
         ListFooterComponent={
           allUsers.length > 0 ? (
-            <View className="py-6 items-center border-t border-secondary-50 mt-4">
-              <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest font-body">
+            <View className="py-6 items-center border-t border-border mt-4">
+              <Text className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-body">
                 Long press to delete user
               </Text>
             </View>

@@ -133,24 +133,24 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       {/* Scrollable Content */}
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Header Area */}
         <View
-          className="px-6 pb-6 bg-white border-b border-secondary-100"
+          className="px-6 pb-6 bg-background border-b border-border"
           style={{ paddingTop: insets.top + 24 }}
         >
           <TouchableOpacity onPress={() => router.back()} className="mb-6">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
               ← Back to POS
             </Text>
           </TouchableOpacity>
 
-          <Text className="text-secondary-500 font-bold uppercase tracking-widest text-xs mb-2">
+          <Text className="text-muted-foreground font-bold uppercase tracking-widest text-xs mb-2">
             Total Amount
           </Text>
-          <Text className="text-5xl font-black tracking-tighter text-primary-900 leading-tight">
+          <Text className="text-5xl font-black tracking-tighter text-foreground leading-tight">
             {formatCurrency(totalAmount)}
           </Text>
 
@@ -166,22 +166,22 @@ export default function CheckoutScreen() {
           {/* Customer Section */}
           <TouchableOpacity
             onPress={() => setShowCustomerModal(true)}
-            className="flex-row items-center justify-between py-4 border-b border-secondary-100 mb-8"
+            className="flex-row items-center justify-between py-4 border-b border-border mb-8"
           >
             <View>
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-1">
+              <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
                 Customer
               </Text>
-              <Text className="text-xl font-bold text-primary-900">
+              <Text className="text-xl font-bold text-foreground">
                 {customer ? customer.name : 'Walk-In Customer'}
               </Text>
             </View>
-            <Text className="text-2xl text-secondary-300">→</Text>
+            <Text className="text-2xl text-muted-foreground">→</Text>
           </TouchableOpacity>
 
           {/* Payment Method */}
           <View className="mb-8">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-3">
+            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
               Payment Method
             </Text>
             <View className="flex-row gap-3">
@@ -191,15 +191,15 @@ export default function CheckoutScreen() {
                   onPress={() => setPaymentMethod(method as any)}
                   className={`flex-1 items-center justify-center py-4 rounded-lg border-2 ${
                     paymentMethod === method
-                      ? 'bg-black border-black'
-                      : 'bg-white border-secondary-200'
+                      ? 'bg-foreground border-foreground'
+                      : 'bg-background border-border'
                   }`}
                 >
                   <Text
                     className={`font-black uppercase tracking-wider ${
                       paymentMethod === method
-                        ? 'text-white'
-                        : 'text-secondary-400'
+                        ? 'text-background'
+                        : 'text-muted-foreground'
                     }`}
                   >
                     {method}
@@ -214,15 +214,15 @@ export default function CheckoutScreen() {
                   onPress={() => setPaymentMethod(method as any)}
                   className={`flex-1 items-center justify-center py-4 rounded-lg border-2 ${
                     paymentMethod === method
-                      ? 'bg-black border-black'
-                      : 'bg-white border-secondary-200'
+                      ? 'bg-foreground border-foreground'
+                      : 'bg-background border-border'
                   }`}
                 >
                   <Text
                     className={`font-black uppercase tracking-wider ${
                       paymentMethod === method
-                        ? 'text-white'
-                        : 'text-secondary-400'
+                        ? 'text-background'
+                        : 'text-muted-foreground'
                     }`}
                   >
                     {method}
@@ -253,9 +253,9 @@ export default function CheckoutScreen() {
                   <TouchableOpacity
                     key={amt}
                     onPress={() => setAmountPaid(String(amt))}
-                    className="bg-secondary-100 px-4 py-2 rounded-full mr-2 border border-secondary-200"
+                    className="bg-muted px-4 py-2 rounded-full mr-2 border border-border"
                   >
-                    <Text className="text-primary-900 font-bold text-xs">
+                    <Text className="text-foreground font-bold text-xs">
                       {formatCurrency(amt)}
                     </Text>
                   </TouchableOpacity>
@@ -263,12 +263,12 @@ export default function CheckoutScreen() {
               </ScrollView>
 
               {paid > 0 && (
-                <View className="mt-4 p-4 bg-secondary-50 rounded-lg border border-secondary-100 flex-row justify-between items-center">
-                  <Text className="text-secondary-600 font-bold uppercase text-xs tracking-wider">
+                <View className="mt-4 p-4 bg-muted rounded-lg border border-border flex-row justify-between items-center">
+                  <Text className="text-muted-foreground font-bold uppercase text-xs tracking-wider">
                     Change Due
                   </Text>
                   <Text
-                    className={`text-xl font-black ${change < 0 ? 'text-danger-600' : 'text-primary-900'}`}
+                    className={`text-xl font-black ${change < 0 ? 'text-danger-600' : 'text-foreground'}`}
                   >
                     {formatCurrency(change)}
                   </Text>
@@ -279,22 +279,22 @@ export default function CheckoutScreen() {
 
           {/* Order Summary */}
           <View>
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-3">
+            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
               Order Items ({items.length})
             </Text>
             {items.map((item) => (
               <View
                 key={item.product.id}
-                className="flex-row justify-between py-3 border-b border-secondary-100"
+                className="flex-row justify-between py-3 border-b border-border"
               >
                 <View className="flex-row items-center gap-3">
-                  <View className="bg-secondary-100 h-8 w-8 rounded items-center justify-center">
-                    <Text className="font-bold text-secondary-600">
+                  <View className="bg-muted h-8 w-8 rounded items-center justify-center">
+                    <Text className="font-bold text-foreground">
                       {item.quantity}x
                     </Text>
                   </View>
                   <View>
-                    <Text className="font-bold text-primary-900 text-sm">
+                    <Text className="font-bold text-foreground text-sm">
                       {item.product.name}
                     </Text>
                     {item.tierName && (
@@ -304,7 +304,7 @@ export default function CheckoutScreen() {
                     )}
                   </View>
                 </View>
-                <Text className="font-bold text-secondary-900">
+                <Text className="font-bold text-foreground">
                   {formatCurrency(
                     item.subtotal || item.product.base_price * item.quantity,
                   )}
@@ -314,12 +314,13 @@ export default function CheckoutScreen() {
           </View>
 
           <View className="mt-8">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
               NOTES
             </Text>
             <TextInput
-              className="border border-secondary-200 rounded-lg px-4 py-3 bg-secondary-50 text-base font-medium"
+              className="border border-border rounded-lg px-4 py-3 bg-muted text-base font-medium text-foreground"
               placeholder="Add transaction notes..."
+              placeholderTextColor="#9CA3AF"
               value={notes}
               onChangeText={setNotes}
             />
@@ -329,7 +330,7 @@ export default function CheckoutScreen() {
 
       {/* Floating Action Button */}
       <View
-        className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-6 py-4"
+        className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-4"
         style={{ paddingBottom: insets.bottom + 12 }}
       >
         <Button

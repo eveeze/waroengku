@@ -87,20 +87,20 @@ export default function CategoriesScreen() {
     <TouchableOpacity
       onPress={() => router.push(`/(admin)/categories/${item.id}`)}
       onLongPress={() => handleDelete(item)}
-      className="mb-0 border-b border-secondary-100 bg-white active:bg-secondary-50"
+      className="mb-0 border-b border-border bg-background active:bg-muted"
     >
       <View className="px-6 py-5 flex-row items-center justify-between">
         <View className="flex-row items-center flex-1">
-          <View className="w-8 h-8 bg-black items-center justify-center mr-4">
-            <Text className="text-secondary-400 text-xs">#</Text>
+          <View className="w-8 h-8 bg-muted items-center justify-center mr-4">
+            <Text className="text-foreground text-xs">#</Text>
           </View>
           <View className="flex-1">
-            <Text className="text-base font-heading font-bold text-primary-900 uppercase tracking-wide">
+            <Text className="text-base font-heading font-bold text-foreground uppercase tracking-wide">
               {item.name}
             </Text>
             {item.description && (
               <Text
-                className="text-xs text-secondary-500 mt-1 font-body"
+                className="text-xs text-muted-foreground mt-1 font-body"
                 numberOfLines={1}
               >
                 {item.description}
@@ -111,10 +111,10 @@ export default function CategoriesScreen() {
 
         {item.product_count !== undefined && (
           <View className="items-end ml-4">
-            <Text className="text-lg font-heading font-black text-primary-900 tracking-tight">
+            <Text className="text-lg font-heading font-black text-foreground tracking-tight">
               {item.product_count}
             </Text>
-            <Text className="text-[9px] font-bold text-secondary-400 uppercase tracking-wider font-body">
+            <Text className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-body">
               Products
             </Text>
           </View>
@@ -124,30 +124,30 @@ export default function CategoriesScreen() {
   );
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
 
       {/* Header */}
       <View
-        className="bg-white border-b border-secondary-100 px-6 pb-6"
+        className="bg-background border-b border-border px-6 pb-6"
         style={{ paddingTop: insets.top + 16 }}
       >
         <View className="flex-row items-end justify-between">
           <View>
             <TouchableOpacity onPress={() => router.back()} className="mb-4">
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
+              <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-body">
                 ← Back
               </Text>
             </TouchableOpacity>
-            <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-black">
+            <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-foreground">
               CATEGORIES
             </Text>
           </View>
           <TouchableOpacity
             onPress={() => router.push('/(admin)/categories/create')}
-            className="bg-black px-5 py-3 items-center justify-center"
+            className="bg-foreground px-5 py-3 items-center justify-center"
           >
-            <Text className="text-white font-bold text-xs uppercase tracking-widest font-heading">
+            <Text className="text-background font-bold text-xs uppercase tracking-widest font-heading">
               + NEW
             </Text>
           </TouchableOpacity>
@@ -166,13 +166,13 @@ export default function CategoriesScreen() {
         ListEmptyComponent={
           !isLoading ? (
             <View className="items-center py-20 px-10">
-              <Text className="text-secondary-300 font-black text-6xl mb-4">
+              <Text className="text-muted-foreground font-black text-6xl mb-4">
                 🏷️
               </Text>
-              <Text className="text-secondary-900 font-bold text-lg text-center uppercase tracking-wide mb-2">
+              <Text className="text-foreground font-bold text-lg text-center uppercase tracking-wide mb-2">
                 No Categories
               </Text>
-              <Text className="text-secondary-500 text-center text-sm">
+              <Text className="text-muted-foreground text-center text-sm">
                 Create categories to organize your products.
               </Text>
             </View>
@@ -180,8 +180,8 @@ export default function CategoriesScreen() {
         }
         ListFooterComponent={
           categories.length > 0 ? (
-            <View className="py-6 items-center border-t border-secondary-50 mt-4">
-              <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest font-body">
+            <View className="py-6 items-center border-t border-border mt-4">
+              <Text className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-body">
                 Long press to delete category
               </Text>
             </View>

@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -63,18 +64,19 @@ export default function CreateCustomerScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
           ADD MEMBER
         </Text>
       </View>
@@ -91,7 +93,7 @@ export default function CreateCustomerScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View className="mb-8">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-6">
+            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6">
               Basic Info
             </Text>
 
@@ -134,11 +136,11 @@ export default function CreateCustomerScreen() {
               name="address"
               render={({ field: { onChange, onBlur, value } }) => (
                 <View className="mb-4">
-                  <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+                  <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
                     Address
                   </Text>
                   <TextInput
-                    className="border border-secondary-200 rounded-none px-4 py-3 bg-secondary-50 text-base font-medium min-h-[80px]"
+                    className="border border-border rounded-none px-4 py-3 bg-muted text-base font-medium min-h-[80px] text-foreground"
                     placeholder="Customer address (optional)"
                     value={value}
                     onChangeText={onChange}
@@ -152,7 +154,7 @@ export default function CreateCustomerScreen() {
           </View>
 
           <View className="mb-8">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-6">
+            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6">
               Financial Limits
             </Text>
             <Controller
@@ -167,7 +169,7 @@ export default function CreateCustomerScreen() {
                   onBlur={onBlur}
                   keyboardType="numeric"
                   leftIcon={
-                    <Text className="text-secondary-400 font-bold">Rp</Text>
+                    <Text className="text-muted-foreground font-bold">Rp</Text>
                   }
                   helperText="Maximum debt allowed for this customer"
                 />
@@ -176,7 +178,7 @@ export default function CreateCustomerScreen() {
           </View>
 
           <View className="mb-4">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-6">
+            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6">
               Notes
             </Text>
             <Controller
@@ -184,7 +186,7 @@ export default function CreateCustomerScreen() {
               name="notes"
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  className="border border-secondary-200 rounded-none px-4 py-3 bg-secondary-50 text-base font-medium min-h-[80px]"
+                  className="border border-border rounded-none px-4 py-3 bg-muted text-base font-medium min-h-[80px] text-foreground"
                   placeholder="Additional notes..."
                   value={value}
                   onChangeText={onChange}
@@ -199,7 +201,7 @@ export default function CreateCustomerScreen() {
 
         {/* Submit Button */}
         <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-6 py-4"
+          className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-4"
           style={{ paddingBottom: insets.bottom + 90 }}
         >
           <Button

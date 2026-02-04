@@ -121,7 +121,7 @@ export default function UserDetailScreen() {
 
   if (isLoading && !user) {
     return (
-      <View className="flex-1 bg-white items-center justify-center">
+      <View className="flex-1 bg-background items-center justify-center">
         <Loading message="LOADING PROFILE..." />
       </View>
     );
@@ -129,9 +129,9 @@ export default function UserDetailScreen() {
 
   if (!user) {
     return (
-      <View className="flex-1 bg-white items-center justify-center">
+      <View className="flex-1 bg-background items-center justify-center">
         <Text className="text-4xl mb-4">❌</Text>
-        <Text className="font-bold uppercase tracking-widest text-secondary-500 mb-6">
+        <Text className="font-bold uppercase tracking-widest text-muted-foreground mb-6">
           User Not Found
         </Text>
         <Button
@@ -147,23 +147,23 @@ export default function UserDetailScreen() {
   const currentSelectedRole = selectedRole || user.role;
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
 
       {/* Swiss Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
           USER PROFILE
         </Text>
-        <Text className="text-secondary-400 font-bold uppercase tracking-widest text-xs mt-1">
+        <Text className="text-muted-foreground font-bold uppercase tracking-widest text-xs mt-1">
           {user.id.substring(0, 8)}...
         </Text>
       </View>
@@ -173,34 +173,38 @@ export default function UserDetailScreen() {
           padding: 24,
           paddingBottom: insets.bottom + 40,
         }}
+        refreshControl={
+          // Add refresh control if needed, but not present in original
+          undefined
+        }
       >
         {/* User Info Block */}
         <View className="mb-10">
-          <View className="w-24 h-24 bg-black rounded-full items-center justify-center mb-6">
-            <Text className="text-4xl text-white">👤</Text>
+          <View className="w-24 h-24 bg-foreground rounded-full items-center justify-center mb-6">
+            <Text className="text-4xl text-background">👤</Text>
           </View>
 
-          <Text className="text-3xl font-black text-primary-900 tracking-tight uppercase mb-1">
+          <Text className="text-3xl font-black text-foreground tracking-tight uppercase mb-1">
             {user.name}
           </Text>
-          <Text className="text-secondary-500 font-medium text-sm uppercase tracking-wide mb-6">
+          <Text className="text-muted-foreground font-medium text-sm uppercase tracking-wide mb-6">
             {user.email}
           </Text>
 
-          <View className="flex-row gap-8 py-4 border-y border-secondary-200">
+          <View className="flex-row gap-8 py-4 border-y border-border">
             <View>
-              <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest mb-1">
+              <Text className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
                 Joined
               </Text>
-              <Text className="text-sm font-bold text-primary-900 uppercase">
+              <Text className="text-sm font-bold text-foreground uppercase">
                 {formatDate(user.created_at)}
               </Text>
             </View>
             <View>
-              <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest mb-1">
+              <Text className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
                 Updated
               </Text>
-              <Text className="text-sm font-bold text-primary-900 uppercase">
+              <Text className="text-sm font-bold text-foreground uppercase">
                 {formatDate(user.updated_at)}
               </Text>
             </View>
@@ -209,7 +213,7 @@ export default function UserDetailScreen() {
 
         {/* Role Selection */}
         <View className="mb-12">
-          <Text className="text-xs font-bold uppercase tracking-widest text-black mb-6">
+          <Text className="text-xs font-bold uppercase tracking-widest text-foreground mb-6">
             ASSIGN ROLE
           </Text>
 
@@ -222,13 +226,13 @@ export default function UserDetailScreen() {
                   onPress={() => setSelectedRole(role.value)}
                   className={`px-5 py-3 border ${
                     isActive
-                      ? 'bg-black border-black'
-                      : 'bg-white border-secondary-200'
+                      ? 'bg-foreground border-foreground'
+                      : 'bg-background border-border'
                   }`}
                 >
                   <Text
                     className={`text-xs font-bold uppercase tracking-widest ${
-                      isActive ? 'text-white' : 'text-secondary-400'
+                      isActive ? 'text-background' : 'text-muted-foreground'
                     }`}
                   >
                     {role.label}
@@ -245,7 +249,7 @@ export default function UserDetailScreen() {
                 onPress={handleUpdateRole}
                 isLoading={isUpdating}
               />
-              <Text className="text-center text-[10px] text-secondary-400 mt-2 font-bold uppercase tracking-widest">
+              <Text className="text-center text-[10px] text-muted-foreground mt-2 font-bold uppercase tracking-widest">
                 This update will be applied immediately
               </Text>
             </View>
@@ -253,7 +257,7 @@ export default function UserDetailScreen() {
         </View>
 
         {/* Danger Zone */}
-        <View className="border-t border-secondary-200 pt-8">
+        <View className="border-t border-border pt-8">
           <Text className="text-[10px] font-bold uppercase tracking-widest text-red-500 mb-4">
             Danger Zone
           </Text>

@@ -69,33 +69,35 @@ export default function ConsignorDetailScreen() {
 
   if (!consignor) {
     return (
-      <View className="flex-1 justify-center items-center">
-        <Text>Not found</Text>
+      <View className="flex-1 justify-center items-center bg-background">
+        <Text className="text-foreground">Not found</Text>
         <Button title="Back" onPress={() => router.back()} />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-secondary-50">
+    <View className="flex-1 bg-background">
       <View
-        className="px-6 pb-6 border-b border-secondary-100 bg-white"
+        className="px-6 pb-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
           {consignor.name}
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         <Card className="mb-4">
-          <Text className="text-lg font-bold">{consignor.name}</Text>
-          <Text className="text-secondary-500">{consignor.phone}</Text>
+          <Text className="text-lg font-bold text-foreground">
+            {consignor.name}
+          </Text>
+          <Text className="text-muted-foreground">{consignor.phone}</Text>
         </Card>
 
         <Button

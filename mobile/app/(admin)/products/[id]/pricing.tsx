@@ -154,18 +154,18 @@ export default function PricingTiersScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       {/* Header */}
       <View
-        className="px-6 pb-6 border-b border-secondary-200"
+        className="px-6 pb-6 border-b border-border"
         style={{ paddingTop: insets.top + 24 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-secondary-500 font-bold uppercase tracking-widest text-xs font-body">
+          <Text className="text-muted-foreground font-bold uppercase tracking-widest text-xs font-body">
             ← BACK TO PRODUCT
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-heading font-black tracking-tighter text-primary-900 uppercase">
+        <Text className="text-4xl font-heading font-black tracking-tighter text-foreground uppercase">
           WHOLESALE PRICING
         </Text>
       </View>
@@ -177,15 +177,15 @@ export default function PricingTiersScreen() {
         }}
       >
         {/* Product Info */}
-        <View className="mb-8 flex-row items-center border border-secondary-200 p-4 rounded-lg bg-secondary-50">
-          <View className="w-12 h-12 bg-white border border-secondary-200 rounded-md items-center justify-center mr-4">
+        <View className="mb-8 flex-row items-center border border-border p-4 rounded-lg bg-muted">
+          <View className="w-12 h-12 bg-background border border-border rounded-md items-center justify-center mr-4">
             <Text className="text-xl">📦</Text>
           </View>
           <View className="flex-1">
-            <Text className="text-xl font-heading font-black text-primary-900 tracking-tight mb-1">
+            <Text className="text-xl font-heading font-black text-foreground tracking-tight mb-1">
               {product?.name}
             </Text>
-            <Text className="text-xs font-bold font-body text-secondary-500 uppercase tracking-widest">
+            <Text className="text-xs font-bold font-body text-muted-foreground uppercase tracking-widest">
               BASE PRICE: {product && formatCurrency(product.base_price)}
             </Text>
           </View>
@@ -193,7 +193,7 @@ export default function PricingTiersScreen() {
 
         {/* Existing Tiers */}
         <View className="mb-8">
-          <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+          <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-3 font-body">
             ACTIVE TIERS
           </Text>
 
@@ -203,24 +203,24 @@ export default function PricingTiersScreen() {
               .map((tier, index) => (
                 <View
                   key={tier.id}
-                  className="bg-white border border-secondary-200 rounded-lg p-4 mb-3"
+                  className="bg-card border border-border rounded-lg p-4 mb-3"
                 >
                   <View className="flex-row justify-between items-start mb-2">
                     <View>
-                      <Text className="text-lg font-heading font-black text-primary-900 uppercase">
+                      <Text className="text-lg font-heading font-black text-foreground uppercase">
                         {tier.name}
                       </Text>
-                      <Text className="text-xs font-bold text-secondary-500 font-body uppercase tracking-wide mt-1">
+                      <Text className="text-xs font-bold text-muted-foreground font-body uppercase tracking-wide mt-1">
                         MIN QTY: {tier.min_quantity}{' '}
                         {tier.max_quantity ? `- ${tier.max_quantity}` : '+'}
                       </Text>
                     </View>
                     <View className="items-end">
-                      <Text className="text-xl font-heading font-black text-primary-900 tracking-tight">
+                      <Text className="text-xl font-heading font-black text-foreground tracking-tight">
                         {formatCurrency(tier.price)}
                       </Text>
-                      <View className="bg-green-100 px-2 py-0.5 rounded mt-1">
-                        <Text className="text-[10px] font-bold text-green-700 uppercase tracking-widest font-body">
+                      <View className="bg-green-100 dark:bg-green-900/20 px-2 py-0.5 rounded mt-1">
+                        <Text className="text-[10px] font-bold text-green-700 dark:text-green-400 uppercase tracking-widest font-body">
                           SAVE{' '}
                           {(
                             (1 - tier.price / product!.base_price) *
@@ -232,12 +232,12 @@ export default function PricingTiersScreen() {
                     </View>
                   </View>
 
-                  <View className="flex-row gap-2 mt-2 pt-2 border-t border-secondary-100">
+                  <View className="flex-row gap-2 mt-2 pt-2 border-t border-border">
                     <TouchableOpacity
                       onPress={() => startEdit(tier)}
-                      className="flex-1 py-2 items-center border-r border-secondary-100"
+                      className="flex-1 py-2 items-center border-r border-border"
                     >
-                      <Text className="text-xs font-bold text-primary-900 uppercase tracking-widest font-body">
+                      <Text className="text-xs font-bold text-foreground uppercase tracking-widest font-body">
                         EDIT
                       </Text>
                     </TouchableOpacity>
@@ -245,7 +245,7 @@ export default function PricingTiersScreen() {
                       onPress={() => handleDelete(tier)}
                       className="flex-1 py-2 items-center"
                     >
-                      <Text className="text-xs font-bold text-danger-600 uppercase tracking-widest font-body">
+                      <Text className="text-xs font-bold text-danger-600 dark:text-red-400 uppercase tracking-widest font-body">
                         DELETE
                       </Text>
                     </TouchableOpacity>
@@ -253,9 +253,9 @@ export default function PricingTiersScreen() {
                 </View>
               ))
           ) : (
-            <View className="items-center py-12 border border-dashed border-secondary-300 rounded-lg">
+            <View className="items-center py-12 border border-dashed border-border rounded-lg">
               <Text className="text-4xl mb-2 opacity-50">🏷️</Text>
-              <Text className="text-secondary-400 font-bold uppercase tracking-widest font-body">
+              <Text className="text-muted-foreground font-bold uppercase tracking-widest font-body">
                 No Pricing Tiers
               </Text>
             </View>
@@ -264,8 +264,8 @@ export default function PricingTiersScreen() {
 
         {/* Add/Edit Form */}
         {showAddForm ? (
-          <View className="bg-secondary-50 border border-secondary-200 p-4 rounded-lg animate-fade-in-down mb-8">
-            <Text className="text-xs font-bold tracking-widest text-primary-900 uppercase mb-4 font-body border-b border-secondary-200 pb-2">
+          <View className="bg-muted border border-border p-4 rounded-lg animate-fade-in-down mb-8">
+            <Text className="text-xs font-bold tracking-widest text-foreground uppercase mb-4 font-body border-b border-border pb-2">
               {editingTier ? 'EDIT TIER' : 'NEW TIER'}
             </Text>
 
@@ -305,13 +305,13 @@ export default function PricingTiersScreen() {
                 onChangeText={setTierPrice}
                 keyboardType="numeric"
                 leftIcon={
-                  <Text className="text-secondary-400 font-heading font-bold">
+                  <Text className="text-muted-foreground font-heading font-bold">
                     Rp
                   </Text>
                 }
               />
               {product && Number(tierPrice) > 0 && (
-                <Text className="text-[10px] font-bold text-green-600 uppercase tracking-wide mt-1 font-body text-right">
+                <Text className="text-[10px] font-bold text-green-600 dark:text-green-400 uppercase tracking-wide mt-1 font-body text-right">
                   Discount:{' '}
                   {((1 - Number(tierPrice) / product.base_price) * 100).toFixed(
                     1,

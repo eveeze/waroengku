@@ -71,20 +71,20 @@ export default function StockOpnameListScreen() {
   const renderItem = ({ item }: { item: OpnameSession }) => (
     <TouchableOpacity
       onPress={() => router.push(`/(admin)/stock-opname/${item.id}`)}
-      className="bg-secondary-50 p-4 rounded-none mb-3 border border-secondary-100 flex-row justify-between items-center"
+      className="bg-muted p-4 rounded-none mb-3 border border-border flex-row justify-between items-center"
     >
       <View>
-        <Text className="font-body font-black text-lg text-primary-900 uppercase tracking-tight">
+        <Text className="font-body font-black text-lg text-foreground uppercase tracking-tight">
           Session #{item.session_number}
         </Text>
-        <Text className="text-secondary-500 font-body text-xs font-bold mt-1 tracking-wide uppercase">
+        <Text className="text-muted-foreground font-body text-xs font-bold mt-1 tracking-wide uppercase">
           {new Date(item.created_at).toLocaleDateString()} • {item.created_by}
         </Text>
       </View>
       <View
-        className={`px-3 py-1 ${item.status === 'active' ? 'bg-black' : 'bg-secondary-300'}`}
+        className={`px-3 py-1 ${item.status === 'active' ? 'bg-foreground' : 'bg-muted'}`}
       >
-        <Text className="text-white text-[10px] font-bold uppercase tracking-widest font-body">
+        <Text className="text-background text-[10px] font-bold uppercase tracking-widest font-body">
           {item.status}
         </Text>
       </View>
@@ -92,20 +92,20 @@ export default function StockOpnameListScreen() {
   );
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
       {/* Swiss Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
         <View className="flex-row justify-between items-end">
-          <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+          <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
             STOCK OPNAME
           </Text>
           <Button
@@ -127,12 +127,12 @@ export default function StockOpnameListScreen() {
         }
         ListEmptyComponent={
           !isLoading ? (
-            <View className="items-center mt-12 bg-secondary-50 p-8 border border-secondary-100">
+            <View className="items-center mt-12 bg-muted p-8 border border-border">
               <Text className="text-3xl mb-2">📋</Text>
-              <Text className="text-secondary-900 font-black uppercase tracking-wide mb-1">
+              <Text className="text-foreground font-black uppercase tracking-wide mb-1">
                 No sessions found
               </Text>
-              <Text className="text-secondary-500 text-xs font-bold uppercase tracking-widest">
+              <Text className="text-muted-foreground text-xs font-bold uppercase tracking-widest">
                 Start a new session to begin accounting
               </Text>
             </View>

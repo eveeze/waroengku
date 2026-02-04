@@ -68,30 +68,32 @@ export default function CreateRefillableScreen() {
 
   const renderProductItem = ({ item }: { item: Product }) => (
     <TouchableOpacity
-      className="p-4 border-b border-gray-100 bg-white active:bg-gray-50"
+      className="p-4 border-b border-border bg-background active:bg-muted"
       onPress={() => {
         setSelectedProduct(item);
         setProductModalVisible(false);
       }}
     >
-      <Text className="font-bold text-gray-900">{item.name}</Text>
-      <Text className="text-xs text-gray-500">{item.sku || 'No SKU'}</Text>
+      <Text className="font-bold text-foreground">{item.name}</Text>
+      <Text className="text-xs text-muted-foreground">
+        {item.sku || 'No SKU'}
+      </Text>
     </TouchableOpacity>
   );
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Cancel
           </Text>
         </TouchableOpacity>
-        <Text className="text-3xl font-black uppercase text-primary-900 tracking-tighter">
+        <Text className="text-3xl font-black uppercase text-foreground tracking-tighter">
           NEW CONTAINER
         </Text>
       </View>
@@ -111,16 +113,16 @@ export default function CreateRefillableScreen() {
 
           {/* Product Selection */}
           <View className="mb-6">
-            <Text className="text-secondary-500 text-[10px] font-bold uppercase tracking-widest mb-2">
+            <Text className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-2">
               LINKED PRODUCT
             </Text>
             <TouchableOpacity
               onPress={() => setProductModalVisible(true)}
-              className="bg-gray-50 border border-gray-200 p-4 rounded-none"
+              className="bg-muted border border-border p-4 rounded-none"
             >
               <Text
                 className={`font-bold ${
-                  selectedProduct ? 'text-gray-900' : 'text-gray-400'
+                  selectedProduct ? 'text-foreground' : 'text-muted-foreground'
                 }`}
               >
                 {selectedProduct ? selectedProduct.name : 'Select Product...'}
@@ -173,10 +175,10 @@ export default function CreateRefillableScreen() {
         animationType="slide"
         presentationStyle="pageSheet"
       >
-        <View className="flex-1 bg-white pt-6">
-          <View className="px-4 pb-4 border-b border-gray-100">
+        <View className="flex-1 bg-background pt-6">
+          <View className="px-4 pb-4 border-b border-border">
             <View className="flex-row justify-between items-center mb-4">
-              <Text className="font-heading font-black text-xl">
+              <Text className="font-heading font-black text-xl text-foreground">
                 SELECT PRODUCT
               </Text>
               <TouchableOpacity onPress={() => setProductModalVisible(false)}>

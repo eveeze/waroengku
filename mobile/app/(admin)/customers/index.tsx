@@ -88,21 +88,21 @@ export default function CustomersScreen() {
   const renderItem = ({ item }: { item: Customer }) => (
     <TouchableOpacity
       onPress={() => router.push(`/(admin)/customers/${item.id}`)}
-      className="bg-secondary-50 p-4 rounded-xl mb-3 border border-secondary-100"
+      className="bg-muted p-4 rounded-xl mb-3 border border-border"
     >
       <View className="flex-row justify-between items-start">
         <View className="flex-1 mr-4">
-          <Text className="font-heading text-xl text-primary-900 uppercase tracking-tight">
+          <Text className="font-heading text-xl text-foreground uppercase tracking-tight">
             {item.name}
           </Text>
-          <Text className="text-secondary-500 text-xs font-bold mt-1">
+          <Text className="text-muted-foreground text-xs font-bold mt-1">
             {item.phone || '-'}
           </Text>
         </View>
 
         {item.current_debt > 0 && (
-          <View className="bg-red-100 px-2 py-1 rounded-md">
-            <Text className="text-red-700 text-[10px] font-black uppercase tracking-widest">
+          <View className="bg-destructive/10 px-2 py-1 rounded-md">
+            <Text className="text-destructive text-[10px] font-black uppercase tracking-widest">
               Debt: {formatCurrency(item.current_debt)}
             </Text>
           </View>
@@ -112,21 +112,21 @@ export default function CustomersScreen() {
   );
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <View className="flex-row justify-between items-end mb-4">
           <View>
             <TouchableOpacity onPress={() => router.back()} className="mb-4">
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+              <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 ← Back
               </Text>
             </TouchableOpacity>
-            <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-black">
+            <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-foreground">
               MEMBERS
             </Text>
           </View>
@@ -139,26 +139,26 @@ export default function CustomersScreen() {
 
         {/* Search & Filter */}
         <View className="flex-row gap-3">
-          <View className="flex-1 bg-secondary-50 rounded-lg px-4 py-2 border border-secondary-200">
+          <View className="flex-1 bg-muted rounded-lg px-4 py-2 border border-border">
             <TextInput
               placeholder="SEARCH MEMBER..."
               value={search}
               onChangeText={setSearch}
-              className="font-bold text-primary-900 leading-tight"
-              placeholderTextColor="#9CA3AF"
+              className="font-bold text-foreground leading-tight"
+              placeholderTextColor="hsl(var(--muted-foreground))"
             />
           </View>
           <TouchableOpacity
             onPress={toggleDebtFilter}
             className={`px-4 py-2 rounded-lg border ${
               showDebtOnly
-                ? 'bg-red-50 border-red-200'
-                : 'bg-white border-secondary-200'
+                ? 'bg-destructive/10 border-destructive'
+                : 'bg-background border-border'
             } justify-center`}
           >
             <Text
               className={`text-xs font-bold uppercase tracking-widest ${
-                showDebtOnly ? 'text-red-700' : 'text-secondary-500'
+                showDebtOnly ? 'text-destructive' : 'text-muted-foreground'
               }`}
             >
               Has Debt
@@ -180,7 +180,7 @@ export default function CustomersScreen() {
         ListEmptyComponent={
           !isLoading ? (
             <View className="items-center mt-10">
-              <Text className="text-secondary-500 font-bold">
+              <Text className="text-muted-foreground font-bold">
                 No members found.
               </Text>
             </View>

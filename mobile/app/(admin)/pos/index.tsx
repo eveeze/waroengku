@@ -203,10 +203,10 @@ export default function POSScreen() {
         activeOpacity={0.7}
       >
         <View
-          className={`bg-white rounded-none border border-secondary-200 overflow-hidden ${!hasStock ? 'opacity-50' : ''}`}
+          className={`bg-background rounded-none border border-border overflow-hidden ${!hasStock ? 'opacity-50' : ''}`}
         >
           {/* Image Area */}
-          <View className="h-32 bg-secondary-50 items-center justify-center border-b border-secondary-100 relative">
+          <View className="h-32 bg-muted items-center justify-center border-b border-border relative">
             {item.image_url ? (
               <Image
                 source={{ uri: item.image_url }}
@@ -218,8 +218,8 @@ export default function POSScreen() {
             )}
 
             {!hasStock && (
-              <View className="absolute inset-0 bg-white/80 items-center justify-center">
-                <Text className="text-black font-black text-xs uppercase tracking-widest border border-black px-2 py-1">
+              <View className="absolute inset-0 bg-background/80 items-center justify-center">
+                <Text className="text-foreground font-black text-xs uppercase tracking-widest border border-foreground px-2 py-1">
                   SOLD OUT
                 </Text>
               </View>
@@ -245,8 +245,8 @@ export default function POSScreen() {
             )}
 
             {hasStock && qty === 0 && (
-              <View className="absolute bottom-2 right-2 bg-black h-8 w-8 items-center justify-center rounded-full opacity-0 group-active:opacity-100">
-                <Text className="text-white font-bold text-xs">+</Text>
+              <View className="absolute bottom-2 right-2 bg-foreground h-8 w-8 items-center justify-center rounded-full opacity-0 group-active:opacity-100">
+                <Text className="text-background font-bold text-xs">+</Text>
               </View>
             )}
           </View>
@@ -254,19 +254,19 @@ export default function POSScreen() {
           {/* Content */}
           <View className="p-3">
             <Text
-              className="font-medium text-secondary-900 text-xs mb-1 h-8 leading-4"
+              className="font-medium text-foreground text-xs mb-1 h-8 leading-4"
               numberOfLines={2}
             >
               {item.name}
             </Text>
-            <Text className="text-black font-black text-sm tracking-tight">
+            <Text className="text-foreground font-black text-sm tracking-tight">
               {formatCurrency(item.base_price)}
             </Text>
 
             {item.is_stock_active &&
               item.current_stock <= item.min_stock_alert &&
               item.current_stock > 0 && (
-                <Text className="text-[10px] text-danger-600 font-bold mt-1 uppercase tracking-wider">
+                <Text className="text-[10px] text-destructive font-bold mt-1 uppercase tracking-wider">
                   Only {item.current_stock} left
                 </Text>
               )}
@@ -277,7 +277,7 @@ export default function POSScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       <BarcodeScanner
         visible={showBarcodeScanner}
         onClose={() => setShowBarcodeScanner(false)}
@@ -287,23 +287,23 @@ export default function POSScreen() {
 
       {/* Top Bar */}
       <View
-        className="bg-white border-b border-secondary-100 px-5 pb-4 z-10"
+        className="bg-background border-b border-border px-5 pb-4 z-10"
         style={{ paddingTop: insets.top + 12 }}
       >
         <View className="flex-row items-center mb-4 gap-3">
           <TouchableOpacity
             onPress={() => router.replace('/(admin)')}
-            className="w-10 h-10 items-center justify-center bg-secondary-50 rounded-full"
+            className="w-10 h-10 items-center justify-center bg-muted rounded-full"
           >
-            <Text className="text-lg">←</Text>
+            <Text className="text-lg text-foreground">←</Text>
           </TouchableOpacity>
 
-          <View className="flex-1 flex-row items-center bg-secondary-50 border border-secondary-200 rounded-lg px-4 h-12">
-            <Text className="mr-3 opacity-50">🔍</Text>
+          <View className="flex-1 flex-row items-center bg-muted border border-border rounded-lg px-4 h-12">
+            <Text className="mr-3 opacity-50 text-foreground">🔍</Text>
             <TextInput
-              className="flex-1 text-base font-medium text-primary-900 h-full"
+              className="flex-1 text-base font-medium text-foreground h-full"
               placeholder="Search items..."
-              placeholderTextColor="#A1A1AA"
+              placeholderTextColor="hsl(var(--muted-foreground))"
               value={search}
               onChangeText={setSearch}
               onSubmitEditing={handleSearch}
@@ -313,14 +313,14 @@ export default function POSScreen() {
 
           <TouchableOpacity
             onPress={() => setShowBarcodeScanner(true)}
-            className="bg-black w-12 h-12 rounded-lg items-center justify-center mr-2"
+            className="bg-foreground w-12 h-12 rounded-lg items-center justify-center mr-2"
           >
-            <Text className="text-white text-xl">📷</Text>
+            <Text className="text-background text-xl">📷</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => router.push('/(admin)/pos/held-carts')}
-            className="bg-secondary-100 w-12 h-12 rounded-lg items-center justify-center"
+            className="bg-muted w-12 h-12 rounded-lg items-center justify-center"
           >
             <Text className="text-xl">📋</Text>
           </TouchableOpacity>
@@ -338,15 +338,15 @@ export default function POSScreen() {
               onPress={() => handleCategorySelect(item.id)}
               className={`px-4 py-2 rounded-md mr-2 border ${
                 selectedCategory === item.id
-                  ? 'bg-black border-black'
-                  : 'bg-white border-secondary-200'
+                  ? 'bg-foreground border-foreground'
+                  : 'bg-background border-border'
               }`}
             >
               <Text
                 className={`text-xs font-bold uppercase tracking-wider ${
                   selectedCategory === item.id
-                    ? 'text-white'
-                    : 'text-secondary-500'
+                    ? 'text-background'
+                    : 'text-muted-foreground'
                 }`}
               >
                 {item.name}
@@ -379,7 +379,7 @@ export default function POSScreen() {
         ListEmptyComponent={
           !isLoading ? (
             <View className="items-center justify-center py-20">
-              <Text className="text-secondary-400 font-bold uppercase tracking-widest">
+              <Text className="text-muted-foreground font-bold uppercase tracking-widest">
                 No Items Found
               </Text>
             </View>
@@ -397,9 +397,9 @@ export default function POSScreen() {
             <TouchableOpacity
               activeOpacity={0.9}
               onPress={handleHoldCart}
-              className="flex-1 bg-secondary-800 rounded-xl shadow-xl p-4 flex-row items-center justify-center border border-secondary-800"
+              className="flex-1 bg-muted rounded-xl shadow-xl p-4 flex-row items-center justify-center border border-border"
             >
-              <Text className="text-white font-bold uppercase text-xs tracking-wider">
+              <Text className="text-foreground font-bold uppercase text-xs tracking-wider">
                 Hold
               </Text>
             </TouchableOpacity>
@@ -407,27 +407,29 @@ export default function POSScreen() {
             <TouchableOpacity
               activeOpacity={0.9}
               onPress={() => router.push('/(admin)/pos/checkout')}
-              className="flex-[3] bg-black rounded-xl shadow-xl p-4 flex-row items-center justify-between border border-secondary-800"
+              className="flex-[3] bg-foreground rounded-xl shadow-xl p-4 flex-row items-center justify-between border border-border"
             >
               <View className="flex-row items-center gap-3">
-                <View className="bg-white/20 px-3 py-1 rounded-md">
-                  <Text className="text-white font-bold">{getItemCount()}</Text>
+                <View className="bg-background/20 px-3 py-1 rounded-md">
+                  <Text className="text-background font-bold">
+                    {getItemCount()}
+                  </Text>
                 </View>
                 <View>
-                  <Text className="text-white/60 text-[10px] font-bold uppercase tracking-widest">
+                  <Text className="text-background/60 text-[10px] font-bold uppercase tracking-widest">
                     Total
                   </Text>
-                  <Text className="text-white font-black text-lg tracking-tight">
+                  <Text className="text-background font-black text-lg tracking-tight">
                     {formatCurrency(getTotal())}
                   </Text>
                 </View>
               </View>
 
               <View className="flex-row items-center">
-                <Text className="text-white font-bold mr-2 uppercase text-xs tracking-wider">
+                <Text className="text-background font-bold mr-2 uppercase text-xs tracking-wider">
                   Checkout
                 </Text>
-                <Text className="text-white">→</Text>
+                <Text className="text-background">→</Text>
               </View>
             </TouchableOpacity>
           </View>

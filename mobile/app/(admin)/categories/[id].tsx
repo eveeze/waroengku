@@ -152,18 +152,18 @@ export default function CategoryDetailScreen() {
   }
 
   return (
-    <View className="flex-1 bg-secondary-50">
+    <View className="flex-1 bg-background">
       {/* Swiss Header */}
       <View
-        className="px-6 pb-6 border-b border-secondary-100 bg-white"
+        className="px-6 pb-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
           EDIT CATEGORY
         </Text>
       </View>
@@ -188,12 +188,13 @@ export default function CategoryDetailScreen() {
             />
 
             <View className="mt-3">
-              <Text className="text-sm font-medium text-secondary-700 mb-1.5">
+              <Text className="text-sm font-medium text-muted-foreground mb-1.5">
                 Deskripsi
               </Text>
               <TextInput
-                className="border border-secondary-200 rounded-lg px-4 py-3 bg-white text-base"
+                className="border border-border rounded-lg px-4 py-3 bg-muted text-base text-foreground"
                 placeholder="Deskripsi kategori (opsional)"
+                placeholderTextColor="#9CA3AF"
                 value={description}
                 onChangeText={setDescription}
                 multiline
@@ -205,8 +206,8 @@ export default function CategoryDetailScreen() {
           {category?.product_count !== undefined && (
             <Card className="mb-4">
               <View className="flex-row items-center justify-between">
-                <Text className="text-secondary-500">Jumlah Produk</Text>
-                <Text className="text-lg font-semibold text-secondary-900">
+                <Text className="text-muted-foreground">Jumlah Produk</Text>
+                <Text className="text-lg font-semibold text-foreground">
                   {category.product_count}
                 </Text>
               </View>
@@ -223,7 +224,7 @@ export default function CategoryDetailScreen() {
 
         {/* Submit Button */}
         <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-4 py-3"
+          className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-3"
           style={{ paddingBottom: insets.bottom + 90 }}
         >
           <Button

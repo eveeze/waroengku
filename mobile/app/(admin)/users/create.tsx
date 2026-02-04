@@ -88,18 +88,18 @@ export default function CreateUserScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Kembali
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
           USER BARU
         </Text>
       </View>
@@ -116,7 +116,7 @@ export default function CreateUserScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View className="mb-8">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-6">
+            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6">
               Informasi Akun
             </Text>
 
@@ -176,7 +176,7 @@ export default function CreateUserScreen() {
           </View>
 
           <View className="mb-8">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-6">
+            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6">
               Pilih Role
             </Text>
             <Controller
@@ -190,24 +190,26 @@ export default function CreateUserScreen() {
                       onPress={() => onChange(role.value as any)}
                       className={`flex-row items-center p-4 mb-3 border ${
                         value === role.value
-                          ? 'border-black bg-black'
-                          : 'border-secondary-200 bg-white'
+                          ? 'border-foreground bg-foreground'
+                          : 'border-border bg-background'
                       }`}
                     >
                       <View className="flex-1">
                         <Text
-                          className={`font-bold uppercase tracking-wide text-sm ${value === role.value ? 'text-white' : 'text-primary-900'}`}
+                          className={`font-bold uppercase tracking-wide text-sm ${value === role.value ? 'text-background' : 'text-foreground'}`}
                         >
                           {role.label}
                         </Text>
                         <Text
-                          className={`text-xs mt-1 ${value === role.value ? 'text-secondary-400' : 'text-secondary-500'}`}
+                          className={`text-xs mt-1 ${value === role.value ? 'text-background/80' : 'text-muted-foreground'}`}
                         >
                           {role.description}
                         </Text>
                       </View>
                       {value === role.value && (
-                        <Text className="text-white text-lg font-bold">✓</Text>
+                        <Text className="text-background text-lg font-bold">
+                          ✓
+                        </Text>
                       )}
                     </TouchableOpacity>
                   ))}
@@ -218,7 +220,7 @@ export default function CreateUserScreen() {
         </ScrollView>
 
         <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-6 py-4"
+          className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-4"
           style={{ paddingBottom: insets.bottom + 90 }}
         >
           <Button

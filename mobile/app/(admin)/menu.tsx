@@ -4,9 +4,16 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
+import { useThemeStore } from '@/stores/themeStore';
+
 export default function MenuScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { theme, setTheme } = useThemeStore();
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   const menuItems = [
     {
@@ -66,18 +73,20 @@ export default function MenuScreen() {
   ];
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar style="dark" />
+    <View className="flex-1 bg-background">
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       <View
-        className="px-6 py-8 bg-white border-b border-secondary-100"
+        className="px-6 py-8 bg-background border-b border-border flex-row justify-between items-end"
         style={{ paddingTop: insets.top + 20 }}
       >
-        <Text className="text-4xl font-heading uppercase tracking-tighter text-black">
-          Menu
-        </Text>
-        <Text className="text-secondary-500 text-sm font-bold mt-1 font-body">
-          All Applications
-        </Text>
+        <View>
+          <Text className="text-4xl font-heading uppercase tracking-tighter text-foreground">
+            Menu
+          </Text>
+          <Text className="text-muted-foreground text-sm font-bold mt-1 font-body">
+            All Applications
+          </Text>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }}>
@@ -86,20 +95,20 @@ export default function MenuScreen() {
             <TouchableOpacity
               key={index}
               onPress={() => router.push(item.route as any)}
-              className="bg-secondary-50 p-4 rounded-xl border border-secondary-100 flex-row items-center gap-4"
+              className="bg-muted p-4 rounded-xl border border-border flex-row items-center gap-4 active:opacity-70"
             >
-              <View className="w-12 h-12 bg-white rounded-full items-center justify-center border border-secondary-100">
+              <View className="w-12 h-12 bg-background rounded-full items-center justify-center border border-border">
                 <Text className="text-2xl">{item.icon}</Text>
               </View>
               <View className="flex-1">
-                <Text className="font-heading text-lg text-primary-900 uppercase">
+                <Text className="font-heading text-lg text-foreground uppercase">
                   {item.label}
                 </Text>
-                <Text className="text-xs text-secondary-500 font-bold font-body">
+                <Text className="text-xs text-muted-foreground font-bold font-body">
                   {item.desc}
                 </Text>
               </View>
-              <Text className="text-secondary-300">→</Text>
+              <Text className="text-muted-foreground">→</Text>
             </TouchableOpacity>
           ))}
         </View>

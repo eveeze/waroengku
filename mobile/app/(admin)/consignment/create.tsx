@@ -100,18 +100,18 @@ export default function CreateConsignorScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
           ADD CONSIGNOR
         </Text>
       </View>
@@ -155,7 +155,7 @@ export default function CreateConsignorScreen() {
           />
 
           <View className="h-8" />
-          <Text className="text-secondary-500 font-bold text-xs uppercase mb-4">
+          <Text className="text-muted-foreground font-bold text-xs uppercase mb-4">
             Bank Details (Optional)
           </Text>
 

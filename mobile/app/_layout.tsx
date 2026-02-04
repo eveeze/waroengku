@@ -5,9 +5,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/stores/authStore';
 import { useNetworkStore } from '@/stores/networkStore';
+import { useThemeStore } from '@/stores/themeStore';
+import { useColorScheme } from 'nativewind';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
 import { OfflineNotice } from '@/components/shared';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
 
 import {
   useFonts,
@@ -34,6 +37,8 @@ import '../global.css';
 export default function RootLayout() {
   const hydrate = useAuthStore((state) => state.hydrate);
   const setupNetworkListener = useNetworkStore((state) => state.setupListener);
+  const theme = useThemeStore((state) => state.theme);
+  const { setColorScheme } = useColorScheme();
 
   const [fontsLoaded] = useFonts({
     SpaceGrotesk_300Light,
@@ -47,6 +52,15 @@ export default function RootLayout() {
     PlusJakartaSans_700Bold,
     PlusJakartaSans_800ExtraBold,
   });
+
+  useEffect(() => {
+    // Sync theme
+    if (theme === 'system') {
+      setColorScheme('system');
+    } else {
+      setColorScheme(theme);
+    }
+  }, [theme, setColorScheme]);
 
   useEffect(() => {
     // Hydrate auth state from storage on app start
@@ -65,17 +79,21 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
-          <StatusBar style="auto" />
-          <OfflineNotice />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(admin)" />
-          </Stack>
+          <ThemeProvider>
+            <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+            <OfflineNotice />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: 'transparent' },
+                animation: 'fade',
+              }}
+            >
+              <Stack.Screen name="index" />
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(admin)" />
+            </Stack>
+          </ThemeProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>
     </QueryClientProvider>

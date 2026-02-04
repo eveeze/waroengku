@@ -152,7 +152,7 @@ export default function TransactionDetailScreen() {
 
   if (isLoading && !transaction) {
     return (
-      <View className="flex-1 bg-white items-center justify-center">
+      <View className="flex-1 bg-background items-center justify-center">
         <Loading message="Fetching Receipt..." />
       </View>
     );
@@ -160,8 +160,8 @@ export default function TransactionDetailScreen() {
 
   if (!transaction) {
     return (
-      <View className="flex-1 bg-white items-center justify-center">
-        <Text>Transaction not found</Text>
+      <View className="flex-1 bg-background items-center justify-center">
+        <Text className="text-foreground">Transaction not found</Text>
         <Button title="Back" onPress={() => router.back()} />
       </View>
     );
@@ -184,23 +184,23 @@ export default function TransactionDetailScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
 
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
           RECEIPT
         </Text>
-        <Text className="text-secondary-400 font-bold uppercase tracking-widest text-xs mt-1">
+        <Text className="text-muted-foreground font-bold uppercase tracking-widest text-xs mt-1">
           #{transaction.invoice_number}
         </Text>
       </View>
@@ -211,32 +211,36 @@ export default function TransactionDetailScreen() {
           paddingBottom: insets.bottom + 100,
         }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={refetch}
+            tintColor="#888"
+          />
         }
       >
         {/* Status Badge */}
-        <View className="flex-row justify-between items-center mb-8 border-b border-black pb-4">
+        <View className="flex-row justify-between items-center mb-8 border-b border-foreground pb-4">
           <View>
-            <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500 mb-1">
+            <Text className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
               Date
             </Text>
-            <Text className="text-sm font-bold text-primary-900">
+            <Text className="text-sm font-bold text-foreground">
               {formatDate(transaction.created_at)}
             </Text>
           </View>
           <View
             className={`px-3 py-1 border ${
               transaction.status === 'completed'
-                ? 'bg-black border-black'
+                ? 'bg-foreground border-foreground'
                 : transaction.status === 'cancelled'
-                  ? 'bg-white border-red-600'
-                  : 'bg-white border-orange-500'
+                  ? 'bg-background border-red-600'
+                  : 'bg-background border-orange-500'
             }`}
           >
             <Text
               className={`text-xs font-black uppercase tracking-widest ${
                 transaction.status === 'completed'
-                  ? 'text-white'
+                  ? 'text-background'
                   : transaction.status === 'cancelled'
                     ? 'text-red-600'
                     : 'text-orange-500'
@@ -249,7 +253,7 @@ export default function TransactionDetailScreen() {
 
         {/* Items Table */}
         <View className="mb-8">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-900 mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-foreground mb-4">
             Purchased Items
           </Text>
 
@@ -257,18 +261,18 @@ export default function TransactionDetailScreen() {
             transaction.items.map((item: TransactionItem, index: number) => (
               <View
                 key={index}
-                className="flex-row justify-between py-3 border-b border-secondary-100 last:border-0"
+                className="flex-row justify-between py-3 border-b border-border last:border-0"
               >
                 <View className="flex-1 pr-4">
-                  <Text className="font-bold text-primary-900 text-sm uppercase mb-1">
+                  <Text className="font-bold text-foreground text-sm uppercase mb-1">
                     {item.product_name}
                   </Text>
-                  <Text className="text-xs text-secondary-500 font-medium">
+                  <Text className="text-xs text-muted-foreground font-medium">
                     {item.quantity} {item.unit} x{' '}
                     {formatCurrency(item.unit_price || 0)}
                   </Text>
                 </View>
-                <Text className="font-bold text-primary-900 text-sm">
+                <Text className="font-bold text-foreground text-sm">
                   {formatCurrency(item.total_amount || 0)}
                 </Text>
               </View>
@@ -276,22 +280,22 @@ export default function TransactionDetailScreen() {
         </View>
 
         {/* Totals Section */}
-        <View className="bg-secondary-50 p-6 mb-8">
+        <View className="bg-muted p-6 mb-8">
           <View className="flex-row justify-between mb-2">
-            <Text className="text-secondary-500 text-xs font-bold uppercase tracking-wider">
+            <Text className="text-muted-foreground text-xs font-bold uppercase tracking-wider">
               Subtotal
             </Text>
-            <Text className="text-primary-900 font-bold text-sm">
+            <Text className="text-foreground font-bold text-sm">
               {formatCurrency(transaction.subtotal)}
             </Text>
           </View>
 
           {transaction.discount_amount > 0 && (
             <View className="flex-row justify-between mb-2">
-              <Text className="text-secondary-500 text-xs font-bold uppercase tracking-wider">
+              <Text className="text-muted-foreground text-xs font-bold uppercase tracking-wider">
                 Discount
               </Text>
-              <Text className="text-primary-900 font-bold text-sm">
+              <Text className="text-foreground font-bold text-sm">
                 -{formatCurrency(transaction.discount_amount)}
               </Text>
             </View>
@@ -299,37 +303,37 @@ export default function TransactionDetailScreen() {
 
           {transaction.tax_amount > 0 && (
             <View className="flex-row justify-between mb-2">
-              <Text className="text-secondary-500 text-xs font-bold uppercase tracking-wider">
+              <Text className="text-muted-foreground text-xs font-bold uppercase tracking-wider">
                 Tax
               </Text>
-              <Text className="text-primary-900 font-bold text-sm">
+              <Text className="text-foreground font-bold text-sm">
                 {formatCurrency(transaction.tax_amount)}
               </Text>
             </View>
           )}
 
-          <View className="border-t border-secondary-200 my-4 pt-4 flex-row justify-between items-center">
-            <Text className="text-lg font-black text-primary-900 uppercase tracking-tighter">
+          <View className="border-t border-border my-4 pt-4 flex-row justify-between items-center">
+            <Text className="text-lg font-black text-foreground uppercase tracking-tighter">
               Total
             </Text>
-            <Text className="text-2xl font-black text-black">
+            <Text className="text-2xl font-black text-foreground">
               {formatCurrency(transaction.total_amount)}
             </Text>
           </View>
 
           <View className="flex-row justify-between mt-2">
-            <Text className="text-secondary-500 text-xs font-bold uppercase tracking-wider">
+            <Text className="text-muted-foreground text-xs font-bold uppercase tracking-wider">
               Payment Method
             </Text>
-            <Text className="text-primary-900 font-bold text-xs uppercase">
+            <Text className="text-foreground font-bold text-xs uppercase">
               {transaction.payment_method}
             </Text>
           </View>
           <View className="flex-row justify-between mt-2">
-            <Text className="text-secondary-500 text-xs font-bold uppercase tracking-wider">
+            <Text className="text-muted-foreground text-xs font-bold uppercase tracking-wider">
               Cashier
             </Text>
-            <Text className="text-primary-900 font-bold text-xs uppercase">
+            <Text className="text-foreground font-bold text-xs uppercase">
               {transaction.cashier_name || 'System'}
             </Text>
           </View>
@@ -379,7 +383,7 @@ export default function TransactionDetailScreen() {
                 onPress={handleCancel}
                 isLoading={isCancelling}
               />
-              <Text className="text-center text-[10px] text-secondary-400 mt-3 font-bold uppercase tracking-widest">
+              <Text className="text-center text-[10px] text-muted-foreground mt-3 font-bold uppercase tracking-widest">
                 Authentication Required for Voiding
               </Text>
             </View>

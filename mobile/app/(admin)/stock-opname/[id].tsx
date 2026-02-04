@@ -112,7 +112,7 @@ export default function StockOpnameSessionScreen() {
 
   if (isLoading || !session) {
     return (
-      <View className="flex-1 bg-white items-center justify-center">
+      <View className="flex-1 bg-background items-center justify-center">
         <Loading message="Loading Session..." />
       </View>
     );
@@ -121,8 +121,8 @@ export default function StockOpnameSessionScreen() {
   const isActive = session.status === 'active';
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
       <BarcodeScanner
         visible={showScanner}
         onClose={() => setShowScanner(false)}
@@ -131,26 +131,26 @@ export default function StockOpnameSessionScreen() {
 
       {/* Swiss Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-3xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-3xl font-black uppercase tracking-tighter text-foreground">
           SESSION #{session.session_number}
         </Text>
         <View className="flex-row items-center mt-2 gap-2">
           <View
-            className={`px-2 py-0.5 ${isActive ? 'bg-black' : 'bg-secondary-500'}`}
+            className={`px-2 py-0.5 ${isActive ? 'bg-foreground' : 'bg-muted-foreground'}`}
           >
-            <Text className="text-white text-[10px] font-bold uppercase tracking-widest">
+            <Text className="text-background text-[10px] font-bold uppercase tracking-widest">
               {session.status}
             </Text>
           </View>
-          <Text className="text-secondary-500 text-xs font-bold uppercase tracking-widest">
+          <Text className="text-muted-foreground text-xs font-bold uppercase tracking-widest">
             {session.created_by}
           </Text>
         </View>
@@ -159,13 +159,17 @@ export default function StockOpnameSessionScreen() {
       <ScrollView
         contentContainerStyle={{ padding: 24 }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={refetch}
+            tintColor="#888"
+          />
         }
       >
         {isActive ? (
           <View>
-            <View className="bg-secondary-50 p-6 rounded-none mb-8 border border-secondary-100">
-              <Text className="text-center font-black uppercase text-xl mb-4 text-primary-900 tracking-tight">
+            <View className="bg-muted p-6 rounded-none mb-8 border border-border">
+              <Text className="text-center font-black uppercase text-xl mb-4 text-foreground tracking-tight">
                 Record Count
               </Text>
 
@@ -181,24 +185,24 @@ export default function StockOpnameSessionScreen() {
                   </View>
                   <TouchableOpacity
                     onPress={() => setShowScanner(true)}
-                    className="w-12 h-12 bg-black items-center justify-center"
+                    className="w-12 h-12 bg-foreground items-center justify-center"
                   >
-                    <Text className="text-white text-xl">📷</Text>
+                    <Text className="text-background text-xl">📷</Text>
                   </TouchableOpacity>
                 </View>
               ) : (
                 <View className="mb-4">
                   <View className="flex-row justify-between items-center mb-2">
-                    <Text className="text-xs font-bold uppercase text-secondary-500 tracking-widest">
+                    <Text className="text-xs font-bold uppercase text-muted-foreground tracking-widest">
                       Product
                     </Text>
                     <TouchableOpacity onPress={() => setProductCode('')}>
-                      <Text className="text-red-600 font-bold text-xs uppercase tracking-widest">
+                      <Text className="text-destructive font-bold text-xs uppercase tracking-widest">
                         CHANGE
                       </Text>
                     </TouchableOpacity>
                   </View>
-                  <Text className="text-2xl font-black text-primary-900 bg-white p-4 border border-secondary-200 text-center uppercase tracking-tight">
+                  <Text className="text-2xl font-black text-foreground bg-background p-4 border border-border text-center uppercase tracking-tight">
                     {productCode}
                   </Text>
                 </View>
@@ -238,7 +242,7 @@ export default function StockOpnameSessionScreen() {
               <Button
                 title="CANCEL SESSION"
                 variant="ghost"
-                textClassName="text-red-600 font-bold uppercase tracking-widest"
+                textClassName="text-destructive font-bold uppercase tracking-widest"
                 onPress={handleCancelSession}
                 isLoading={isCancelling}
               />
@@ -246,7 +250,7 @@ export default function StockOpnameSessionScreen() {
           </View>
         ) : (
           <View className="items-center py-10">
-            <Text className="text-secondary-500 font-bold mb-4 uppercase tracking-widest">
+            <Text className="text-muted-foreground font-bold mb-4 uppercase tracking-widest">
               Session is {session.status}
             </Text>
             <Button

@@ -35,8 +35,8 @@ export default function RecordCashFlowScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white p-6 justify-center">
-      <Text className="text-2xl font-black uppercase text-center mb-6">
+    <View className="flex-1 bg-background p-6 justify-center">
+      <Text className="text-2xl font-black uppercase text-center mb-6 text-foreground">
         Record Cash Flow
       </Text>
 

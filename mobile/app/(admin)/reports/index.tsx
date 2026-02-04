@@ -65,20 +65,20 @@ export default function ReportsHubScreen() {
   ];
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
 
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
           REPORTS
         </Text>
       </View>
@@ -98,27 +98,27 @@ export default function ReportsHubScreen() {
         }
       >
         {/* Today Summary */}
-        <View className="mb-8 p-6 bg-black">
-          <Text className="text-secondary-400 text-xs font-bold uppercase tracking-widest mb-2">
+        <View className="mb-8 p-6 bg-foreground">
+          <Text className="text-background/60 text-xs font-bold uppercase tracking-widest mb-2">
             Today's Performance
           </Text>
-          <Text className="text-4xl font-black text-white mb-4">
+          <Text className="text-4xl font-black text-background mb-4">
             {dashboard?.today
               ? formatCurrency(dashboard.today.total_sales)
               : 'Rp 0'}
           </Text>
 
-          <View className="flex-row border-t border-zinc-800 pt-4">
+          <View className="flex-row border-t border-background/20 pt-4">
             <View className="flex-1">
-              <Text className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+              <Text className="text-background/60 text-[10px] font-bold uppercase tracking-widest mb-1">
                 Transactions
               </Text>
-              <Text className="text-white text-xl font-bold">
+              <Text className="text-background text-xl font-bold">
                 {dashboard?.today?.total_transactions || 0}
               </Text>
             </View>
             <View className="flex-1">
-              <Text className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-1">
+              <Text className="text-background/60 text-[10px] font-bold uppercase tracking-widest mb-1">
                 Est. Profit
               </Text>
               <Text className="text-green-400 text-xl font-bold">
@@ -132,43 +132,43 @@ export default function ReportsHubScreen() {
 
         {/* Menu Grid */}
         <View>
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
             Analytics
           </Text>
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
               onPress={() => router.push(item.route as any)}
-              className="mb-4 bg-white border border-secondary-200 p-5 active:bg-secondary-50"
+              className="mb-4 bg-background border border-border p-5 active:bg-muted"
             >
               <View className="flex-row justify-between items-start mb-2">
-                <View className="bg-secondary-100 px-2 py-1">
-                  <Text className="text-[10px] font-black uppercase tracking-widest text-secondary-900">
+                <View className="bg-muted px-2 py-1">
+                  <Text className="text-[10px] font-black uppercase tracking-widest text-foreground">
                     {item.icon}
                   </Text>
                 </View>
                 {/* Right Value or Arrow */}
                 {item.value !== undefined ? (
                   <Text
-                    className={`font-bold ${item.title === 'ACCOUNTS RECEIVABLE' ? 'text-red-600' : 'text-primary-900'}`}
+                    className={`font-bold ${item.title === 'ACCOUNTS RECEIVABLE' ? 'text-destructive' : 'text-foreground'}`}
                   >
                     {item.isMoney ? formatCurrency(item.value) : item.value}
                   </Text>
                 ) : (
-                  <Text className="text-secondary-300 font-bold">↗</Text>
+                  <Text className="text-muted-foreground font-bold">↗</Text>
                 )}
               </View>
 
-              <Text className="text-lg font-black text-primary-900 uppercase tracking-tight mb-1">
+              <Text className="text-lg font-black text-foreground uppercase tracking-tight mb-1">
                 {item.title}
               </Text>
-              <Text className="text-xs text-secondary-500 font-medium">
+              <Text className="text-xs text-muted-foreground font-medium">
                 {item.subtitle}
               </Text>
 
               {item.alert && (
-                <View className="mt-3 bg-red-100 self-start px-2 py-1">
-                  <Text className="text-[10px] font-bold text-red-700 uppercase tracking-wide">
+                <View className="mt-3 bg-red-100 dark:bg-red-900/30 self-start px-2 py-1">
+                  <Text className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wide">
                     ⚠️ {item.alert}
                   </Text>
                 </View>

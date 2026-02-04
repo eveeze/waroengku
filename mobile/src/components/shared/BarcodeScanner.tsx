@@ -185,19 +185,19 @@ export function BarcodeScanner({
         {/* Scanned Result Footer */}
         {scanned && lastScannedCode && (
           <View
-            className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl px-6 py-6"
+            className="absolute bottom-0 left-0 right-0 bg-background rounded-t-3xl px-6 py-6"
             style={{ paddingBottom: insets.bottom + 16 }}
           >
             <View className="items-center mb-4">
-              <View className="w-12 h-1 bg-secondary-200 rounded-full mb-4" />
+              <View className="w-12 h-1 bg-muted rounded-full mb-4" />
               <Text className="text-green-500 text-4xl mb-2">✓</Text>
-              <Text className="text-lg font-semibold text-secondary-900">
+              <Text className="text-lg font-semibold text-foreground">
                 Barcode Terdeteksi
               </Text>
             </View>
 
-            <View className="bg-secondary-100 rounded-lg px-4 py-3 mb-4">
-              <Text className="text-center text-secondary-900 font-mono text-lg">
+            <View className="bg-muted rounded-lg px-4 py-3 mb-4">
+              <Text className="text-center text-foreground font-mono text-lg">
                 {lastScannedCode}
               </Text>
             </View>
@@ -205,17 +205,17 @@ export function BarcodeScanner({
             <View className="flex-row">
               <TouchableOpacity
                 onPress={handleRescan}
-                className="flex-1 bg-secondary-100 py-3 rounded-lg mr-2"
+                className="flex-1 bg-secondary py-3 rounded-lg mr-2"
               >
-                <Text className="text-secondary-700 text-center font-semibold">
+                <Text className="text-foreground text-center font-semibold">
                   Scan Ulang
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={onClose}
-                className="flex-1 bg-primary-600 py-3 rounded-lg ml-2"
+                className="flex-1 bg-primary py-3 rounded-lg ml-2"
               >
-                <Text className="text-white text-center font-semibold">
+                <Text className="text-primary-foreground text-center font-semibold">
                   Selesai
                 </Text>
               </TouchableOpacity>

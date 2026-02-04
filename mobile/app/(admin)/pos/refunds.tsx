@@ -139,22 +139,24 @@ export default function RefundScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       {/* Header */}
       <View
-        className="px-6 py-4 border-b border-secondary-100 bg-white"
+        className="px-6 py-4 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 10 }}
       >
         <View className="flex-row items-center justify-between">
           <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-lg font-bold text-secondary-500">Cancel</Text>
+            <Text className="text-lg font-bold text-muted-foreground">
+              Cancel
+            </Text>
           </TouchableOpacity>
-          <Text className="text-xl font-black uppercase tracking-tight">
+          <Text className="text-xl font-black uppercase tracking-tight text-foreground">
             Refund
           </Text>
           <TouchableOpacity disabled={isSubmitting} onPress={handleRefund}>
             <Text
-              className={`text-lg font-bold ${isSubmitting ? 'text-secondary-300' : 'text-primary-900'}`}
+              className={`text-lg font-bold ${isSubmitting ? 'text-muted-foreground' : 'text-foreground'}`}
             >
               Confirm
             </Text>
@@ -163,7 +165,7 @@ export default function RefundScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 24 }}>
-        <Text className="text-secondary-500 font-bold uppercase tracking-widest text-xs mb-4">
+        <Text className="text-muted-foreground font-bold uppercase tracking-widest text-xs mb-4">
           Select Items to Refund (Invoice #{transaction.invoice_number})
         </Text>
 
@@ -194,8 +196,8 @@ export default function RefundScreen() {
               key={itemId}
               className={`p-4 rounded-xl border mb-3 ${
                 isSelected
-                  ? 'border-primary-900 bg-secondary-50'
-                  : 'border-secondary-200 bg-white'
+                  ? 'border-primary bg-muted'
+                  : 'border-border bg-background'
               }`}
             >
               <View className="flex-row">
@@ -203,54 +205,64 @@ export default function RefundScreen() {
                   onPress={() => toggleItemSelection(itemId, item.quantity)}
                   className={`w-6 h-6 rounded border mr-3 items-center justify-center ${
                     isSelected
-                      ? 'bg-primary-900 border-primary-900'
-                      : 'border-secondary-300'
+                      ? 'bg-primary border-primary'
+                      : 'border-muted-foreground'
                   }`}
                 >
-                  {isSelected && <Text className="text-white text-xs">✓</Text>}
+                  {isSelected && (
+                    <Text className="text-primary-foreground text-xs">✓</Text>
+                  )}
                 </TouchableOpacity>
 
                 <View className="flex-1">
-                  <Text className="font-bold text-primary-900 text-lg uppercase">
+                  <Text className="font-bold text-foreground text-lg uppercase">
                     {item.product_name}
                   </Text>
-                  <Text className="text-secondary-500 text-xs mb-2">
+                  <Text className="text-muted-foreground text-xs mb-2">
                     Purchased: {item.quantity} {item.unit}
                   </Text>
 
                   {isSelected && (
                     <View className="mt-2">
                       <View className="flex-row items-center justify-between mb-3">
-                        <Text className="font-bold text-sm">Return Qty:</Text>
-                        <View className="flex-row items-center border border-secondary-300 rounded-lg bg-white">
+                        <Text className="font-bold text-sm text-foreground">
+                          Return Qty:
+                        </Text>
+                        <View className="flex-row items-center border border-border rounded-lg bg-background">
                           <TouchableOpacity
-                            className="px-3 py-1 border-r border-secondary-300"
+                            className="px-3 py-1 border-r border-border"
                             onPress={() =>
                               updateQuantity(itemId, qty - 1, item.quantity)
                             }
                           >
-                            <Text className="font-bold text-lg">-</Text>
+                            <Text className="font-bold text-lg text-foreground">
+                              -
+                            </Text>
                           </TouchableOpacity>
-                          <Text className="px-3 font-bold text-lg">{qty}</Text>
+                          <Text className="px-3 font-bold text-lg text-foreground">
+                            {qty}
+                          </Text>
                           <TouchableOpacity
-                            className="px-3 py-1 border-l border-secondary-300"
+                            className="px-3 py-1 border-l border-border"
                             onPress={() =>
                               updateQuantity(itemId, qty + 1, item.quantity)
                             }
                           >
-                            <Text className="font-bold text-lg">+</Text>
+                            <Text className="font-bold text-lg text-foreground">
+                              +
+                            </Text>
                           </TouchableOpacity>
                         </View>
                       </View>
 
                       <View className="flex-row items-center justify-between">
-                        <Text className="font-bold text-sm text-secondary-700">
+                        <Text className="font-bold text-sm text-foreground">
                           Restock to Inventory?
                         </Text>
                         <Switch
                           value={restockMap[itemId] ?? true}
                           onValueChange={() => toggleRestock(itemId)}
-                          trackColor={{ false: '#e4e4e7', true: '#000' }}
+                          trackColor={{ false: '#71717a', true: '#000' }}
                         />
                       </View>
                     </View>

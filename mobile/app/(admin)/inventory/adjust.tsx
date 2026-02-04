@@ -99,8 +99,8 @@ export default function AdjustScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
       <BarcodeScanner
         visible={showScanner}
         onClose={() => setShowScanner(false)}
@@ -109,15 +109,15 @@ export default function AdjustScreen() {
 
       {/* Swiss Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <Pressable onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </Pressable>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
           ADJUST STOCK
         </Text>
       </View>
@@ -125,7 +125,7 @@ export default function AdjustScreen() {
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         {/* Product Selection */}
         <View className="mb-8">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
             Target Product
           </Text>
 
@@ -141,19 +141,19 @@ export default function AdjustScreen() {
               </View>
               <Pressable
                 onPress={() => setShowScanner(true)}
-                className="w-12 h-12 bg-black items-center justify-center border border-black"
+                className="w-12 h-12 bg-foreground items-center justify-center border border-foreground"
               >
-                <Text className="text-white text-xl">📷</Text>
+                <Text className="text-background text-xl">📷</Text>
               </Pressable>
             </View>
           ) : (
-            <View className="bg-secondary-50 p-6 border border-secondary-100">
+            <View className="bg-muted p-6 border border-border">
               <View className="flex-row justify-between items-start">
                 <View className="flex-1 pr-4">
-                  <Text className="font-heading font-black text-2xl uppercase text-primary-900 leading-tight mb-1">
+                  <Text className="font-heading font-black text-2xl uppercase text-foreground leading-tight mb-1">
                     {product.name}
                   </Text>
-                  <Text className="text-secondary-500 font-bold uppercase text-xs tracking-wider">
+                  <Text className="text-muted-foreground font-bold uppercase text-xs tracking-wider">
                     Current: {product.current_stock}
                   </Text>
                 </View>
@@ -163,9 +163,9 @@ export default function AdjustScreen() {
                     setBarcodeInput('');
                     setQuantity('');
                   }}
-                  className="bg-secondary-200 px-3 py-1.5"
+                  className="bg-muted px-3 py-1.5"
                 >
-                  <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-900">
+                  <Text className="text-[10px] font-bold uppercase tracking-widest text-foreground">
                     CHANGE
                   </Text>
                 </Pressable>
@@ -177,7 +177,7 @@ export default function AdjustScreen() {
         {product && (
           <View className="animate-fade-in-down">
             <View className="mb-6">
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+              <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
                 Action
               </Text>
               <View className="flex-row gap-4">
@@ -185,15 +185,15 @@ export default function AdjustScreen() {
                   onPress={() => setType('decrease')}
                   className={`flex-1 py-4 border-2 items-center justify-center rounded-lg ${
                     type === 'decrease'
-                      ? 'bg-red-50 border-red-500'
-                      : 'bg-white border-secondary-100'
+                      ? 'bg-red-50 border-red-500 dark:bg-red-900/20 dark:border-red-800'
+                      : 'bg-background border-border'
                   }`}
                 >
                   <Text
                     className={`font-black uppercase tracking-wide ${
                       type === 'decrease'
-                        ? 'text-red-600'
-                        : 'text-secondary-400'
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-muted-foreground'
                     }`}
                   >
                     REMOVE (-)
@@ -203,15 +203,15 @@ export default function AdjustScreen() {
                   onPress={() => setType('increase')}
                   className={`flex-1 py-4 border-2 items-center justify-center rounded-lg ${
                     type === 'increase'
-                      ? 'bg-green-50 border-green-500'
-                      : 'bg-white border-secondary-100'
+                      ? 'bg-green-50 border-green-500 dark:bg-green-900/20 dark:border-green-800'
+                      : 'bg-background border-border'
                   }`}
                 >
                   <Text
                     className={`font-black uppercase tracking-wide ${
                       type === 'increase'
-                        ? 'text-green-600'
-                        : 'text-secondary-400'
+                        ? 'text-green-600 dark:text-green-400'
+                        : 'text-muted-foreground'
                     }`}
                   >
                     ADD (+)
@@ -243,11 +243,11 @@ export default function AdjustScreen() {
             <Pressable
               onPress={handleSubmit}
               disabled={isPending}
-              className={`py-4 items-center justify-center rounded-xl bg-primary-900 ${
+              className={`py-4 items-center justify-center rounded-xl bg-foreground ${
                 isPending ? 'opacity-50' : ''
               }`}
             >
-              <Text className="text-white font-bold text-lg uppercase tracking-widest">
+              <Text className="text-background font-bold text-lg uppercase tracking-widest">
                 {isPending ? 'Saving...' : 'Confirm Adjustment'}
               </Text>
             </Pressable>

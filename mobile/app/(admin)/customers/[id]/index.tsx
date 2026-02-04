@@ -114,7 +114,7 @@ export default function CustomerDetailScreen() {
 
   if (isLoading && !customer) {
     return (
-      <View className="flex-1 bg-white items-center justify-center">
+      <View className="flex-1 bg-background items-center justify-center">
         <Loading />
       </View>
     );
@@ -122,7 +122,7 @@ export default function CustomerDetailScreen() {
 
   if (!customer) {
     return (
-      <View className="flex-1 bg-white items-center justify-center">
+      <View className="flex-1 bg-background items-center justify-center">
         <Text>Customer not found</Text>
         <Button title="Back" onPress={() => router.back()} />
       </View>
@@ -132,32 +132,32 @@ export default function CustomerDetailScreen() {
   const hasDebt = (customer.current_debt || 0) > 0;
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
       {/* Swiss Header */}
       <View
-        className="px-6 pb-6 border-b border-secondary-100 bg-white"
+        className="px-6 pb-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <View className="flex-row justify-between items-start mb-2">
           <TouchableOpacity onPress={() => router.back()} className="mb-4">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
               ← Back
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => router.push(`/(admin)/customers/${id}/edit`)}
-            className="bg-secondary-100 px-3 py-1.5 rounded-full"
+            className="bg-muted px-3 py-1.5 rounded-full"
           >
-            <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-900">
+            <Text className="text-[10px] font-bold uppercase tracking-widest text-foreground">
               EDIT
             </Text>
           </TouchableOpacity>
         </View>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black leading-tight">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground leading-tight">
           {customer.name}
         </Text>
-        <Text className="text-secondary-500 text-xs font-bold mt-1 uppercase tracking-wide">
+        <Text className="text-muted-foreground text-xs font-bold mt-1 uppercase tracking-wide">
           {customer.phone || 'No Phone'}
         </Text>
       </View>
@@ -170,32 +170,32 @@ export default function CustomerDetailScreen() {
       >
         {/* Debt Card */}
         <View
-          className={`p-6 rounded-none mb-8 border ${hasDebt ? 'bg-red-50 border-red-100' : 'bg-secondary-50 border-secondary-100'}`}
+          className={`p-6 rounded-none mb-8 border ${hasDebt ? 'bg-red-50 border-red-100 dark:bg-red-900/20 dark:border-red-900/30' : 'bg-muted border-border'}`}
         >
           <Text
-            className={`text-xs font-bold uppercase tracking-widest mb-1 ${hasDebt ? 'text-red-500' : 'text-secondary-500'}`}
+            className={`text-xs font-bold uppercase tracking-widest mb-1 ${hasDebt ? 'text-red-500' : 'text-muted-foreground'}`}
           >
             Outstanding Debt (Kasbon)
           </Text>
           <Text
-            className={`text-3xl font-black tracking-tighter ${hasDebt ? 'text-red-600' : 'text-secondary-900'}`}
+            className={`text-3xl font-black tracking-tighter ${hasDebt ? 'text-red-600 dark:text-red-400' : 'text-foreground'}`}
           >
             {formatCurrency(kasbonSummary?.current_balance || 0)}
           </Text>
-          <View className="mt-4 pt-4 border-t border-secondary-200">
+          <View className="mt-4 pt-4 border-t border-border dark:border-red-900/30">
             <View className="flex-row justify-between mb-1">
-              <Text className="text-secondary-500 text-xs font-bold uppercase">
+              <Text className="text-muted-foreground text-xs font-bold uppercase">
                 Limit
               </Text>
-              <Text className="font-bold">
+              <Text className="font-bold text-foreground">
                 {formatCurrency(kasbonSummary?.credit_limit || 0)}
               </Text>
             </View>
             <View className="flex-row justify-between">
-              <Text className="text-secondary-500 text-xs font-bold uppercase">
+              <Text className="text-muted-foreground text-xs font-bold uppercase">
                 Remaining
               </Text>
-              <Text className="font-bold text-green-600">
+              <Text className="font-bold text-green-600 dark:text-green-400">
                 {formatCurrency(kasbonSummary?.remaining_credit || 0)}
               </Text>
             </View>
@@ -204,22 +204,22 @@ export default function CustomerDetailScreen() {
 
         {/* Info */}
         <View className="mb-8">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-4">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
             Details
           </Text>
           <View className="mb-4">
-            <Text className="text-xs text-secondary-400 font-bold uppercase mb-1">
+            <Text className="text-xs text-muted-foreground font-bold uppercase mb-1">
               Address
             </Text>
-            <Text className="text-base font-bold text-primary-900">
+            <Text className="text-base font-bold text-foreground">
               {customer.address || '-'}
             </Text>
           </View>
           <View>
-            <Text className="text-xs text-secondary-400 font-bold uppercase mb-1">
+            <Text className="text-xs text-muted-foreground font-bold uppercase mb-1">
               Notes
             </Text>
-            <Text className="text-base font-bold text-primary-900">
+            <Text className="text-base font-bold text-foreground">
               {customer.notes || '-'}
             </Text>
           </View>

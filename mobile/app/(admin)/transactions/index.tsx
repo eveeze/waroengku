@@ -109,25 +109,25 @@ export default function TransactionsScreen() {
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'text-green-600 bg-green-50 border-green-200';
+        return 'text-green-600 bg-green-50 border-green-200 dark:bg-green-900/30 dark:border-green-800 dark:text-green-400';
       case 'pending':
-        return 'text-orange-600 bg-orange-50 border-orange-200';
+        return 'text-orange-600 bg-orange-50 border-orange-200 dark:bg-orange-900/30 dark:border-orange-800 dark:text-orange-400';
       case 'cancelled':
-        return 'text-red-600 bg-red-50 border-red-200';
+        return 'text-destructive bg-destructive/10 border-destructive dark:bg-red-900/30 dark:border-red-800 dark:text-red-400';
       default:
-        return 'text-secondary-600 bg-secondary-50 border-secondary-200';
+        return 'text-muted-foreground bg-muted border-border';
     }
   };
 
   const renderItem = ({ item }: { item: Transaction }) => (
     <TouchableOpacity
       onPress={() => router.push(`/(admin)/transactions/${item.id}`)}
-      className="border-b border-secondary-100 bg-white active:bg-secondary-50"
+      className="border-b border-border bg-background active:bg-muted"
     >
       <View className="px-6 py-5 flex-row justify-between items-center">
         <View className="flex-1 mr-4">
           <View className="flex-row items-center mb-1">
-            <Text className="font-heading font-black text-primary-900 uppercase tracking-tight text-lg mr-2">
+            <Text className="font-heading font-black text-foreground uppercase tracking-tight text-lg mr-2">
               {item.invoice_number}
             </Text>
             <View
@@ -142,17 +142,17 @@ export default function TransactionsScreen() {
           </View>
 
           <View className="flex-row items-center">
-            <Text className="text-secondary-500 text-xs font-bold uppercase tracking-wider mr-2 font-body">
+            <Text className="text-muted-foreground text-xs font-bold uppercase tracking-wider mr-2 font-body">
               {formatDate(item.created_at)}
             </Text>
-            <Text className="text-secondary-300 text-xs">•</Text>
-            <Text className="text-secondary-500 text-xs font-bold uppercase tracking-wider ml-2 font-body">
+            <Text className="text-muted-foreground text-xs">•</Text>
+            <Text className="text-muted-foreground text-xs font-bold uppercase tracking-wider ml-2 font-body">
               {formatTime(item.created_at)}
             </Text>
           </View>
 
           <Text
-            className="text-secondary-600 text-xs mt-1 font-medium font-body truncate"
+            className="text-muted-foreground text-xs mt-1 font-medium font-body truncate"
             numberOfLines={1}
           >
             {item.customer?.name || 'Guest Customer'}
@@ -160,10 +160,10 @@ export default function TransactionsScreen() {
         </View>
 
         <View className="items-end">
-          <Text className="font-heading font-black text-primary-900 text-lg tracking-tight">
+          <Text className="font-heading font-black text-foreground text-lg tracking-tight">
             {formatCurrency(item.total_amount)}
           </Text>
-          <Text className="text-[10px] font-bold text-secondary-400 uppercase tracking-widest mt-1">
+          <Text className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
             {item.payment_method}
           </Text>
         </View>
@@ -172,30 +172,30 @@ export default function TransactionsScreen() {
   );
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
 
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-body">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-black mb-4">
+        <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-foreground mb-4">
           HISTORY
         </Text>
 
         {/* Search */}
         <View className="flex-row gap-2 mb-4">
-          <View className="flex-1 bg-secondary-50 border border-secondary-200 rounded-lg px-4 py-3">
+          <View className="flex-1 bg-muted border border-border rounded-lg px-4 py-3">
             <TextInput
               placeholder="SEARCH INVOICE / NAME..."
-              placeholderTextColor="#9CA3AF"
-              className="font-bold text-sm text-primary-900"
+              placeholderTextColor="hsl(var(--muted-foreground))"
+              className="font-bold text-sm text-foreground"
               value={search}
               onChangeText={setSearch}
             />
@@ -207,8 +207,8 @@ export default function TransactionsScreen() {
               filters.payment_method ||
               filters.date_from ||
               filters.customer
-                ? 'bg-black border-black'
-                : 'bg-white border-secondary-200'
+                ? 'bg-foreground border-foreground'
+                : 'bg-background border-border'
             }`}
           >
             <Text
@@ -217,8 +217,8 @@ export default function TransactionsScreen() {
                 filters.payment_method ||
                 filters.date_from ||
                 filters.customer
-                  ? 'text-white'
-                  : 'text-primary-900'
+                  ? 'text-background'
+                  : 'text-foreground'
               } text-lg`}
             >
               ⚙️
@@ -233,23 +233,23 @@ export default function TransactionsScreen() {
               onPress={() =>
                 setFilters((prev) => ({ ...prev, customer: null }))
               }
-              className="bg-black px-3 py-1 rounded-full flex-row items-center"
+              className="bg-foreground px-3 py-1 rounded-full flex-row items-center"
             >
-              <Text className="text-white text-xs font-bold mr-2">
+              <Text className="text-background text-xs font-bold mr-2">
                 User: {filters.customer.name}
               </Text>
-              <Text className="text-white text-xs">✕</Text>
+              <Text className="text-background text-xs">✕</Text>
             </TouchableOpacity>
           )}
           {filters.status && (
             <TouchableOpacity
               onPress={() => setFilters((prev) => ({ ...prev, status: null }))}
-              className="bg-secondary-900 px-3 py-1 rounded-full flex-row items-center"
+              className="bg-muted px-3 py-1 rounded-full flex-row items-center"
             >
-              <Text className="text-white text-xs font-bold mr-2">
+              <Text className="text-foreground text-xs font-bold mr-2">
                 Status: {filters.status}
               </Text>
-              <Text className="text-white text-xs">✕</Text>
+              <Text className="text-foreground text-xs">✕</Text>
             </TouchableOpacity>
           )}
           {filters.payment_method && (
@@ -257,12 +257,12 @@ export default function TransactionsScreen() {
               onPress={() =>
                 setFilters((prev) => ({ ...prev, payment_method: null }))
               }
-              className="bg-secondary-900 px-3 py-1 rounded-full flex-row items-center"
+              className="bg-muted px-3 py-1 rounded-full flex-row items-center"
             >
-              <Text className="text-white text-xs font-bold mr-2">
+              <Text className="text-foreground text-xs font-bold mr-2">
                 Pay: {filters.payment_method}
               </Text>
-              <Text className="text-white text-xs">✕</Text>
+              <Text className="text-foreground text-xs">✕</Text>
             </TouchableOpacity>
           )}
           {filters.date_from !== '' && (
@@ -270,12 +270,12 @@ export default function TransactionsScreen() {
               onPress={() =>
                 setFilters((prev) => ({ ...prev, date_from: '', date_to: '' }))
               }
-              className="bg-secondary-900 px-3 py-1 rounded-full flex-row items-center"
+              className="bg-muted px-3 py-1 rounded-full flex-row items-center"
             >
-              <Text className="text-white text-xs font-bold mr-2">
+              <Text className="text-foreground text-xs font-bold mr-2">
                 Date: {filters.date_from}
               </Text>
-              <Text className="text-white text-xs">✕</Text>
+              <Text className="text-foreground text-xs">✕</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -318,7 +318,7 @@ export default function TransactionsScreen() {
           !isLoading ? (
             <View className="items-center py-20 opacity-50">
               <Text className="text-6xl mb-4">📜</Text>
-              <Text className="text-lg font-bold uppercase tracking-widest text-secondary-900">
+              <Text className="text-lg font-bold uppercase tracking-widest text-foreground">
                 No Transactions
               </Text>
             </View>

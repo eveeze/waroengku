@@ -33,10 +33,10 @@ export default function OpenDrawerScreen() {
 
   return (
     <View
-      className="flex-1 bg-white p-6 justify-center"
+      className="flex-1 bg-background p-6 justify-center"
       style={{ marginBottom: 100 }}
     >
-      <Text className="text-2xl font-black uppercase text-center mb-6">
+      <Text className="text-2xl font-black uppercase text-center mb-6 text-foreground">
         Open Register
       </Text>
 

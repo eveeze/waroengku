@@ -1,80 +1,40 @@
-/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./app/**/*.{js,jsx,ts,tsx}', './src/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
       colors: {
-        // Minimalist Futuristic Palette
-        background: '#FFFFFF', // Pure White
-        foreground: '#09090b', // Deep Black
-
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
         primary: {
-          DEFAULT: '#18181b', // Zinc-950
-          foreground: '#fafafa', // Zinc-50
-          50: '#fafafa',
-          100: '#f4f4f5',
-          200: '#e4e4e7',
-          300: '#d4d4d8',
-          400: '#a1a1aa',
-          500: '#71717a',
-          600: '#52525b',
-          700: '#3f3f46',
-          800: '#27272a',
-          900: '#18181b',
-          950: '#09090b',
-        },
-        accent: {
-          DEFAULT: '#7c3aed', // Violet-600 (Sharp Contrast)
-          foreground: '#ffffff',
-          50: '#f5f3ff',
-          100: '#ede9fe',
-          200: '#ddd6fe',
-          300: '#c4b5fd',
-          400: '#a78bfa',
-          500: '#8b5cf6',
-          600: '#7c3aed',
-          700: '#6d28d9',
-          800: '#5b21b6',
-          900: '#4c1d95',
-          950: '#2e1065',
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+          900: 'hsl(var(--primary))', // Map 900 to Main Primary for backward compat
         },
         secondary: {
-          DEFAULT: '#f4f4f5', // Zinc-100
-          foreground: '#18181b', // Zinc-900
-          50: '#f4f4f5', // Mapped for backward compatibility
-          100: '#f4f4f5',
-          200: '#e4e4e7',
-          300: '#d4d4d8',
-          400: '#a1a1aa',
-          500: '#71717a',
-          600: '#52525b',
-          700: '#3f3f46',
-          800: '#27272a',
-          900: '#18181b',
-          950: '#09090b',
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+          50: 'hsl(var(--secondary))', // Surface
+          100: 'hsl(var(--secondary))',
+          200: 'hsl(var(--border))',
+          500: 'hsl(var(--muted-foreground))',
+          900: 'hsl(var(--secondary-foreground))',
         },
-        success: {
-          DEFAULT: '#10b981', // Emerald-500
-          50: '#ecfdf5',
-          500: '#10b981',
-          700: '#047857',
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
         },
-        warning: {
-          DEFAULT: '#f59e0b', // Amber-500
-          50: '#fffbeb',
-          500: '#f59e0b',
-          700: '#b45309',
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
         },
-        danger: {
-          DEFAULT: '#ef4444', // Red-500
-          50: '#fef2f2',
-          500: '#ef4444',
-          700: '#b91c1c',
+        accent: {
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
         },
-        border: '#e4e4e7', // Zinc-200
-        input: '#e4e4e7',
-        ring: '#18181b',
       },
       fontFamily: {
         sans: ['PlusJakartaSans_500Medium', 'system-ui', 'sans-serif'],

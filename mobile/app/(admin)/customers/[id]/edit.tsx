@@ -127,19 +127,19 @@ export default function EditCustomerScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
       {/* Swiss Header */}
       <View
-        className="px-6 pb-6 border-b border-secondary-100 bg-white"
+        className="px-6 pb-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
           EDIT CUSTOMER
         </Text>
       </View>
@@ -186,11 +186,11 @@ export default function EditCustomerScreen() {
             name="address"
             render={({ field: { onChange, onBlur, value } }) => (
               <View className="mb-4">
-                <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+                <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
                   Address
                 </Text>
                 <TextInput
-                  className="border border-secondary-200 bg-secondary-50 p-4 font-bold text-primary-900 rounded-none h-24"
+                  className="border border-border bg-secondary p-4 font-bold text-foreground rounded-none h-24"
                   multiline
                   value={value}
                   onChangeText={onChange}
@@ -225,11 +225,11 @@ export default function EditCustomerScreen() {
             name="notes"
             render={({ field: { onChange, onBlur, value } }) => (
               <View className="mb-4">
-                <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+                <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
                   Notes
                 </Text>
                 <TextInput
-                  className="border border-secondary-200 bg-secondary-50 p-4 font-bold text-primary-900 rounded-none h-24"
+                  className="border border-border bg-secondary p-4 font-bold text-foreground rounded-none h-24"
                   multiline
                   value={value}
                   onChangeText={onChange}
@@ -244,8 +244,8 @@ export default function EditCustomerScreen() {
           <View className="h-4" />
 
           {/* Active Status Switch */}
-          <View className="flex-row justify-between items-center py-4 border-t border-b border-secondary-100">
-            <Text className="text-sm font-bold uppercase tracking-wide text-secondary-900">
+          <View className="flex-row justify-between items-center py-4 border-t border-b border-border">
+            <Text className="text-sm font-bold uppercase tracking-wide text-foreground">
               Customer Active
             </Text>
             <Switch

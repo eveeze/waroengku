@@ -64,22 +64,22 @@ export default function InventoryReportScreen() {
     <TouchableOpacity
       key={item.id}
       onPress={() => router.push(`/(admin)/products/${item.id}`)}
-      className="mb-0 border-b border-secondary-100 bg-white active:bg-secondary-50"
+      className="mb-0 border-b border-border bg-background active:bg-muted"
     >
       <View className="p-4 flex-row justify-between items-center">
         <View className="flex-1">
-          <Text className="text-base font-bold text-primary-900 uppercase tracking-tight">
+          <Text className="text-base font-bold text-foreground uppercase tracking-tight">
             {item.name}
           </Text>
-          <Text className="text-[10px] text-orange-600 font-bold uppercase tracking-wider mt-1">
+          <Text className="text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase tracking-wider mt-1">
             Minimum: {item.min_stock_alert} {item.unit}
           </Text>
         </View>
         <View className="items-end">
-          <Text className="text-xl font-black text-orange-600">
+          <Text className="text-xl font-black text-orange-600 dark:text-orange-400">
             {item.current_stock}
           </Text>
-          <Text className="text-[10px] text-secondary-500 font-bold uppercase">
+          <Text className="text-[10px] text-muted-foreground font-bold uppercase">
             {item.unit}
           </Text>
         </View>
@@ -91,15 +91,15 @@ export default function InventoryReportScreen() {
     <TouchableOpacity
       key={item.id}
       onPress={() => router.push(`/(admin)/products/${item.id}`)}
-      className="mb-0 border-b border-secondary-100 bg-white active:bg-secondary-50"
+      className="mb-0 border-b border-border bg-background active:bg-muted"
     >
       <View className="p-4 flex-row justify-between items-center">
         <View className="flex-1">
-          <Text className="text-base font-bold text-primary-900 uppercase tracking-tight">
+          <Text className="text-base font-bold text-foreground uppercase tracking-tight">
             {item.name}
           </Text>
           {item.last_sale_date && (
-            <Text className="text-[10px] text-secondary-500 font-bold uppercase tracking-wider mt-1">
+            <Text className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1">
               Last Sale:{' '}
               {new Date(item.last_sale_date).toLocaleDateString('en-GB')}
             </Text>
@@ -117,43 +117,43 @@ export default function InventoryReportScreen() {
   const renderCategoryStock = (item: StockByCategory) => (
     <View
       key={item.category_id}
-      className="flex-row items-center py-4 border-b border-secondary-100"
+      className="flex-row items-center py-4 border-b border-border"
     >
       <View className="flex-1">
-        <Text className="font-bold text-primary-900 uppercase tracking-wide text-sm">
+        <Text className="font-bold text-foreground uppercase tracking-wide text-sm">
           {item.category_name}
         </Text>
-        <Text className="text-[10px] text-secondary-500 font-bold uppercase tracking-wider mt-1">
+        <Text className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mt-1">
           {item.product_count} items
         </Text>
       </View>
-      <Text className="text-sm font-black text-primary-900">
+      <Text className="text-sm font-black text-foreground">
         {formatCurrency(item.total_stock_value)}
       </Text>
     </View>
   );
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
 
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
           INVENTORY
         </Text>
       </View>
 
       {/* Tabs */}
-      <View className="bg-white border-b border-secondary-100">
+      <View className="bg-background border-b border-border">
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -165,12 +165,16 @@ export default function InventoryReportScreen() {
                 key={tab.key}
                 onPress={() => setActiveTab(tab.key)}
                 className={`py-4 mr-6 border-b-2 ${
-                  activeTab === tab.key ? 'border-black' : 'border-transparent'
+                  activeTab === tab.key
+                    ? 'border-foreground'
+                    : 'border-transparent'
                 }`}
               >
                 <Text
                   className={`text-xs font-black uppercase tracking-widest ${
-                    activeTab === tab.key ? 'text-black' : 'text-secondary-400'
+                    activeTab === tab.key
+                      ? 'text-foreground'
+                      : 'text-muted-foreground'
                   }`}
                 >
                   {tab.label}
@@ -189,13 +193,13 @@ export default function InventoryReportScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={refetch}
-            tintColor="#000"
+            tintColor="#888"
           />
         }
       >
         {error && (
-          <View className="bg-black p-4 mb-6 mx-6 mt-6">
-            <Text className="text-white font-bold uppercase tracking-wide text-xs">
+          <View className="bg-destructive p-4 mb-6 mx-6 mt-6">
+            <Text className="text-destructive-foreground font-bold uppercase tracking-wide text-xs">
               Error loading inventory report
             </Text>
           </View>
@@ -205,19 +209,19 @@ export default function InventoryReportScreen() {
           <View className="p-6">
             {/* Summary Stats */}
             <View className="flex-row mb-8">
-              <View className="flex-1 mr-4 border border-secondary-200 p-4">
-                <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500 mb-2">
+              <View className="flex-1 mr-4 border border-border p-4">
+                <Text className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
                   Total Products
                 </Text>
-                <Text className="text-2xl font-black text-primary-900">
+                <Text className="text-2xl font-black text-foreground">
                   {report.total_products}
                 </Text>
               </View>
-              <View className="flex-1 border border-secondary-200 p-4">
-                <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-500 mb-2">
+              <View className="flex-1 border border-border p-4">
+                <Text className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
                   Total Value
                 </Text>
-                <Text className="text-lg font-black text-primary-900">
+                <Text className="text-lg font-black text-foreground">
                   {formatCurrency(report.total_stock_value)}
                 </Text>
               </View>
@@ -227,23 +231,23 @@ export default function InventoryReportScreen() {
             <View className="flex-row mb-8 space-x-4">
               <TouchableOpacity
                 onPress={() => setActiveTab('lowstock')}
-                className="flex-1 bg-orange-50 p-4 border border-orange-100 items-center justify-center"
+                className="flex-1 bg-orange-50 dark:bg-orange-900/20 p-4 border border-orange-100 dark:border-orange-900/30 items-center justify-center"
               >
-                <Text className="text-4xl font-black text-orange-600 mb-1">
+                <Text className="text-4xl font-black text-orange-600 dark:text-orange-400 mb-1">
                   {report.low_stock_products?.length || 0}
                 </Text>
-                <Text className="text-[10px] font-bold uppercase tracking-widest text-orange-800">
+                <Text className="text-[10px] font-bold uppercase tracking-widest text-orange-800 dark:text-orange-300">
                   Low Stock
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setActiveTab('outofstock')}
-                className="flex-1 bg-red-50 p-4 border border-red-100 items-center justify-center"
+                className="flex-1 bg-red-50 dark:bg-red-900/20 p-4 border border-red-100 dark:border-red-900/30 items-center justify-center"
               >
-                <Text className="text-4xl font-black text-red-600 mb-1">
+                <Text className="text-4xl font-black text-red-600 dark:text-red-400 mb-1">
                   {report.out_of_stock_products?.length || 0}
                 </Text>
-                <Text className="text-[10px] font-bold uppercase tracking-widest text-red-800">
+                <Text className="text-[10px] font-bold uppercase tracking-widest text-red-800 dark:text-red-300">
                   Out of Stock
                 </Text>
               </TouchableOpacity>
@@ -253,7 +257,7 @@ export default function InventoryReportScreen() {
             {report.stock_by_category &&
               report.stock_by_category.length > 0 && (
                 <View>
-                  <Text className="text-xs font-bold uppercase tracking-widest text-secondary-900 mb-2 border-b border-black pb-2">
+                  <Text className="text-xs font-bold uppercase tracking-widest text-foreground mb-2 border-b border-foreground pb-2">
                     Valuation by Category
                   </Text>
                   {report.stock_by_category.map(renderCategoryStock)}
@@ -269,10 +273,10 @@ export default function InventoryReportScreen() {
               report.low_stock_products.map(renderLowStockItem)
             ) : (
               <View className="items-center py-20 px-10">
-                <Text className="text-secondary-300 font-black text-6xl mb-4">
+                <Text className="text-muted-foreground font-black text-6xl mb-4">
                   ✅
                 </Text>
-                <Text className="text-secondary-900 font-bold text-lg text-center uppercase tracking-wide mb-2">
+                <Text className="text-foreground font-bold text-lg text-center uppercase tracking-wide mb-2">
                   Stocks Healthy
                 </Text>
               </View>
@@ -287,10 +291,10 @@ export default function InventoryReportScreen() {
               report.out_of_stock_products.map(renderOutOfStockItem)
             ) : (
               <View className="items-center py-20 px-10">
-                <Text className="text-secondary-300 font-black text-6xl mb-4">
+                <Text className="text-muted-foreground font-black text-6xl mb-4">
                   🎉
                 </Text>
-                <Text className="text-secondary-900 font-bold text-lg text-center uppercase tracking-wide mb-2">
+                <Text className="text-foreground font-bold text-lg text-center uppercase tracking-wide mb-2">
                   Fully Stocked
                 </Text>
               </View>

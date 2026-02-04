@@ -158,9 +158,9 @@ export default function ProductDetailScreen() {
 
   if (error || !product) {
     return (
-      <View className="flex-1 bg-white items-center justify-center">
+      <View className="flex-1 bg-background items-center justify-center">
         <Text className="text-4xl mb-4">❌</Text>
-        <Text className="text-secondary-500 font-bold uppercase tracking-widest">
+        <Text className="text-muted-foreground font-bold uppercase tracking-widest">
           Product Not Found
         </Text>
         <Button
@@ -181,32 +181,34 @@ export default function ProductDetailScreen() {
       : 0;
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       {/* Custom Header matching POS style */}
       <View
-        className="px-6 pb-6 border-b border-secondary-200"
+        className="px-6 pb-6 border-b border-border"
         style={{ paddingTop: insets.top + 24 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-secondary-500 font-bold uppercase tracking-widest text-xs font-body">
+          <Text className="text-muted-foreground font-bold uppercase tracking-widest text-xs font-body">
             ← BACK TO LIST
           </Text>
         </TouchableOpacity>
         <View className="flex-row justify-between items-start">
-          <Text className="text-4xl font-heading font-black tracking-tighter text-primary-900 uppercase flex-1 mr-4 leading-9">
+          <Text className="text-4xl font-heading font-black tracking-tighter text-foreground uppercase flex-1 mr-4 leading-9">
             {product.name}
           </Text>
           <TouchableOpacity
             onPress={() => mutateToggleActive()}
             className={`px-3 py-1 rounded-full border ${
               product.is_active
-                ? 'bg-primary-900 border-primary-900'
-                : 'bg-white border-secondary-300'
+                ? 'bg-primary border-primary'
+                : 'bg-background border-border'
             }`}
           >
             <Text
               className={`text-xs font-bold uppercase tracking-widest font-heading ${
-                product.is_active ? 'text-white' : 'text-secondary-400'
+                product.is_active
+                  ? 'text-primary-foreground'
+                  : 'text-muted-foreground'
               }`}
             >
               {product.is_active ? 'ACTIVE' : 'INACTIVE'}
@@ -223,7 +225,7 @@ export default function ProductDetailScreen() {
       >
         {/* Product Image Placeholder */}
         <View
-          className="bg-secondary-50 rounded-xl items-center justify-center mb-8 border border-secondary-200 overflow-hidden"
+          className="bg-muted rounded-xl items-center justify-center mb-8 border border-border overflow-hidden"
           style={{ height: 300 }} // Explicit height
         >
           {product.image_url ? (
@@ -235,7 +237,7 @@ export default function ProductDetailScreen() {
           ) : (
             <View className="items-center">
               <Text className="text-6xl mb-2 opacity-20">📦</Text>
-              <Text className="text-secondary-400 font-bold uppercase tracking-widest text-xs">
+              <Text className="text-muted-foreground font-bold uppercase tracking-widest text-xs">
                 No Image
               </Text>
             </View>
@@ -245,8 +247,8 @@ export default function ProductDetailScreen() {
         {/* Info Grid */}
         <View className="flex-row flex-wrap mb-8 gap-2">
           {product.category_name && (
-            <View className="bg-white border border-secondary-200 px-3 py-1.5 rounded-md">
-              <Text className="text-primary-900 text-xs font-bold uppercase tracking-widest font-heading">
+            <View className="bg-background border border-border px-3 py-1.5 rounded-md">
+              <Text className="text-foreground text-xs font-bold uppercase tracking-widest font-heading">
                 {product.category_name}
               </Text>
             </View>
@@ -261,17 +263,17 @@ export default function ProductDetailScreen() {
                   Alert.alert('Copied', 'Barcode copied to clipboard');
                 }
               }}
-              className="bg-secondary-50 border border-secondary-200 px-3 py-1.5 rounded-md flex-row items-center gap-2"
+              className="bg-muted border border-border px-3 py-1.5 rounded-md flex-row items-center gap-2"
             >
-              <Text className="text-secondary-600 text-xs font-mono font-medium tracking-wide">
+              <Text className="text-muted-foreground text-xs font-mono font-medium tracking-wide">
                 {product.barcode}
               </Text>
               <Text className="text-[10px]">📋</Text>
             </TouchableOpacity>
           )}
           {product.sku && (
-            <View className="bg-secondary-50 border border-secondary-200 px-3 py-1.5 rounded-md">
-              <Text className="text-secondary-600 text-xs font-medium tracking-wide">
+            <View className="bg-muted border border-border px-3 py-1.5 rounded-md">
+              <Text className="text-muted-foreground text-xs font-medium tracking-wide">
                 SKU: {product.sku}
               </Text>
             </View>
@@ -279,21 +281,21 @@ export default function ProductDetailScreen() {
         </View>
 
         {product.consignor_id && consignorName && (
-          <View className="mb-8 mt-4 bg-secondary-50 border border-secondary-200 rounded-lg p-4">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-1 font-body">
+          <View className="mb-8 mt-4 bg-muted border border-border rounded-lg p-4">
+            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-1 font-body">
               CONSIGNOR
             </Text>
             <View className="flex-row items-center justify-between">
-              <Text className="text-lg font-heading font-black text-primary-900">
+              <Text className="text-lg font-heading font-black text-foreground">
                 {consignorName}
               </Text>
               <TouchableOpacity
                 onPress={() =>
                   router.push(`/(admin)/consignment/${product.consignor_id}`)
                 }
-                className="bg-white border border-secondary-200 px-3 py-1 rounded"
+                className="bg-background border border-border px-3 py-1 rounded"
               >
-                <Text className="text-xs font-bold text-primary-900">VIEW</Text>
+                <Text className="text-xs font-bold text-foreground">VIEW</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -301,52 +303,52 @@ export default function ProductDetailScreen() {
 
         {product.description && (
           <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2 font-body">
               DESCRIPTION
             </Text>
-            <Text className="text-secondary-900 font-body leading-6 text-base">
+            <Text className="text-foreground font-body leading-6 text-base">
               {product.description}
             </Text>
           </View>
         )}
 
-        <View className="h-px bg-secondary-100 w-full mb-8" />
+        <View className="h-px bg-border w-full mb-8" />
 
         {/* Pricing Info */}
         <View className="mb-8">
-          <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-4 font-body">
+          <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-4 font-body">
             PRICING & PROFIT
           </Text>
 
           <View className="flex-row gap-4">
-            <View className="flex-1 bg-secondary-50 p-4 rounded-lg border border-secondary-200">
-              <Text className="text-xs font-bold text-secondary-500 uppercase tracking-wide mb-1">
+            <View className="flex-1 bg-muted p-4 rounded-lg border border-border">
+              <Text className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
                 SELLING PRICE
               </Text>
-              <Text className="text-2xl font-heading font-black text-primary-900 tracking-tight">
+              <Text className="text-2xl font-heading font-black text-foreground tracking-tight">
                 {formatCurrency(product.base_price)}
               </Text>
             </View>
 
-            <View className="flex-1 bg-white p-4 rounded-lg border border-dashed border-secondary-300">
-              <Text className="text-xs font-bold text-secondary-400 uppercase tracking-wide mb-1">
+            <View className="flex-1 bg-background p-4 rounded-lg border border-dashed border-border">
+              <Text className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
                 COST PRICE
               </Text>
-              <Text className="text-xl font-heading font-bold text-secondary-700">
+              <Text className="text-xl font-heading font-bold text-foreground">
                 {formatCurrency(product.cost_price)}
               </Text>
             </View>
           </View>
 
-          <View className="mt-4 flex-row items-center justify-between bg-green-50 p-4 rounded-lg border border-green-100">
-            <Text className="text-green-800 font-bold uppercase tracking-widest text-xs">
+          <View className="mt-4 flex-row items-center justify-between bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-100 dark:border-green-900/30">
+            <Text className="text-green-800 dark:text-green-300 font-bold uppercase tracking-widest text-xs">
               PROFIT MARGIN
             </Text>
             <View className="flex-row items-baseline">
-              <Text className="text-green-700 font-heading font-black text-lg mr-2">
+              <Text className="text-green-700 dark:text-green-400 font-heading font-black text-lg mr-2">
                 +{formatCurrency(profit)}
               </Text>
-              <Text className="text-green-600 font-bold text-xs bg-white px-2 py-0.5 rounded-full overflow-hidden">
+              <Text className="text-green-600 dark:text-green-300 font-bold text-xs bg-white dark:bg-black/20 px-2 py-0.5 rounded-full overflow-hidden">
                 {profitMargin}%
               </Text>
             </View>
@@ -356,48 +358,48 @@ export default function ProductDetailScreen() {
         {/* Pricing Tiers Link */}
         <TouchableOpacity
           onPress={() => router.push(`/(admin)/products/${id}/pricing`)}
-          className="mb-8 bg-black p-5 rounded-xl flex-row justify-between items-center shadow-sm active:opacity-90"
+          className="mb-8 bg-card border border-border p-5 rounded-xl flex-row justify-between items-center shadow-sm active:opacity-90"
         >
           <View>
-            <Text className="text-white font-heading font-black text-lg uppercase tracking-tight">
+            <Text className="text-foreground font-heading font-black text-lg uppercase tracking-tight">
               WHOLESALE PRICING
             </Text>
-            <Text className="text-white/60 text-xs font-bold uppercase tracking-widest mt-1">
+            <Text className="text-muted-foreground text-xs font-bold uppercase tracking-widest mt-1">
               {product.pricing_tiers?.length || 0} ACTIVE TIERS
             </Text>
           </View>
-          <View className="bg-white/20 w-10 h-10 rounded-full items-center justify-center">
-            <Text className="text-white font-bold text-lg">→</Text>
+          <View className="bg-muted w-10 h-10 rounded-full items-center justify-center">
+            <Text className="text-foreground font-bold text-lg">→</Text>
           </View>
         </TouchableOpacity>
 
         {/* Stock Info */}
         <View className="mb-8">
           <View className="flex-row justify-between items-end mb-4">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase font-body">
+            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase font-body">
               STOCK LEVEL
             </Text>
             <Text
               className={`text-xs font-bold uppercase tracking-widest font-heading ${
                 product.is_stock_active
-                  ? 'text-green-600'
-                  : 'text-secondary-400'
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-muted-foreground'
               }`}
             >
               {product.is_stock_active ? 'TRACKING ACTIVE' : 'TRACKING OFF'}
             </Text>
           </View>
 
-          <View className="bg-white border border-secondary-200 rounded-xl p-5">
-            <View className="flex-row justify-between items-center mb-4 pb-4 border-b border-secondary-100">
-              <Text className="text-secondary-900 font-bold text-sm uppercase tracking-wide">
+          <View className="bg-card border border-border rounded-xl p-5">
+            <View className="flex-row justify-between items-center mb-4 pb-4 border-b border-border">
+              <Text className="text-foreground font-bold text-sm uppercase tracking-wide">
                 CURRENT STOCK
               </Text>
               <Text
-                className={`text-3xl font-heading font-black ${isLowStock ? 'text-danger-600' : 'text-primary-900'}`}
+                className={`text-3xl font-heading font-black ${isLowStock ? 'text-danger-600 dark:text-red-400' : 'text-foreground'}`}
               >
                 {product.current_stock}{' '}
-                <Text className="text-sm text-secondary-500 font-medium">
+                <Text className="text-sm text-muted-foreground font-medium">
                   {product.unit}
                 </Text>
               </Text>
@@ -405,27 +407,27 @@ export default function ProductDetailScreen() {
 
             <View className="flex-row gap-4">
               <View className="flex-1">
-                <Text className="text-xs text-secondary-400 font-bold uppercase tracking-wider mb-1">
+                <Text className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-1">
                   MIN ALERT
                 </Text>
-                <Text className="text-lg font-heading font-bold text-secondary-700">
+                <Text className="text-lg font-heading font-bold text-foreground">
                   {product.min_stock_alert}
                 </Text>
               </View>
-              <View className="flex-1 border-l border-secondary-100 pl-4">
-                <Text className="text-xs text-secondary-400 font-bold uppercase tracking-wider mb-1">
+              <View className="flex-1 border-l border-border pl-4">
+                <Text className="text-xs text-muted-foreground font-bold uppercase tracking-wider mb-1">
                   MAX STOCK
                 </Text>
-                <Text className="text-lg font-heading font-bold text-secondary-700">
+                <Text className="text-lg font-heading font-bold text-foreground">
                   {product.max_stock || '∞'}
                 </Text>
               </View>
             </View>
 
             {isLowStock && (
-              <View className="bg-danger-50 rounded-lg p-3 mt-4 border border-danger-100 flex-row items-center">
+              <View className="bg-danger-50 dark:bg-red-900/20 rounded-lg p-3 mt-4 border border-danger-100 dark:border-red-900/30 flex-row items-center">
                 <Text className="mr-2">⚠️</Text>
-                <Text className="text-danger-800 font-bold text-xs uppercase tracking-wide">
+                <Text className="text-danger-800 dark:text-red-300 font-bold text-xs uppercase tracking-wide">
                   Low Stock Warning
                 </Text>
               </View>
@@ -448,7 +450,7 @@ export default function ProductDetailScreen() {
             fullWidth
             onPress={handleDelete}
             className="mt-2"
-            textClassName="text-danger-600"
+            textClassName="text-danger-600 dark:text-red-400"
           />
         </View>
       </ScrollView>

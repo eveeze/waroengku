@@ -33,29 +33,29 @@ const variantStyles: Record<
   { container: string; text: string; loader: string }
 > = {
   primary: {
-    container: 'bg-primary-900 border border-primary-900 shadow-sm',
-    text: 'text-primary-50',
-    loader: '#fafafa',
+    container: 'bg-primary border border-primary shadow-sm',
+    text: 'text-primary-foreground',
+    loader: 'hsl(var(--primary-foreground))',
   },
   secondary: {
-    container: 'bg-white border border-secondary-200',
-    text: 'text-primary-900',
-    loader: '#18181b', // primary-900
+    container: 'bg-background border border-border',
+    text: 'text-foreground',
+    loader: 'hsl(var(--foreground))',
   },
   outline: {
-    container: 'bg-transparent border border-secondary-300',
-    text: 'text-primary-900',
-    loader: '#18181b',
+    container: 'bg-transparent border border-border',
+    text: 'text-foreground',
+    loader: 'hsl(var(--foreground))',
   },
   danger: {
-    container: 'bg-danger-600 border border-danger-600',
-    text: 'text-white',
-    loader: '#fff',
+    container: 'bg-destructive border border-destructive',
+    text: 'text-destructive-foreground',
+    loader: 'hsl(var(--destructive-foreground))',
   },
   ghost: {
     container: 'bg-transparent border-transparent',
-    text: 'text-primary-600',
-    loader: '#18181b',
+    text: 'text-muted-foreground',
+    loader: 'hsl(var(--muted-foreground))',
   },
 };
 
@@ -64,17 +64,17 @@ const sizeStyles: Record<
   { container: string; text: string; icon: string }
 > = {
   sm: {
-    container: 'px-4 py-2 rounded-md',
+    container: 'px-4 py-2 rounded-sm',
     text: 'text-sm font-medium tracking-tight',
     icon: 'mr-1.5',
   },
   md: {
-    container: 'px-5 py-3 rounded-lg',
+    container: 'px-5 py-3 rounded-md',
     text: 'text-base font-semibold tracking-tight',
     icon: 'mr-2',
   },
   lg: {
-    container: 'px-8 py-4 rounded-xl',
+    container: 'px-8 py-4 rounded-lg',
     text: 'text-lg font-bold tracking-tight',
     icon: 'mr-3',
   },

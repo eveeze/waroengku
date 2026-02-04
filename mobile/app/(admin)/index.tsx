@@ -71,8 +71,8 @@ export default function DashboardScreen() {
   const outstandingKasbon = dashboard?.total_outstanding_kasbon ?? 0;
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
 
       {/* Scrollable Content */}
       <ScrollView
@@ -86,54 +86,56 @@ export default function DashboardScreen() {
       >
         {/* Header Section */}
         <View
-          className="px-6 pb-6 border-b border-secondary-100 bg-white"
+          className="px-6 pb-6 bg-background"
           style={{ paddingTop: insets.top + 20 }}
         >
           <View className="flex-row justify-between items-start mb-6">
             <View>
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-1 font-body">
+              <Text className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-1 font-body">
                 Welcome back,
               </Text>
-              <Text className="text-3xl font-heading uppercase tracking-tight text-primary-900">
+              <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
                 {userName}
               </Text>
             </View>
             <TouchableOpacity
               onPress={handleLogout}
-              className="w-10 h-10 items-center justify-center rounded-full bg-secondary-50"
+              className="w-10 h-10 items-center justify-center rounded-none bg-muted"
             >
-              <Text className="text-lg">➜</Text>
+              <Text className="text-lg text-foreground">→</Text>
             </TouchableOpacity>
           </View>
 
           {/* Error Message */}
           {error && (
-            <View className="bg-red-50 p-4 mb-4 rounded-lg">
-              <Text className="text-red-600 font-bold mb-2">
+            <View className="bg-destructive/10 p-4 mb-4 rounded-none">
+              <Text className="text-destructive font-bold mb-2 uppercase">
                 FAILED TO LOAD DATA
               </Text>
-              <Text className="text-red-800 text-xs mb-3">
+              <Text className="text-destructive font-medium text-xs mb-3">
                 {(error as Error)?.message || 'Unknown error'}
               </Text>
               <TouchableOpacity onPress={() => refetch()}>
-                <Text className="font-bold underline text-red-900">RETRY</Text>
+                <Text className="font-bold underline text-destructive uppercase tracking-wide">
+                  RETRY
+                </Text>
               </TouchableOpacity>
             </View>
           )}
 
           {/* Hero Metric: Today's Sales */}
           <View className="py-2">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2 font-body">
+            <Text className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2 font-body">
               Today's Revenue
             </Text>
-            <Text className="text-6xl font-heading tracking-tighter text-black leading-tight">
+            <Text className="text-6xl font-black tracking-tighter text-foreground leading-tight">
               {formatCurrency(todaySales)}
             </Text>
             <View className="flex-row items-center gap-4 mt-2">
-              <Text className="text-sm font-bold text-green-600 bg-green-50 px-2 py-1 uppercase tracking-wide">
-                +{todayTransactions} Transactions
+              <Text className="text-sm font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-1 uppercase tracking-wide">
+                +{todayTransactions} Txns
               </Text>
-              <Text className="text-sm font-bold text-secondary-500 uppercase tracking-wide">
+              <Text className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
                 Profit: {formatCurrency(todayProfit)}
               </Text>
             </View>
@@ -151,15 +153,15 @@ export default function DashboardScreen() {
               paddingHorizontal: 24,
               paddingVertical: 16,
             }}
-            className="bg-secondary-50 border-b border-secondary-100"
+            className="bg-muted border-b border-border"
           >
             {outOfStockCount > 0 && (
               <TouchableOpacity
                 onPress={() => router.push('/(admin)/reports/inventory')}
-                className="flex-row items-center bg-white border border-secondary-200 px-3 py-2 rounded-md mr-3"
+                className="flex-row items-center bg-background border border-border px-3 py-2 rounded-md mr-3"
               >
-                <View className="w-2 h-2 rounded-full bg-red-500 mr-2" />
-                <Text className="text-xs font-bold text-red-600 uppercase tracking-wide">
+                <View className="w-2 h-2 rounded-full bg-destructive mr-2" />
+                <Text className="text-xs font-bold text-destructive uppercase tracking-wide">
                   Out of Stock ({outOfStockCount})
                 </Text>
               </TouchableOpacity>
@@ -167,10 +169,10 @@ export default function DashboardScreen() {
             {lowStockCount > 0 && (
               <TouchableOpacity
                 onPress={() => router.push('/(admin)/reports/inventory')}
-                className="flex-row items-center bg-white border border-secondary-200 px-3 py-2 rounded-md mr-3"
+                className="flex-row items-center bg-background border border-border px-3 py-2 rounded-md mr-3"
               >
-                <View className="w-2 h-2 rounded-full bg-orange-500 mr-2" />
-                <Text className="text-xs font-bold text-orange-600 uppercase tracking-wide">
+                <View className="w-2 h-2 rounded-full bg-warning mr-2" />
+                <Text className="text-xs font-bold text-warning uppercase tracking-wide">
                   Low Stock ({lowStockCount})
                 </Text>
               </TouchableOpacity>
@@ -178,7 +180,7 @@ export default function DashboardScreen() {
             {outstandingKasbon > 0 && (
               <TouchableOpacity
                 onPress={() => router.push('/(admin)/reports/kasbon')}
-                className="flex-row items-center bg-white border border-secondary-200 px-3 py-2 rounded-md mr-3"
+                className="flex-row items-center bg-background border border-border px-3 py-2 rounded-md mr-3"
               >
                 <View className="w-2 h-2 rounded-full bg-blue-500 mr-2" />
                 <Text className="text-xs font-bold text-blue-600 uppercase tracking-wide">
@@ -190,8 +192,8 @@ export default function DashboardScreen() {
         )}
 
         {/* Main Navigation Grid */}
-        <View className="p-6">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-4">
+        <View className="px-6 pb-6">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
             Quick Actions
           </Text>
 
@@ -199,23 +201,21 @@ export default function DashboardScreen() {
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={() => router.push('/(admin)/pos')}
-            className="mb-6 bg-black p-6 rounded-none relative overflow-hidden h-40 justify-between group"
+            className="mb-6 bg-foreground p-6 rounded-none relative overflow-hidden h-40 justify-between"
           >
-            <View className="absolute right-[-20] top-[-20] w-32 h-32 bg-white/10 rounded-full" />
-
             <View>
-              <Text className="text-white/60 font-bold uppercase tracking-widest text-xs mb-1">
+              <Text className="text-background/60 font-bold uppercase tracking-widest text-xs mb-1">
                 Point of Sale
               </Text>
-              <Text className="text-white font-black text-3xl tracking-tight">
+              <Text className="text-background font-black text-3xl tracking-tight">
                 OPEN CASHIER
               </Text>
             </View>
             <View className="flex-row items-center">
-              <Text className="text-white font-bold mr-2 uppercase tracking-widest text-xs">
+              <Text className="text-background font-bold mr-2 uppercase tracking-widest text-xs">
                 Start Selling
               </Text>
-              <Text className="text-white text-lg">→</Text>
+              <Text className="text-background text-lg">→</Text>
             </View>
           </TouchableOpacity>
 
@@ -223,14 +223,14 @@ export default function DashboardScreen() {
             {/* Products */}
             <TouchableOpacity
               onPress={() => router.push('/(admin)/products')}
-              className="flex-1 min-w-[140px] bg-white border border-secondary-200 p-5 aspect-square justify-between"
+              className="flex-1 min-w-[140px] bg-muted p-5 aspect-square justify-between rounded-none"
             >
               <Text className="text-3xl">📦</Text>
               <View>
-                <Text className="font-heading text-lg text-primary-900">
+                <Text className="font-heading text-lg text-foreground">
                   PRODUCTS
                 </Text>
-                <Text className="text-xs text-secondary-500 font-medium">
+                <Text className="text-xs text-muted-foreground font-medium">
                   Manage Inventory
                 </Text>
               </View>
@@ -239,14 +239,14 @@ export default function DashboardScreen() {
             {/* Customers */}
             <TouchableOpacity
               onPress={() => router.push('/(admin)/customers')}
-              className="flex-1 min-w-[140px] bg-white border border-secondary-200 p-5 aspect-square justify-between"
+              className="flex-1 min-w-[140px] bg-muted p-5 aspect-square justify-between rounded-none"
             >
               <Text className="text-3xl">👥</Text>
               <View>
-                <Text className="font-heading text-lg text-primary-900">
+                <Text className="font-heading text-lg text-foreground">
                   CUSTOMERS
                 </Text>
-                <Text className="text-xs text-secondary-500 font-medium">
+                <Text className="text-xs text-muted-foreground font-medium">
                   Manage Members
                 </Text>
               </View>
@@ -255,31 +255,30 @@ export default function DashboardScreen() {
             {/* Reports */}
             <TouchableOpacity
               onPress={() => router.push('/(admin)/reports')}
-              className="flex-1 min-w-[140px] bg-white border border-secondary-200 p-5 aspect-square justify-between"
+              className="flex-1 min-w-[140px] bg-muted p-5 aspect-square justify-between rounded-none"
             >
               <Text className="text-3xl">📈</Text>
               <View>
-                <Text className="font-heading text-lg text-primary-900">
+                <Text className="font-heading text-lg text-foreground">
                   REPORTS
                 </Text>
-                <Text className="text-xs text-secondary-500 font-medium">
+                <Text className="text-xs text-muted-foreground font-medium">
                   View Analytics
                 </Text>
               </View>
             </TouchableOpacity>
 
-            {/* Settings/Users */}
-            {/* Inventory (Replaces Settings) */}
+            {/* Inventory */}
             <TouchableOpacity
               onPress={() => router.push('/(admin)/inventory')}
-              className="flex-1 min-w-[140px] bg-white border border-secondary-200 p-5 aspect-square justify-between"
+              className="flex-1 min-w-[140px] bg-muted p-5 aspect-square justify-between rounded-none"
             >
               <Text className="text-3xl">🏭</Text>
               <View>
-                <Text className="font-heading text-lg text-primary-900">
+                <Text className="font-heading text-lg text-foreground">
                   INVENTORY
                 </Text>
-                <Text className="text-xs text-secondary-500 font-medium">
+                <Text className="text-xs text-muted-foreground font-medium">
                   Restock & Count
                 </Text>
               </View>

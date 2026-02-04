@@ -39,16 +39,16 @@ export default function CloseDrawerScreen() {
   if (isLoadingSession) return <Loading />;
 
   return (
-    <View className="flex-1 bg-white p-6 justify-center">
-      <Text className="text-2xl font-black uppercase text-center mb-6">
+    <View className="flex-1 bg-background p-6 justify-center">
+      <Text className="text-2xl font-black uppercase text-center mb-6 text-foreground">
         Close Register
       </Text>
 
-      <View className="bg-secondary-50 p-4 rounded-lg mb-6">
-        <Text className="text-center text-secondary-500 font-bold uppercase text-xs">
+      <View className="bg-muted p-4 rounded-lg mb-6">
+        <Text className="text-center text-muted-foreground font-bold uppercase text-xs">
           Expected Cash
         </Text>
-        <Text className="text-center text-2xl font-black text-primary-900">
+        <Text className="text-center text-2xl font-black text-foreground">
           {new Intl.NumberFormat('id-ID', {
             style: 'currency',
             currency: 'IDR',

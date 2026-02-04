@@ -168,7 +168,7 @@ export default function CreateProductScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       {/* Barcode Scanner Modal */}
       <BarcodeScanner
         visible={showBarcodeScanner}
@@ -179,15 +179,15 @@ export default function CreateProductScreen() {
 
       {/* Header */}
       <View
-        className="px-6 pb-6 border-b border-secondary-200"
+        className="px-6 pb-6 border-b border-border"
         style={{ paddingTop: insets.top + 24 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-secondary-500 font-bold uppercase tracking-widest text-xs font-body">
+          <Text className="text-muted-foreground font-bold uppercase tracking-widest text-xs font-body">
             ← BACK TO LIST
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-heading font-black tracking-tighter text-primary-900">
+        <Text className="text-4xl font-heading font-black tracking-tighter text-foreground">
           NEW PRODUCT
         </Text>
       </View>
@@ -205,7 +205,7 @@ export default function CreateProductScreen() {
         >
           {/* Section: Image */}
           <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-3 font-body">
               PRODUCT IMAGE
             </Text>
             <ImagePickerInput
@@ -219,7 +219,7 @@ export default function CreateProductScreen() {
 
           {/* Section: Basic Info */}
           <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-3 font-body">
               BASIC INFORMATION
             </Text>
 
@@ -256,9 +256,9 @@ export default function CreateProductScreen() {
               </View>
               <TouchableOpacity
                 onPress={() => setShowBarcodeScanner(true)}
-                className="bg-primary-900 h-[52px] w-[52px] rounded-lg items-center justify-center mb-5"
+                className="bg-primary h-[52px] w-[52px] rounded-lg items-center justify-center mb-5"
               >
-                <Text className="text-white text-xl">📷</Text>
+                <Text className="text-primary-foreground text-xl">📷</Text>
               </TouchableOpacity>
             </View>
 
@@ -267,7 +267,7 @@ export default function CreateProductScreen() {
               name="category_id"
               render={({ field: { onChange, value } }) => (
                 <View className="mt-2 mb-5">
-                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+                  <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2 font-body">
                     CATEGORY
                   </Text>
                   <ScrollView
@@ -281,13 +281,15 @@ export default function CreateProductScreen() {
                         onPress={() => onChange(value === cat.id ? '' : cat.id)}
                         className={`px-4 py-2 rounded-md mr-2 border ${
                           value === cat.id
-                            ? 'bg-primary-900 border-primary-900'
-                            : 'bg-white border-secondary-200'
+                            ? 'bg-primary border-primary'
+                            : 'bg-background border-border'
                         }`}
                       >
                         <Text
                           className={`text-xs font-bold uppercase tracking-widest font-heading ${
-                            value === cat.id ? 'text-white' : 'text-primary-900'
+                            value === cat.id
+                              ? 'text-primary-foreground'
+                              : 'text-foreground'
                           }`}
                         >
                           {cat.name}
@@ -303,7 +305,7 @@ export default function CreateProductScreen() {
               name="consignor_id"
               render={({ field: { onChange, value } }) => (
                 <View className="mb-5">
-                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+                  <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2 font-body">
                     CONSIGNOR / SUPPLIER
                   </Text>
                   <ScrollView
@@ -315,13 +317,13 @@ export default function CreateProductScreen() {
                       onPress={() => onChange(null)}
                       className={`px-4 py-2 rounded-md mr-2 border ${
                         !value
-                          ? 'bg-primary-900 border-primary-900'
-                          : 'bg-white border-secondary-200'
+                          ? 'bg-primary border-primary'
+                          : 'bg-background border-border'
                       }`}
                     >
                       <Text
                         className={`text-xs font-bold uppercase tracking-widest font-heading ${
-                          !value ? 'text-white' : 'text-primary-900'
+                          !value ? 'text-primary-foreground' : 'text-foreground'
                         }`}
                       >
                         NONE
@@ -335,15 +337,15 @@ export default function CreateProductScreen() {
                         }
                         className={`px-4 py-2 rounded-md mr-2 border ${
                           value === cons.id
-                            ? 'bg-primary-900 border-primary-900'
-                            : 'bg-white border-secondary-200'
+                            ? 'bg-primary border-primary'
+                            : 'bg-background border-border'
                         }`}
                       >
                         <Text
                           className={`text-xs font-bold uppercase tracking-widest font-heading ${
                             value === cons.id
-                              ? 'text-white'
-                              : 'text-primary-900'
+                              ? 'text-primary-foreground'
+                              : 'text-foreground'
                           }`}
                         >
                           {cons.name}
@@ -360,12 +362,13 @@ export default function CreateProductScreen() {
               name="description"
               render={({ field: { onChange, onBlur, value } }) => (
                 <View>
-                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+                  <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2 font-body">
                     DESCRIPTION
                   </Text>
                   <TextInput
-                    className="border border-secondary-200 rounded-lg px-4 py-3 bg-secondary-50 text-base min-h-[100px] text-primary-900"
+                    className="border border-border rounded-lg px-4 py-3 bg-muted text-base min-h-[100px] text-foreground"
                     placeholder="Optional description..."
+                    placeholderTextColor="#9CA3AF"
                     textAlignVertical="top"
                     value={value}
                     onChangeText={onChange}
@@ -380,7 +383,7 @@ export default function CreateProductScreen() {
 
           {/* Section: Pricing */}
           <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-3 font-body">
               PRICING & STOCK
             </Text>
 
@@ -467,15 +470,17 @@ export default function CreateProductScreen() {
                   <View
                     className={`w-5 h-5 rounded border mr-3 items-center justify-center ${
                       value
-                        ? 'bg-primary-900 border-primary-900'
-                        : 'bg-white border-secondary-300'
+                        ? 'bg-primary border-primary'
+                        : 'bg-background border-border'
                     }`}
                   >
                     {value && (
-                      <Text className="text-white text-xs font-bold">✓</Text>
+                      <Text className="text-primary-foreground text-xs font-bold">
+                        ✓
+                      </Text>
                     )}
                   </View>
-                  <Text className="text-base font-bold font-heading text-primary-900">
+                  <Text className="text-base font-bold font-heading text-foreground">
                     Track Stock Inventory
                   </Text>
                 </TouchableOpacity>
@@ -485,7 +490,7 @@ export default function CreateProductScreen() {
 
           {/* Section: Wholesale (Optional) */}
           <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3">
+            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-3">
               WHOLESALE TIERS (OPTIONAL)
             </Text>
 
@@ -494,18 +499,18 @@ export default function CreateProductScreen() {
                 {pricingTiers.map((tier, index) => (
                   <View
                     key={index}
-                    className="flex-row items-center justify-between bg-secondary-50 border border-secondary-200 rounded-lg p-3 mb-2"
+                    className="flex-row items-center justify-between bg-muted border border-border rounded-lg p-3 mb-2"
                   >
                     <View>
-                      <Text className="font-bold text-primary-900">
+                      <Text className="font-bold text-foreground">
                         {tier.name}
                       </Text>
-                      <Text className="text-xs text-secondary-500 font-medium">
+                      <Text className="text-xs text-muted-foreground font-medium">
                         Min. {tier.min_quantity} pcs → {tier.price}
                       </Text>
                     </View>
                     <TouchableOpacity onPress={() => removePricingTier(index)}>
-                      <Text className="text-danger-500 font-bold">REMOVE</Text>
+                      <Text className="text-destructive font-bold">REMOVE</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -513,7 +518,7 @@ export default function CreateProductScreen() {
             )}
 
             {showTierForm ? (
-              <View className="bg-secondary-50 border border-secondary-200 rounded-lg p-4 animate-fade-in-down">
+              <View className="bg-muted border border-border rounded-lg p-4 animate-fade-in-down">
                 <Input
                   label="TIER NAME"
                   placeholder="e.g. Grosir"
@@ -582,7 +587,7 @@ export default function CreateProductScreen() {
 
         {/* Floating Submit Bar */}
         <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-6 py-4"
+          className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-4"
           style={{ paddingBottom: insets.bottom + 90 }}
         >
           <Button

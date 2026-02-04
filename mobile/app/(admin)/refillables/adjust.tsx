@@ -90,21 +90,21 @@ export default function AdjustRefillableScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Cancel
           </Text>
         </TouchableOpacity>
-        <Text className="text-secondary-500 font-bold uppercase text-xs mb-1 tracking-widest">
+        <Text className="text-muted-foreground font-bold uppercase text-xs mb-1 tracking-widest">
           Adjusting Stock For
         </Text>
-        <Text className="text-3xl font-black uppercase text-primary-900 tracking-tighter">
+        <Text className="text-3xl font-black uppercase text-foreground tracking-tighter">
           {params.name}
         </Text>
       </View>
@@ -114,7 +114,6 @@ export default function AdjustRefillableScreen() {
         className="flex-1"
       >
         <ScrollView contentContainerStyle={{ padding: 24 }}>
-          {/* Mode Toggle */}
           {/* Mode Toggle */}
           <View className="flex-row gap-4 mb-6">
             <Button
@@ -134,11 +133,11 @@ export default function AdjustRefillableScreen() {
           <View className="flex-row gap-4 mb-4">
             {/* Empty Column */}
             <View className="flex-1">
-              <View className="bg-red-50 p-4 rounded-none border border-red-100 items-center mb-2">
+              <View className="bg-red-50 dark:bg-red-900/20 p-4 rounded-none border border-red-100 dark:border-red-900/30 items-center mb-2">
                 <Text className="text-red-500 font-black text-[10px] uppercase tracking-widest mb-1">
                   Empty
                 </Text>
-                <Text className="text-3xl font-black text-red-900">
+                <Text className="text-3xl font-black text-red-900 dark:text-red-400">
                   {params.current_empty}
                 </Text>
               </View>
@@ -152,7 +151,7 @@ export default function AdjustRefillableScreen() {
                     mode === 'reduce' ? 'text-red-600' : 'text-green-600'
                   }`}
                 />
-                <Text className="text-center text-[10px] text-secondary-500 mt-1 font-bold uppercase tracking-wide">
+                <Text className="text-center text-[10px] text-muted-foreground mt-1 font-bold uppercase tracking-wide">
                   New: {getPreview(params.current_empty!, emptyAmount)}
                 </Text>
               </View>
@@ -160,11 +159,11 @@ export default function AdjustRefillableScreen() {
 
             {/* Full Column */}
             <View className="flex-1">
-              <View className="bg-green-50 p-4 rounded-none border border-green-100 items-center mb-2">
+              <View className="bg-green-50 dark:bg-green-900/20 p-4 rounded-none border border-green-100 dark:border-green-900/30 items-center mb-2">
                 <Text className="text-green-600 font-black text-[10px] uppercase tracking-widest mb-1">
                   Full
                 </Text>
-                <Text className="text-3xl font-black text-green-700">
+                <Text className="text-3xl font-black text-green-700 dark:text-green-400">
                   {params.current_full}
                 </Text>
               </View>
@@ -178,7 +177,7 @@ export default function AdjustRefillableScreen() {
                     mode === 'reduce' ? 'text-red-600' : 'text-green-600'
                   }`}
                 />
-                <Text className="text-center text-[10px] text-secondary-500 mt-1 font-bold uppercase tracking-wide">
+                <Text className="text-center text-[10px] text-muted-foreground mt-1 font-bold uppercase tracking-wide">
                   New: {getPreview(params.current_full!, fullAmount)}
                 </Text>
               </View>

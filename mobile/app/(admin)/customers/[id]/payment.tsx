@@ -124,22 +124,22 @@ export default function RecordPaymentScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
       {/* Swiss Header */}
       <View
-        className="px-6 pb-6 border-b border-secondary-100 bg-white"
+        className="px-6 pb-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
           PAY DEBT
         </Text>
-        <Text className="text-secondary-500 text-xs font-bold mt-1 uppercase tracking-wide">
+        <Text className="text-muted-foreground text-xs font-bold mt-1 uppercase tracking-wide">
           {customer.name}
         </Text>
       </View>
@@ -149,34 +149,35 @@ export default function RecordPaymentScreen() {
         className="flex-1"
       >
         <ScrollView contentContainerStyle={{ padding: 24 }}>
-          <View className="bg-secondary-50 p-6 mb-8 border border-secondary-100">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+          <View className="bg-secondary p-6 mb-8 border border-border">
+            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
               Current Outstanding
             </Text>
-            <Text className="text-4xl font-black text-red-600 tracking-tighter">
+            <Text className="text-4xl font-black text-red-600 dark:text-red-400 tracking-tighter">
               {formatCurrency(summary.current_balance)}
             </Text>
           </View>
 
           <View className="mb-6">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
               Payment Amount
             </Text>
             <View className="flex-row items-center gap-2">
-              <View className="flex-1 border border-secondary-200 p-4">
+              <View className="flex-1 border border-border p-4">
                 <TextInput
-                  className="font-black text-2xl text-primary-900"
+                  className="font-black text-2xl text-foreground"
                   placeholder="0"
                   keyboardType="numeric"
                   value={amount}
                   onChangeText={setAmount}
+                  placeholderTextColor="#9ca3af"
                 />
               </View>
               <TouchableOpacity
                 onPress={setFullPayment}
-                className="bg-black px-4 py-4 justify-center"
+                className="bg-foreground px-4 py-4 justify-center"
               >
-                <Text className="text-white font-bold uppercase tracking-widest text-xs">
+                <Text className="text-background font-bold uppercase tracking-widest text-xs">
                   Full
                 </Text>
               </TouchableOpacity>
@@ -184,16 +185,17 @@ export default function RecordPaymentScreen() {
           </View>
 
           <View className="mb-8">
-            <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
               Notes (Optional)
             </Text>
             <TextInput
-              className="border border-secondary-200 p-4 font-bold text-primary-900 h-24"
+              className="border border-border p-4 font-bold text-foreground h-24"
               multiline
               textAlignVertical="top"
               placeholder="e.g. Bank Transfer"
               value={notes}
               onChangeText={setNotes}
+              placeholderTextColor="#9ca3af"
             />
           </View>
 

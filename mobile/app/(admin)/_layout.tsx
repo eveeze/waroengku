@@ -8,8 +8,18 @@ import { BottomTabBar } from '@/components/navigation/BottomTabBar';
  * Admin Layout
  * Protected layout with bottom tabs for admin role
  */
+import { TouchableOpacity, Text, View } from 'react-native';
+import { useThemeStore } from '@/stores/themeStore';
+
+// ...
+
 export default function AdminLayout() {
   const { isAuthenticated, isHydrated, user } = useAuthStore();
+  const { theme, setTheme } = useThemeStore();
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   // Show loading while hydrating
   if (!isHydrated) {
@@ -31,6 +41,7 @@ export default function AdminLayout() {
       tabBar={(props) => <BottomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: 'transparent' },
       }}
     >
       <Tabs.Screen

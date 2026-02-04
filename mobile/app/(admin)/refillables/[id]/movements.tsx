@@ -36,19 +36,19 @@ export default function RefillableMovementsScreen() {
   };
 
   const renderItem = ({ item }: { item: RefillableMovement }) => (
-    <View className="bg-white p-4 border-b border-gray-100 flex-row justify-between items-start">
+    <View className="bg-background p-4 border-b border-border flex-row justify-between items-start">
       <View className="flex-1 mr-4">
         <View className="flex-row items-center mb-1">
-          <View className="bg-gray-100 px-2 py-0.5 mr-2">
-            <Text className="text-[10px] uppercase font-bold text-gray-500">
+          <View className="bg-muted px-2 py-0.5 mr-2">
+            <Text className="text-[10px] uppercase font-bold text-muted-foreground">
               {item.actor_name || 'System'}
             </Text>
           </View>
-          <Text className="text-xs text-gray-400">
+          <Text className="text-xs text-muted-foreground">
             {formatDate(item.created_at)}
           </Text>
         </View>
-        <Text className="text-gray-800 font-medium">
+        <Text className="text-foreground font-medium">
           {item.notes || 'No notes'}
         </Text>
       </View>
@@ -56,7 +56,9 @@ export default function RefillableMovementsScreen() {
         {item.empty_change !== 0 && (
           <Text
             className={`font-mono font-bold ${
-              item.empty_change > 0 ? 'text-red-600' : 'text-green-600'
+              item.empty_change > 0
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-green-600 dark:text-green-400'
             }`}
           >
             Empty: {item.empty_change > 0 ? '+' : ''}
@@ -66,7 +68,9 @@ export default function RefillableMovementsScreen() {
         {item.full_change !== 0 && (
           <Text
             className={`font-mono font-bold ${
-              item.full_change > 0 ? 'text-green-600' : 'text-red-600'
+              item.full_change > 0
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-red-600 dark:text-red-400'
             }`}
           >
             Full: {item.full_change > 0 ? '+' : ''}
@@ -78,21 +82,21 @@ export default function RefillableMovementsScreen() {
   );
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-secondary-500 font-bold uppercase text-xs mb-1 tracking-widest">
+        <Text className="text-muted-foreground font-bold uppercase text-xs mb-1 tracking-widest">
           Movement History
         </Text>
-        <Text className="text-3xl font-black uppercase text-primary-900 tracking-tighter">
+        <Text className="text-3xl font-black uppercase text-foreground tracking-tighter">
           {name || 'Unknown'}
         </Text>
       </View>
@@ -102,12 +106,16 @@ export default function RefillableMovementsScreen() {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={refetch}
+            tintColor="#888"
+          />
         }
         ListEmptyComponent={
           !isLoading ? (
             <View className="p-8 items-center">
-              <Text className="text-secondary-400 font-bold uppercase tracking-widest text-center">
+              <Text className="text-muted-foreground font-bold uppercase tracking-widest text-center">
                 No movements found.
               </Text>
             </View>

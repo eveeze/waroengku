@@ -44,7 +44,7 @@ export function BottomTabBar({
       ]}
       pointerEvents="box-none"
     >
-      <View style={styles.dock}>
+      <View className="flex-row items-center bg-white dark:bg-zinc-900 w-[90%] h-[72px] rounded-3xl px-2 mb-2 shadow-lg shadow-black/10 border border-zinc-100 dark:border-white/10">
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
@@ -101,16 +101,16 @@ export function BottomTabBar({
                   onPress={onPress}
                   onLongPress={onLongPress}
                   activeOpacity={0.9}
-                  style={[
-                    styles.posButton,
-                    isFocused && styles.posButtonFocused,
-                  ]}
+                  className={`w-16 h-16 rounded-full items-center justify-center border-4 border-white dark:border-zinc-950 shadow-lg shadow-black/30 ${
+                    isFocused
+                      ? 'bg-zinc-800 dark:bg-zinc-200 scale-105'
+                      : 'bg-black dark:bg-white'
+                  }`}
                 >
                   <Feather
                     name={iconName}
                     size={28}
-                    color="white"
-                    style={{ marginLeft: 1 }} // Optical centering
+                    className="text-white dark:text-black ml-[1px]"
                   />
                 </TouchableOpacity>
               </View>
@@ -127,19 +127,34 @@ export function BottomTabBar({
               testID={(options as any).tabBarTestID}
               onPress={onPress}
               onLongPress={onLongPress}
-              style={styles.tabItem}
+              className="flex-1 h-full items-center justify-center"
               activeOpacity={0.7}
             >
               <View
-                style={[styles.iconContainer, isFocused && styles.iconActive]}
+                className={`p-2 rounded-xl ${
+                  isFocused ? 'bg-black/5 dark:bg-white/10' : ''
+                }`}
               >
                 <Feather
                   name={iconName}
                   size={24}
-                  color={isFocused ? '#000000' : '#A1A1AA'} // Black vs Zinc-400
+                  color={
+                    isFocused
+                      ? Platform.OS === 'ios'
+                        ? '#000'
+                        : '#000'
+                      : '#A1A1AA'
+                  } // We handle color via class if possible, but Icon expects prop string. passing explicit color for now logic
+                  className={
+                    isFocused
+                      ? 'text-primary dark:text-primary-foreground'
+                      : 'text-zinc-400'
+                  }
                 />
               </View>
-              {isFocused && <View style={styles.activeDot} />}
+              {isFocused && (
+                <View className="absolute bottom-3 w-1 h-1 rounded-full bg-black dark:bg-white" />
+              )}
             </TouchableOpacity>
           );
         })}
@@ -159,75 +174,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   dock: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    width: width - 40, // Floating with margin
-    height: 72,
-    borderRadius: 24, // Soft rounded corners
-    paddingHorizontal: 8,
-    marginBottom: 10,
-    // Premium Shadows
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    // Styling moved to className
   },
-  tabItem: {
-    flex: 1,
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconContainer: {
-    padding: 8,
-    borderRadius: 12,
-  },
-  iconActive: {
-    backgroundColor: 'rgba(0,0,0,0.05)', // Subtle backdrop for active
-  },
-  activeDot: {
-    position: 'absolute',
-    bottom: 12,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#000',
-  },
+  // ... other styles removed/simplified
   posButtonContainer: {
     width: 72,
     height: 72,
-    top: -20, // Lifted
+    top: -20,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  posButton: {
-    width: 64,
-    height: 64,
-    backgroundColor: '#000000',
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // Button Shadow
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    elevation: 12,
-    borderWidth: 4,
-    borderColor: '#FFFFFF',
-  },
-  posButtonFocused: {
-    transform: [{ scale: 1.05 }],
-    backgroundColor: '#1a1a1a',
   },
 });

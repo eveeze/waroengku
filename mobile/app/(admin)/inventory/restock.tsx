@@ -101,8 +101,8 @@ export default function RestockScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" />
+    <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
       <BarcodeScanner
         visible={showScanner}
         onClose={() => setShowScanner(false)}
@@ -111,15 +111,15 @@ export default function RestockScreen() {
 
       {/* Swiss Header */}
       <View
-        className="px-6 py-6 border-b border-secondary-100 bg-white"
+        className="px-6 py-6 border-b border-border bg-background"
         style={{ paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-black">
+        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
           RESTOCK
         </Text>
       </View>
@@ -127,7 +127,7 @@ export default function RestockScreen() {
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         {/* Product Selection */}
         <View className="mb-8">
-          <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 mb-2">
+          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
             Target Product
           </Text>
 
@@ -143,19 +143,19 @@ export default function RestockScreen() {
               </View>
               <TouchableOpacity
                 onPress={() => setShowScanner(true)}
-                className="w-12 h-12 bg-black items-center justify-center border border-black"
+                className="w-12 h-12 bg-foreground items-center justify-center border border-foreground"
               >
-                <Text className="text-white text-xl">📷</Text>
+                <Text className="text-background text-xl">📷</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <View className="bg-secondary-50 p-6 border border-secondary-100">
+            <View className="bg-muted p-6 border border-border">
               <View className="flex-row justify-between items-start">
                 <View className="flex-1 pr-4">
-                  <Text className="font-heading font-black text-2xl uppercase text-primary-900 leading-tight mb-1">
+                  <Text className="font-heading font-black text-2xl uppercase text-foreground leading-tight mb-1">
                     {product.name}
                   </Text>
-                  <Text className="text-secondary-500 font-bold uppercase text-xs tracking-wider">
+                  <Text className="text-muted-foreground font-bold uppercase text-xs tracking-wider">
                     Current: {product.current_stock}
                   </Text>
                 </View>
@@ -165,9 +165,9 @@ export default function RestockScreen() {
                     setBarcodeInput('');
                     setQuantity('');
                   }}
-                  className="bg-secondary-200 px-3 py-1.5"
+                  className="bg-muted px-3 py-1.5"
                 >
-                  <Text className="text-[10px] font-bold uppercase tracking-widest text-secondary-900">
+                  <Text className="text-[10px] font-bold uppercase tracking-widest text-foreground">
                     CHANGE
                   </Text>
                 </TouchableOpacity>

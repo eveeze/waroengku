@@ -29,32 +29,32 @@ export const Input = forwardRef<RNTextInput, InputProps>(
     return (
       <View className="mb-5">
         {label && (
-          <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+          <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2 font-body">
             {label}
           </Text>
         )}
         <View
           className={`
             flex-row items-center
-            bg-secondary-50 border rounded-lg px-4
-            ${hasError ? 'border-danger-500' : 'border-secondary-200'}
-            focus-within:border-primary-900 focus-within:bg-white focus-within:shadow-sm
+            bg-muted border rounded-lg px-4
+            ${hasError ? 'border-destructive' : 'border-border'}
+            focus-within:border-primary focus-within:bg-background focus-within:shadow-sm
           `}
         >
           {leftIcon && <View className="mr-3">{leftIcon}</View>}
           <RNTextInput
             ref={ref}
             className={`
-              flex-1 py-3.5 text-base font-bold text-primary-900 font-heading
+              flex-1 py-3.5 text-base font-bold text-foreground font-heading
               ${className || ''}
             `}
-            placeholderTextColor="#a1a1aa"
+            placeholderTextColor="hsl(var(--muted-foreground))"
             {...props}
           />
           {rightIcon && <View className="ml-3">{rightIcon}</View>}
         </View>
         {hasError && (
-          <Text className="text-xs font-medium text-danger-600 mt-1.5 ml-1 font-body">
+          <Text className="text-xs font-medium text-destructive mt-1.5 ml-1 font-body">
             {error}
           </Text>
         )}

@@ -30,22 +30,22 @@ export function Card({
   return (
     <View
       className={`
-        bg-white rounded-xl
-        border border-secondary-200
+        bg-background rounded-none
+        border border-border
         ${className || ''}
       `}
       {...props}
     >
       {(title || subtitle || action || actions) && (
-        <View className="flex-row items-center justify-between px-5 py-4 border-b border-secondary-100">
+        <View className="flex-row items-center justify-between px-5 py-4 border-b border-border">
           <View className="flex-1">
             {title && (
-              <Text className="text-xl font-heading font-black uppercase tracking-tight text-primary-900">
+              <Text className="text-xl font-heading font-black uppercase tracking-tight text-foreground">
                 {title}
               </Text>
             )}
             {subtitle && (
-              <Text className="text-xs font-bold uppercase tracking-widest text-secondary-500 font-body mt-1">
+              <Text className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground font-body mt-1">
                 {subtitle}
               </Text>
             )}
@@ -55,9 +55,9 @@ export function Card({
               <TouchableOpacity
                 key={index}
                 onPress={item.onPress}
-                className="ml-3 px-3 py-1.5 bg-secondary-50 rounded-md border border-secondary-200"
+                className="ml-3 px-3 py-1.5 bg-muted rounded-none border border-border"
               >
-                <Text className="text-xs font-bold text-primary-900 uppercase tracking-widest font-heading">
+                <Text className="text-[10px] font-bold text-foreground uppercase tracking-widest font-heading">
                   {item.title}
                 </Text>
               </TouchableOpacity>

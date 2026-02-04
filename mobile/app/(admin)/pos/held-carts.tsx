@@ -89,15 +89,15 @@ export default function HeldCartsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       <View
-        className="px-6 py-4 border-b border-secondary-100 flex-row items-center gap-4"
+        className="px-6 py-4 border-b border-border flex-row items-center gap-4"
         style={{ paddingTop: insets.top + 10 }}
       >
         <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-xl">←</Text>
+          <Text className="text-xl text-foreground">←</Text>
         </TouchableOpacity>
-        <Text className="text-xl font-bold uppercase tracking-tight">
+        <Text className="text-xl font-bold uppercase tracking-tight text-foreground">
           Held Carts
         </Text>
       </View>
@@ -107,33 +107,33 @@ export default function HeldCartsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 20 }}
         renderItem={({ item }) => (
-          <View className="bg-white border border-secondary-200 rounded-xl p-4 mb-4">
+          <View className="bg-background border border-border rounded-xl p-4 mb-4">
             <View className="flex-row justify-between mb-2">
-              <Text className="font-bold text-lg">
+              <Text className="font-bold text-lg text-foreground">
                 {item.held_at
                   ? new Date(item.held_at).toLocaleTimeString()
                   : 'Unknown Time'}
               </Text>
-              <Text className="text-secondary-500 font-medium">
+              <Text className="text-muted-foreground font-medium">
                 {item.items.length} Items
               </Text>
             </View>
-            <Text className="text-secondary-500 mb-4">
+            <Text className="text-muted-foreground mb-4">
               Held by: {item.held_by}
             </Text>
 
             <View className="flex-row gap-3">
               <TouchableOpacity
                 onPress={() => handleDiscard(item.id)}
-                className="flex-1 bg-secondary-100 py-3 rounded-lg items-center"
+                className="flex-1 bg-muted py-3 rounded-lg items-center"
               >
-                <Text className="font-bold text-secondary-700">Discard</Text>
+                <Text className="font-bold text-foreground">Discard</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => handleResume(item.id)}
-                className="flex-1 bg-black py-3 rounded-lg items-center"
+                className="flex-1 bg-foreground py-3 rounded-lg items-center"
               >
-                <Text className="font-bold text-white">Resume</Text>
+                <Text className="font-bold text-background">Resume</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -232,18 +232,18 @@ export default function EditProductScreen() {
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-background">
       {/* Header */}
       <View
-        className="px-6 pb-6 border-b border-secondary-200"
+        className="px-6 pb-6 border-b border-border"
         style={{ paddingTop: insets.top + 24 }}
       >
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-secondary-500 font-bold uppercase tracking-widest text-xs font-body">
+          <Text className="text-muted-foreground font-bold uppercase tracking-widest text-xs font-body">
             ← BACK TO DETAIL
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-heading font-black tracking-tighter text-primary-900 uppercase">
+        <Text className="text-4xl font-heading font-black tracking-tighter text-foreground uppercase">
           EDIT PRODUCT
         </Text>
       </View>
@@ -261,7 +261,7 @@ export default function EditProductScreen() {
         >
           {/* Image Section */}
           <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-3 font-body">
               PRODUCT IMAGE
             </Text>
             <ImagePickerInput
@@ -275,7 +275,7 @@ export default function EditProductScreen() {
 
           {/* Basic Info */}
           <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-3 font-body">
               BASIC INFORMATION
             </Text>
 
@@ -324,9 +324,9 @@ export default function EditProductScreen() {
               </View>
               <TouchableOpacity
                 onPress={() => setShowBarcodeScanner(true)}
-                className="bg-primary-900 h-[52px] w-[52px] rounded-lg items-center justify-center mb-[2px]"
+                className="bg-primary h-[52px] w-[52px] rounded-lg items-center justify-center mb-[2px]"
               >
-                <Text className="text-white text-xl">📷</Text>
+                <Text className="text-primary-foreground text-xl">📷</Text>
               </TouchableOpacity>
               <View className="flex-1">
                 <Controller
@@ -350,12 +350,13 @@ export default function EditProductScreen() {
               name="description"
               render={({ field: { onChange, onBlur, value } }) => (
                 <View className="mt-1">
-                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+                  <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2 font-body">
                     DESCRIPTION
                   </Text>
                   <TextInput
-                    className="border border-secondary-200 rounded-lg px-4 py-3 bg-secondary-50 text-base font-body text-primary-900 min-h-[100px]"
+                    className="border border-border rounded-lg px-4 py-3 bg-muted text-base font-body text-foreground min-h-[100px]"
                     placeholder="Product description (optional)"
+                    placeholderTextColor="#9CA3AF"
                     textAlignVertical="top"
                     value={value}
                     onChangeText={onChange}
@@ -369,7 +370,7 @@ export default function EditProductScreen() {
 
             {/* Category */}
             <View className="mt-5">
-              <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+              <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2 font-body">
                 CATEGORY
               </Text>
               <Controller
@@ -381,12 +382,12 @@ export default function EditProductScreen() {
                       onPress={() => onChange('')}
                       className={`px-4 py-2 rounded-lg mr-2 mb-2 border ${
                         !value
-                          ? 'bg-primary-900 border-primary-900'
-                          : 'bg-white border-secondary-200'
+                          ? 'bg-primary border-primary'
+                          : 'bg-background border-border'
                       }`}
                     >
                       <Text
-                        className={`text-xs font-bold uppercase tracking-widest font-heading ${!value ? 'text-white' : 'text-primary-900'}`}
+                        className={`text-xs font-bold uppercase tracking-widest font-heading ${!value ? 'text-primary-foreground' : 'text-foreground'}`}
                       >
                         NONE
                       </Text>
@@ -397,13 +398,15 @@ export default function EditProductScreen() {
                         onPress={() => onChange(cat.id)}
                         className={`px-4 py-2 rounded-lg mr-2 mb-2 border ${
                           value === cat.id
-                            ? 'bg-primary-900 border-primary-900'
-                            : 'bg-white border-secondary-200'
+                            ? 'bg-primary border-primary'
+                            : 'bg-background border-border'
                         }`}
                       >
                         <Text
                           className={`text-xs font-bold uppercase tracking-widest font-heading ${
-                            value === cat.id ? 'text-white' : 'text-primary-900'
+                            value === cat.id
+                              ? 'text-primary-foreground'
+                              : 'text-foreground'
                           }`}
                         >
                           {cat.name}
@@ -417,7 +420,7 @@ export default function EditProductScreen() {
 
             {/* Consignor */}
             <View className="mt-5">
-              <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+              <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2 font-body">
                 CONSIGNOR
               </Text>
               <Controller
@@ -429,12 +432,12 @@ export default function EditProductScreen() {
                       onPress={() => onChange(null)}
                       className={`px-4 py-2 rounded-lg mr-2 mb-2 border ${
                         !value
-                          ? 'bg-primary-900 border-primary-900'
-                          : 'bg-white border-secondary-200'
+                          ? 'bg-primary border-primary'
+                          : 'bg-background border-border'
                       }`}
                     >
                       <Text
-                        className={`text-xs font-bold uppercase tracking-widest font-heading ${!value ? 'text-white' : 'text-primary-900'}`}
+                        className={`text-xs font-bold uppercase tracking-widest font-heading ${!value ? 'text-primary-foreground' : 'text-foreground'}`}
                       >
                         NONE
                       </Text>
@@ -447,15 +450,15 @@ export default function EditProductScreen() {
                         }
                         className={`px-4 py-2 rounded-lg mr-2 mb-2 border ${
                           value === cons.id
-                            ? 'bg-primary-900 border-primary-900'
-                            : 'bg-white border-secondary-200'
+                            ? 'bg-primary border-primary'
+                            : 'bg-background border-border'
                         }`}
                       >
                         <Text
                           className={`text-xs font-bold uppercase tracking-widest font-heading ${
                             value === cons.id
-                              ? 'text-white'
-                              : 'text-primary-900'
+                              ? 'text-primary-foreground'
+                              : 'text-foreground'
                           }`}
                         >
                           {cons.name}
@@ -472,7 +475,7 @@ export default function EditProductScreen() {
               name="unit"
               render={({ field: { onChange, value } }) => (
                 <View className="mt-3">
-                  <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-2 font-body">
+                  <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2 font-body">
                     UNIT
                   </Text>
                   <ScrollView
@@ -486,13 +489,15 @@ export default function EditProductScreen() {
                         onPress={() => onChange(unit)}
                         className={`px-4 py-2 rounded-lg mr-2 border ${
                           value === unit
-                            ? 'bg-primary-900 border-primary-900'
-                            : 'bg-white border-secondary-200'
+                            ? 'bg-primary border-primary'
+                            : 'bg-background border-border'
                         }`}
                       >
                         <Text
                           className={`text-xs font-bold uppercase tracking-widest font-heading ${
-                            value === unit ? 'text-white' : 'text-primary-900'
+                            value === unit
+                              ? 'text-primary-foreground'
+                              : 'text-foreground'
                           }`}
                         >
                           {unit}
@@ -507,7 +512,7 @@ export default function EditProductScreen() {
 
           {/* Pricing */}
           <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-3 font-body">
               PRICING
             </Text>
             <View className="flex-row gap-3">
@@ -524,7 +529,7 @@ export default function EditProductScreen() {
                       onBlur={onBlur}
                       keyboardType="numeric"
                       leftIcon={
-                        <Text className="text-secondary-400 font-heading font-bold">
+                        <Text className="text-muted-foreground font-heading font-bold">
                           Rp
                         </Text>
                       }
@@ -545,7 +550,7 @@ export default function EditProductScreen() {
                       onBlur={onBlur}
                       keyboardType="numeric"
                       leftIcon={
-                        <Text className="text-secondary-400 font-heading font-bold">
+                        <Text className="text-muted-foreground font-heading font-bold">
                           Rp
                         </Text>
                       }
@@ -558,7 +563,7 @@ export default function EditProductScreen() {
 
           {/* Stock Settings */}
           <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-3 font-body">
               STOCK SETTINGS
             </Text>
             <View className="flex-row gap-3">
@@ -604,18 +609,20 @@ export default function EditProductScreen() {
               render={({ field: { onChange, value } }) => (
                 <TouchableOpacity
                   onPress={() => onChange(!value)}
-                  className="flex-row items-center mt-2 border border-secondary-200 rounded-lg p-3"
+                  className="flex-row items-center mt-2 border border-border rounded-lg p-3"
                 >
                   <View
                     className={`w-5 h-5 rounded border mr-3 items-center justify-center ${
                       value
-                        ? 'bg-primary-900 border-primary-900'
-                        : 'border-secondary-300'
+                        ? 'bg-primary border-primary'
+                        : 'border-muted-foreground'
                     }`}
                   >
-                    {value && <Text className="text-white text-xs">✓</Text>}
+                    {value && (
+                      <Text className="text-primary-foreground text-xs">✓</Text>
+                    )}
                   </View>
-                  <Text className="text-primary-900 font-heading font-bold uppercase tracking-wider text-xs">
+                  <Text className="text-foreground font-heading font-bold uppercase tracking-wider text-xs">
                     REFILLABLE PRODUCT (GAS/GALON)
                   </Text>
                 </TouchableOpacity>
@@ -625,7 +632,7 @@ export default function EditProductScreen() {
 
           {/* Status */}
           <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-secondary-500 uppercase mb-3 font-body">
+            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-3 font-body">
               STATUS
             </Text>
             <Controller
@@ -634,19 +641,19 @@ export default function EditProductScreen() {
               render={({ field: { onChange, value } }) => (
                 <TouchableOpacity
                   onPress={() => onChange(!value)}
-                  className="flex-row items-center justify-between border border-secondary-200 rounded-lg p-4 bg-secondary-50"
+                  className="flex-row items-center justify-between border border-border rounded-lg p-4 bg-muted"
                 >
                   <View>
-                    <Text className="text-primary-900 font-heading font-black uppercase text-sm">
+                    <Text className="text-foreground font-heading font-black uppercase text-sm">
                       PRODUCT ACTIVE
                     </Text>
-                    <Text className="text-secondary-500 text-xs font-body mt-1">
+                    <Text className="text-muted-foreground text-xs font-body mt-1">
                       Inactive products won't show in POS
                     </Text>
                   </View>
                   <View
                     className={`w-12 h-6 rounded-full p-1 ${
-                      value ? 'bg-primary-900' : 'bg-secondary-300'
+                      value ? 'bg-primary' : 'bg-gray-300'
                     }`}
                   >
                     <View
@@ -663,7 +670,7 @@ export default function EditProductScreen() {
 
         {/* Submit Button */}
         <View
-          className="absolute bottom-0 left-0 right-0 bg-white border-t border-secondary-200 px-6 py-4"
+          className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-4"
           style={{ paddingBottom: insets.bottom + 90 }}
         >
           <Button
