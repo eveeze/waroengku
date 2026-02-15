@@ -101,13 +101,20 @@ export default function ConsignorDetailScreen() {
         </Card>
 
         <Button
-          title="View Associated Products"
+          title="VIEW ASSOCIATED PRODUCTS"
           variant="outline"
           onPress={() => router.push(`/(admin)/products?consignor_id=${id}`)}
-          className="mb-4"
+          className="mb-4 rounded-none h-14"
+          textClassName="font-bold tracking-widest"
         />
 
-        <Button title="Delete" variant="danger" onPress={handleDelete} />
+        <Button
+          title="DELETE CONSIGNOR"
+          variant="danger"
+          onPress={handleDelete}
+          className="rounded-none h-14"
+          textClassName="font-bold tracking-widest"
+        />
       </ScrollView>
     </View>
   );

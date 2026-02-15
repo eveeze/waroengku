@@ -248,6 +248,8 @@ export default function UserDetailScreen() {
                 title="SAVE NEW ROLE"
                 onPress={handleUpdateRole}
                 isLoading={isUpdating}
+                className="rounded-none h-14"
+                textClassName="font-black tracking-widest text-lg"
               />
               <Text className="text-center text-[10px] text-muted-foreground mt-2 font-bold uppercase tracking-widest">
                 This update will be applied immediately
@@ -264,8 +266,8 @@ export default function UserDetailScreen() {
           <Button
             title="DELETE USER PERMANENTLY"
             variant="outline"
-            className="border-red-500"
-            textClassName="text-red-500"
+            className="border-red-500 rounded-none h-14"
+            textClassName="text-red-500 font-bold tracking-widest"
             onPress={handleDelete}
             isLoading={isDeleting}
           />

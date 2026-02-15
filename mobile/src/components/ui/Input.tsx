@@ -5,10 +5,12 @@ import {
   View,
   Text,
 } from 'react-native';
+import { useIsTablet } from '@/hooks/useResponsive';
 
 /**
  * Input Component
  * Reusable text input with label and error state
+ * Responsive sizing for phones and tablets
  */
 
 interface InputProps extends RNTextInputProps {
@@ -24,42 +26,61 @@ export const Input = forwardRef<RNTextInput, InputProps>(
     { label, error, helperText, leftIcon, rightIcon, className, ...props },
     ref,
   ) => {
+    const isTablet = useIsTablet();
     const hasError = !!error;
 
     return (
-      <View className="mb-5">
+      <View className={isTablet ? 'mb-6' : 'mb-5'}>
         {label && (
-          <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-2 font-body">
+          <Text
+            className={`font-bold tracking-widest text-muted-foreground uppercase mb-2 font-body ${
+              isTablet ? 'text-sm' : 'text-xs'
+            }`}
+          >
             {label}
           </Text>
         )}
         <View
           className={`
             flex-row items-center
-            bg-muted border rounded-lg px-4
+            bg-muted border rounded-lg
+            ${isTablet ? 'px-5' : 'px-4'}
             ${hasError ? 'border-destructive' : 'border-border'}
             focus-within:border-primary focus-within:bg-background focus-within:shadow-sm
           `}
         >
-          {leftIcon && <View className="mr-3">{leftIcon}</View>}
+          {leftIcon && (
+            <View className={isTablet ? 'mr-4' : 'mr-3'}>{leftIcon}</View>
+          )}
           <RNTextInput
             ref={ref}
             className={`
-              flex-1 py-3.5 text-base font-bold text-foreground font-heading
+              flex-1 font-bold text-foreground font-heading
+              ${isTablet ? 'py-4 text-lg' : 'py-3.5 text-base'}
               ${className || ''}
             `}
             placeholderTextColor="hsl(var(--muted-foreground))"
             {...props}
           />
-          {rightIcon && <View className="ml-3">{rightIcon}</View>}
+          {rightIcon && (
+            <View className={isTablet ? 'ml-4' : 'ml-3'}>{rightIcon}</View>
+          )}
         </View>
         {hasError && (
-          <Text className="text-xs font-medium text-destructive mt-1.5 ml-1 font-body">
+          <Text
+            className={`font-medium text-destructive mt-1.5 ml-1 font-body ${
+              isTablet ? 'text-sm' : 'text-xs'
+            }`}
+          >
             {error}
           </Text>
         )}
         {!hasError && helperText && (
-          <Text className="text-xs text-secondary-400 mt-1.5 ml-1 font-body">
+          <Text
+            className={`text-secondary-400 mt-1.5 ml-1 font-body ${
+              isTablet ? 'text-sm' : 'text-xs'
+            }`}
+          >
             {helperText}
           </Text>
         )}

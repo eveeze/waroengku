@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-// import { useApi } from '@/hooks/useApi'; // Deprecated for GET
-import { useApi } from '@/hooks/useApi'; // Keeping for search/actions
+import { useApi } from '@/hooks/useApi';
+import { useResponsive } from '@/hooks/useResponsive';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import apiClient, { fetcher, fetchWithCache } from '@/api/client';
 import {
@@ -24,7 +24,9 @@ import {
 import { Product, Category, ProductListParams, Consignor } from '@/api/types';
 import { Card, Loading, Button } from '@/components/ui';
 import { getCleanImageUrl } from '@/utils/image';
-import { BarcodeScanner } from '@/components/shared';
+import { BarcodeScanner, EmptyStateInline } from '@/components/shared';
+import { ProductListInlineSkeleton } from '@/components/skeletons';
+import { BOTTOM_NAV_HEIGHT } from '@/components/navigation/BottomTabBar';
 
 /**
  * Products List Screen (Swiss Design)
@@ -32,6 +34,8 @@ import { BarcodeScanner } from '@/components/shared';
 export default function ProductsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { breakpoints, screenPadding } = useResponsive();
+  const isTablet = breakpoints.isTablet;
 
   // State
   const [search, setSearch] = useState('');
@@ -313,23 +317,31 @@ export default function ProductsScreen() {
 
       {/* Header */}
       <View
-        className="px-6 pb-6 border-b border-border"
-        style={{ paddingTop: insets.top + 24 }}
+        className={`border-b border-border ${isTablet ? 'px-8 pb-8' : 'px-6 pb-6'}`}
+        style={{ paddingTop: insets.top + (isTablet ? 28 : 24) }}
       >
-        <View className="mb-6">
-          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1 font-body">
+        <View className={isTablet ? 'mb-8' : 'mb-6'}>
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground mb-1 font-body ${isTablet ? 'text-sm' : 'text-xs'}`}
+          >
             INVENTORY
           </Text>
           <View className="flex-row items-end justify-between">
-            <Text className="text-4xl font-heading font-bold tracking-tighter text-foreground uppercase">
+            <Text
+              className={`font-heading font-bold tracking-tighter text-foreground uppercase ${isTablet ? 'text-5xl' : 'text-4xl'}`}
+            >
               PRODUCTS
             </Text>
             <View className="flex-row gap-2">
               <TouchableOpacity
                 onPress={() => setShowBarcodeScanner(true)}
-                className="w-10 h-10 items-center justify-center bg-muted border border-border rounded-lg"
+                className={`items-center justify-center bg-muted border border-border rounded-lg ${isTablet ? 'w-12 h-12' : 'w-10 h-10'}`}
               >
-                <Text className="text-lg text-foreground">📷</Text>
+                <Text
+                  className={`text-foreground ${isTablet ? 'text-xl' : 'text-lg'}`}
+                >
+                  📷
+                </Text>
               </TouchableOpacity>
               <Button
                 title="NEW"
@@ -341,10 +353,12 @@ export default function ProductsScreen() {
         </View>
 
         {/* Search */}
-        <View className="flex-row gap-3">
-          <View className="flex-1 bg-muted border border-border rounded-lg px-4 flex-row items-center h-12">
+        <View className={`flex-row ${isTablet ? 'gap-4' : 'gap-3'}`}>
+          <View
+            className={`flex-1 bg-muted border border-border rounded-lg flex-row items-center ${isTablet ? 'px-5 h-14' : 'px-4 h-12'}`}
+          >
             <TextInput
-              className="flex-1 text-base font-medium text-foreground h-full"
+              className={`flex-1 font-medium text-foreground h-full ${isTablet ? 'text-lg' : 'text-base'}`}
               placeholder="Search products..."
               placeholderTextColor="hsl(var(--muted-foreground))"
               value={search}
@@ -355,7 +369,7 @@ export default function ProductsScreen() {
           </View>
           <TouchableOpacity
             onPress={() => setShowFilters(!showFilters)}
-            className={`w-12 h-12 rounded-lg items-center justify-center border ${
+            className={`rounded-lg items-center justify-center border ${isTablet ? 'w-14 h-14' : 'w-12 h-12'} ${
               showFilters
                 ? 'bg-foreground border-foreground'
                 : 'bg-background border-border'
@@ -490,7 +504,10 @@ export default function ProductsScreen() {
         data={products}
         renderItem={renderProduct}
         keyExtractor={(item) => item?.id || Math.random().toString()}
-        contentContainerStyle={{ padding: 24, paddingBottom: 120 }}
+        contentContainerStyle={{
+          padding: screenPadding,
+          paddingBottom: BOTTOM_NAV_HEIGHT + 20,
+        }}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching && !isFetchingNextPage}
@@ -501,34 +518,29 @@ export default function ProductsScreen() {
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.3}
         ListEmptyComponent={
-          !isListLoading && !isRefetching ? (
-            <View className="items-center py-20 opacity-50">
-              <Text className="text-lg font-medium text-foreground">
-                NO PRODUCTS FOUND
-              </Text>
-              <Text className="text-sm text-muted-foreground mt-2 text-center mb-4 px-8">
-                {statusFilter === 'active'
+          isListLoading ? (
+            <ProductListInlineSkeleton count={6} mode="list" />
+          ) : (
+            <EmptyStateInline
+              title="No Products Found"
+              message={
+                statusFilter === 'active'
                   ? 'Your seeded products might be set to Inactive.'
-                  : 'Try adjusting filters or search terms.'}
-              </Text>
-              {statusFilter === 'active' && (
-                <TouchableOpacity
-                  onPress={() => {
-                    setStatusFilter('inactive');
-                  }}
-                  className="bg-foreground px-6 py-3 rounded-lg"
-                >
-                  <Text className="text-background font-bold text-xs uppercase tracking-widest">
-                    Show Inactive Products
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          ) : null
+                  : 'Try adjusting filters or search terms.'
+              }
+              icon="📦"
+              action={
+                statusFilter === 'active'
+                  ? {
+                      label: 'Show Inactive',
+                      onPress: () => setStatusFilter('inactive'),
+                    }
+                  : undefined
+              }
+            />
+          )
         }
-        ListFooterComponent={
-          isFetchingNextPage ? <Loading /> : isLoading ? <Loading /> : null
-        }
+        ListFooterComponent={isFetchingNextPage ? <Loading /> : null}
       />
     </View>
   );

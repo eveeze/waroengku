@@ -6,11 +6,12 @@ import {
   Pressable,
   PressableProps,
 } from 'react-native';
+import { useIsTablet } from '@/hooks/useResponsive';
 
 /**
  * Button Component (Minimalist Futuristic)
  * High precision, tactile feedback, solid typography.
- * Simplified to remove Animated/Reanimated conflicts.
+ * Responsive sizing for phones and tablets.
  */
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
@@ -59,7 +60,8 @@ const variantStyles: Record<
   },
 };
 
-const sizeStyles: Record<
+// Phone size styles
+const phoneSizeStyles: Record<
   ButtonSize,
   { container: string; text: string; icon: string }
 > = {
@@ -80,6 +82,28 @@ const sizeStyles: Record<
   },
 };
 
+// Tablet size styles (scaled up)
+const tabletSizeStyles: Record<
+  ButtonSize,
+  { container: string; text: string; icon: string }
+> = {
+  sm: {
+    container: 'px-5 py-2.5 rounded-sm',
+    text: 'text-base font-medium tracking-tight',
+    icon: 'mr-2',
+  },
+  md: {
+    container: 'px-6 py-3.5 rounded-md',
+    text: 'text-lg font-semibold tracking-tight',
+    icon: 'mr-2.5',
+  },
+  lg: {
+    container: 'px-10 py-5 rounded-lg',
+    text: 'text-xl font-bold tracking-tight',
+    icon: 'mr-3',
+  },
+};
+
 export function Button({
   title,
   variant = 'primary',
@@ -93,8 +117,9 @@ export function Button({
   textClassName,
   ...props
 }: ButtonProps) {
+  const isTablet = useIsTablet();
   const variantStyle = variantStyles[variant];
-  const sizeStyle = sizeStyles[size];
+  const sizeStyle = isTablet ? tabletSizeStyles[size] : phoneSizeStyles[size];
   const isDisabled = disabled || isLoading;
 
   return (

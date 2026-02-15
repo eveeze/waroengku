@@ -7,6 +7,7 @@ import {
   RefreshControl,
   StatusBar,
   TextInput,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,14 +16,23 @@ import { fetchWithCache } from '@/api/client';
 import { Transaction, PaginatedResponse, Customer } from '@/api/types';
 import { Loading, Button } from '@/components/ui';
 import { CustomerSelector } from '@/components/shared/CustomerSelector';
+import { EmptyStateInline } from '@/components/shared';
 import {
   TransactionFilterModal,
   FilterState,
 } from '@/components/shared/TransactionFilterModal';
+import { TransactionListInlineSkeleton } from '@/components/skeletons';
+import { BOTTOM_NAV_HEIGHT } from '@/components/navigation/BottomTabBar';
 
 export default function TransactionsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+
+  // Responsive sizing
+  const isSmallPhone = width < 360;
+  const isTablet = width >= 768;
+
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<FilterState>({
     status: null,
@@ -46,12 +56,6 @@ export default function TransactionsScreen() {
     queryKey: ['/transactions', { search, ...filters }],
     queryFn: async ({ pageParam = 1, queryKey }) => {
       const [url, params] = queryKey as [string, { search?: string }];
-      // fetchWithCache expects a queryKey compatible context or just call it directly?
-      // fetchWithCache signature: ({ queryKey }: QueryFunctionContext) => Promise<T>
-      // We can reuse it if we construct a proxy context, or just use the logic inside it?
-      // Actually fetchWithCache implementation takes { queryKey } and uses queryKey[0] as url and queryKey[1] as params.
-      // So we need to pass [url, full_params]
-
       return fetchWithCache<PaginatedResponse<Transaction>>({
         queryKey: [
           url,
@@ -119,22 +123,61 @@ export default function TransactionsScreen() {
     }
   };
 
+  // Responsive text sizes
+  const headerSize = isTablet
+    ? 'text-5xl'
+    : isSmallPhone
+      ? 'text-3xl'
+      : 'text-4xl';
+  const invoiceSize = isTablet
+    ? 'text-xl'
+    : isSmallPhone
+      ? 'text-base'
+      : 'text-lg';
+  const amountSize = isTablet
+    ? 'text-xl'
+    : isSmallPhone
+      ? 'text-base'
+      : 'text-lg';
+  const dateSize = isTablet
+    ? 'text-sm'
+    : isSmallPhone
+      ? 'text-[10px]'
+      : 'text-xs';
+  const statusSize = isTablet
+    ? 'text-[10px]'
+    : isSmallPhone
+      ? 'text-[7px]'
+      : 'text-[8px]';
+  const padding = isTablet
+    ? 'px-8 py-8'
+    : isSmallPhone
+      ? 'px-4 py-4'
+      : 'px-6 py-6';
+  const itemPadding = isTablet
+    ? 'px-8 py-6'
+    : isSmallPhone
+      ? 'px-4 py-4'
+      : 'px-6 py-5';
+
   const renderItem = ({ item }: { item: Transaction }) => (
     <TouchableOpacity
       onPress={() => router.push(`/(admin)/transactions/${item.id}`)}
       className="border-b border-border bg-background active:bg-muted"
     >
-      <View className="px-6 py-5 flex-row justify-between items-center">
-        <View className="flex-1 mr-4">
-          <View className="flex-row items-center mb-1">
-            <Text className="font-heading font-black text-foreground uppercase tracking-tight text-lg mr-2">
+      <View className={`${itemPadding} flex-row justify-between items-center`}>
+        <View className="flex-1 mr-3">
+          <View className="flex-row items-center mb-1 flex-wrap">
+            <Text
+              className={`font-heading font-black text-foreground uppercase tracking-tight ${invoiceSize} mr-2`}
+            >
               {item.invoice_number}
             </Text>
             <View
-              className={`px-2 py-0.5 rounded border ${getStatusStyle(item.status).split(' ').slice(1).join(' ')}`}
+              className={`px-1.5 py-0.5 rounded border ${getStatusStyle(item.status).split(' ').slice(1).join(' ')}`}
             >
               <Text
-                className={`text-[8px] font-bold uppercase tracking-widest ${getStatusStyle(item.status).split(' ')[0]}`}
+                className={`${statusSize} font-bold uppercase tracking-widest ${getStatusStyle(item.status).split(' ')[0]}`}
               >
                 {item.status}
               </Text>
@@ -142,17 +185,21 @@ export default function TransactionsScreen() {
           </View>
 
           <View className="flex-row items-center">
-            <Text className="text-muted-foreground text-xs font-bold uppercase tracking-wider mr-2 font-body">
+            <Text
+              className={`text-muted-foreground ${dateSize} font-bold uppercase tracking-wider mr-2 font-body`}
+            >
               {formatDate(item.created_at)}
             </Text>
-            <Text className="text-muted-foreground text-xs">•</Text>
-            <Text className="text-muted-foreground text-xs font-bold uppercase tracking-wider ml-2 font-body">
+            <Text className={`text-muted-foreground ${dateSize}`}>•</Text>
+            <Text
+              className={`text-muted-foreground ${dateSize} font-bold uppercase tracking-wider ml-2 font-body`}
+            >
               {formatTime(item.created_at)}
             </Text>
           </View>
 
           <Text
-            className="text-muted-foreground text-xs mt-1 font-medium font-body truncate"
+            className={`text-muted-foreground ${dateSize} mt-1 font-medium font-body truncate`}
             numberOfLines={1}
           >
             {item.customer?.name || 'Guest Customer'}
@@ -160,10 +207,14 @@ export default function TransactionsScreen() {
         </View>
 
         <View className="items-end">
-          <Text className="font-heading font-black text-foreground text-lg tracking-tight">
+          <Text
+            className={`font-heading font-black text-foreground ${amountSize} tracking-tight`}
+          >
             {formatCurrency(item.total_amount)}
           </Text>
-          <Text className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+          <Text
+            className={`${statusSize} font-bold text-muted-foreground uppercase tracking-widest mt-1`}
+          >
             {item.payment_method}
           </Text>
         </View>
@@ -177,32 +228,41 @@ export default function TransactionsScreen() {
 
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-border bg-background"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`${padding} border-b border-border bg-background`}
+        style={{ paddingTop: insets.top + (isSmallPhone ? 12 : 16) }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-body">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isSmallPhone ? 'mb-3' : 'mb-4'}
+        >
+          <Text
+            className={`${dateSize} font-bold uppercase tracking-widest text-muted-foreground font-body`}
+          >
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-foreground mb-4">
+        <Text
+          className={`${headerSize} font-heading font-black uppercase tracking-tighter text-foreground mb-4`}
+        >
           HISTORY
         </Text>
 
         {/* Search */}
-        <View className="flex-row gap-2 mb-4">
-          <View className="flex-1 bg-muted border border-border rounded-lg px-4 py-3">
+        <View className="flex-row gap-2 mb-3">
+          <View
+            className={`flex-1 bg-muted border border-border rounded-lg ${isSmallPhone ? 'px-3 py-2' : 'px-4 py-3'}`}
+          >
             <TextInput
               placeholder="SEARCH INVOICE / NAME..."
               placeholderTextColor="hsl(var(--muted-foreground))"
-              className="font-bold text-sm text-foreground"
+              className={`font-bold ${isSmallPhone ? 'text-xs' : 'text-sm'} text-foreground`}
               value={search}
               onChangeText={setSearch}
             />
           </View>
           <TouchableOpacity
             onPress={() => setShowFilterModal(true)}
-            className={`w-12 h-12 items-center justify-center rounded-lg border ${
+            className={`${isSmallPhone ? 'w-10 h-10' : 'w-12 h-12'} items-center justify-center rounded-lg border ${
               filters.status ||
               filters.payment_method ||
               filters.date_from ||
@@ -219,7 +279,7 @@ export default function TransactionsScreen() {
                 filters.customer
                   ? 'text-background'
                   : 'text-foreground'
-              } text-lg`}
+              } ${isSmallPhone ? 'text-base' : 'text-lg'}`}
             >
               ⚙️
             </Text>
@@ -227,29 +287,29 @@ export default function TransactionsScreen() {
         </View>
 
         {/* Active Filters Display */}
-        <View className="flex-row flex-wrap gap-2 mb-4">
+        <View className="flex-row flex-wrap gap-2">
           {filters.customer && (
             <TouchableOpacity
               onPress={() =>
                 setFilters((prev) => ({ ...prev, customer: null }))
               }
-              className="bg-foreground px-3 py-1 rounded-full flex-row items-center"
+              className="bg-foreground px-2 py-1 rounded-full flex-row items-center"
             >
-              <Text className="text-background text-xs font-bold mr-2">
+              <Text className={`text-background ${statusSize} font-bold mr-1`}>
                 User: {filters.customer.name}
               </Text>
-              <Text className="text-background text-xs">✕</Text>
+              <Text className={`text-background ${statusSize}`}>✕</Text>
             </TouchableOpacity>
           )}
           {filters.status && (
             <TouchableOpacity
               onPress={() => setFilters((prev) => ({ ...prev, status: null }))}
-              className="bg-muted px-3 py-1 rounded-full flex-row items-center"
+              className="bg-muted px-2 py-1 rounded-full flex-row items-center"
             >
-              <Text className="text-foreground text-xs font-bold mr-2">
+              <Text className={`text-foreground ${statusSize} font-bold mr-1`}>
                 Status: {filters.status}
               </Text>
-              <Text className="text-foreground text-xs">✕</Text>
+              <Text className={`text-foreground ${statusSize}`}>✕</Text>
             </TouchableOpacity>
           )}
           {filters.payment_method && (
@@ -257,12 +317,12 @@ export default function TransactionsScreen() {
               onPress={() =>
                 setFilters((prev) => ({ ...prev, payment_method: null }))
               }
-              className="bg-muted px-3 py-1 rounded-full flex-row items-center"
+              className="bg-muted px-2 py-1 rounded-full flex-row items-center"
             >
-              <Text className="text-foreground text-xs font-bold mr-2">
+              <Text className={`text-foreground ${statusSize} font-bold mr-1`}>
                 Pay: {filters.payment_method}
               </Text>
-              <Text className="text-foreground text-xs">✕</Text>
+              <Text className={`text-foreground ${statusSize}`}>✕</Text>
             </TouchableOpacity>
           )}
           {filters.date_from !== '' && (
@@ -270,12 +330,12 @@ export default function TransactionsScreen() {
               onPress={() =>
                 setFilters((prev) => ({ ...prev, date_from: '', date_to: '' }))
               }
-              className="bg-muted px-3 py-1 rounded-full flex-row items-center"
+              className="bg-muted px-2 py-1 rounded-full flex-row items-center"
             >
-              <Text className="text-foreground text-xs font-bold mr-2">
+              <Text className={`text-foreground ${statusSize} font-bold mr-1`}>
                 Date: {filters.date_from}
               </Text>
-              <Text className="text-foreground text-xs">✕</Text>
+              <Text className={`text-foreground ${statusSize}`}>✕</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -312,17 +372,18 @@ export default function TransactionsScreen() {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 120,
+          paddingBottom: BOTTOM_NAV_HEIGHT + 20,
         }}
         ListEmptyComponent={
-          !isLoading ? (
-            <View className="items-center py-20 opacity-50">
-              <Text className="text-6xl mb-4">📜</Text>
-              <Text className="text-lg font-bold uppercase tracking-widest text-foreground">
-                No Transactions
-              </Text>
-            </View>
-          ) : null
+          isLoading ? (
+            <TransactionListInlineSkeleton count={6} />
+          ) : (
+            <EmptyStateInline
+              title="No Transactions"
+              message="No transactions match your current filters."
+              icon="📜"
+            />
+          )
         }
         ListFooterComponent={
           isFetchingNextPage ? <Loading message="Loading more..." /> : null

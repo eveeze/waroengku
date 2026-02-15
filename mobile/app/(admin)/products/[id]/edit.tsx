@@ -255,7 +255,7 @@ export default function EditProductScreen() {
         <ScrollView
           contentContainerStyle={{
             padding: 24,
-            paddingBottom: insets.bottom + 180,
+            paddingBottom: insets.bottom + 20,
           }}
           keyboardShouldPersistTaps="handled"
         >
@@ -666,21 +666,16 @@ export default function EditProductScreen() {
               )}
             />
           </View>
-        </ScrollView>
 
-        {/* Submit Button */}
-        <View
-          className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-4"
-          style={{ paddingBottom: insets.bottom + 90 }}
-        >
           <Button
             title="SAVE CHANGES"
             fullWidth
             size="lg"
             onPress={handleSubmit(onSubmit)}
             isLoading={isUpdating}
+            className="mt-6 mb-8 h-14"
           />
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );

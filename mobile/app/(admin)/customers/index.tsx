@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,23 +7,27 @@ import {
   RefreshControl,
   TextInput,
   StatusBar,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useInfiniteQuery } from '@tanstack/react-query';
-// We import getCustomers directly, letting useInfiniteQuery handle pagination state.
-// caching is handled by React Query + ETag (if getCustomers calls apiCall which allows conditional requests,
-// though for search/infinite it's less critical than Detail).
+import { Feather } from '@expo/vector-icons';
 import { getCustomers } from '@/api/endpoints/customers';
 import { Customer, PaginatedResponse } from '@/api/types';
-import { Loading, Button } from '@/components/ui';
-
-// Debounce helper could be useful but we'll stick to simple state for now or manual trigger if needed.
-// For now, search triggers refetch on text change (fast enough for local dev, might want debounce in prod).
+import { Loading } from '@/components/ui';
+import { EmptyStateInline } from '@/components/shared';
+import { CustomerListInlineSkeleton } from '@/components/skeletons';
+import { BOTTOM_NAV_HEIGHT } from '@/components/navigation/BottomTabBar';
 
 export default function CustomersScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { width } = useWindowDimensions();
+
+  // Responsive sizing
+  const isSmallPhone = width < 360;
+  const isTablet = width >= 768;
 
   const [search, setSearch] = useState('');
   const [showDebtOnly, setShowDebtOnly] = useState(false);
@@ -32,7 +36,6 @@ export default function CustomersScreen() {
     data,
     fetchNextPage,
     hasNextPage,
-    isFetching,
     isFetchingNextPage,
     refetch,
     isLoading,
@@ -85,25 +88,82 @@ export default function CustomersScreen() {
     }).format(amount);
   };
 
+  // Responsive sizes
+  const headerSize = isTablet
+    ? 'text-5xl'
+    : isSmallPhone
+      ? 'text-2xl'
+      : 'text-3xl';
+  const backSize = isTablet
+    ? 'text-sm'
+    : isSmallPhone
+      ? 'text-[10px]'
+      : 'text-xs';
+  const nameSize = isTablet
+    ? 'text-xl'
+    : isSmallPhone
+      ? 'text-base'
+      : 'text-lg';
+  const phoneSize = isTablet
+    ? 'text-sm'
+    : isSmallPhone
+      ? 'text-[10px]'
+      : 'text-xs';
+  const debtSize = isTablet
+    ? 'text-xs'
+    : isSmallPhone
+      ? 'text-[8px]'
+      : 'text-[10px]';
+  const searchSize = isTablet
+    ? 'text-base'
+    : isSmallPhone
+      ? 'text-xs'
+      : 'text-sm';
+  const filterSize = isTablet
+    ? 'text-sm'
+    : isSmallPhone
+      ? 'text-[10px]'
+      : 'text-xs';
+  const headerPadding = isTablet
+    ? 'px-8 pb-6'
+    : isSmallPhone
+      ? 'px-4 pb-4'
+      : 'px-6 pb-5';
+  const itemPadding = isTablet
+    ? 'p-5 mb-4'
+    : isSmallPhone
+      ? 'p-3 mb-2'
+      : 'p-4 mb-3';
+  const screenPadding = isTablet ? 24 : isSmallPhone ? 12 : 16;
+
   const renderItem = ({ item }: { item: Customer }) => (
     <TouchableOpacity
       onPress={() => router.push(`/(admin)/customers/${item.id}`)}
-      className="bg-muted p-4 rounded-xl mb-3 border border-border"
+      className={`bg-muted border border-border ${itemPadding}`}
     >
       <View className="flex-row justify-between items-start">
-        <View className="flex-1 mr-4">
-          <Text className="font-heading text-xl text-foreground uppercase tracking-tight">
+        <View className="flex-1 mr-3">
+          <Text
+            className={`font-bold text-foreground uppercase tracking-tight ${nameSize}`}
+            numberOfLines={1}
+          >
             {item.name}
           </Text>
-          <Text className="text-muted-foreground text-xs font-bold mt-1">
+          <Text
+            className={`text-muted-foreground font-medium mt-0.5 ${phoneSize}`}
+          >
             {item.phone || '-'}
           </Text>
         </View>
 
         {item.current_debt > 0 && (
-          <View className="bg-destructive/10 px-2 py-1 rounded-md">
-            <Text className="text-destructive text-[10px] font-black uppercase tracking-widest">
-              Debt: {formatCurrency(item.current_debt)}
+          <View
+            className={`bg-destructive/10 ${isSmallPhone ? 'px-1.5 py-0.5' : 'px-2 py-1'}`}
+          >
+            <Text
+              className={`text-destructive font-bold uppercase tracking-wide ${debtSize}`}
+            >
+              {formatCurrency(item.current_debt)}
             </Text>
           </View>
         )}
@@ -116,52 +176,76 @@ export default function CustomersScreen() {
       <StatusBar barStyle="default" />
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-border bg-background"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`border-b border-border bg-background ${headerPadding}`}
+        style={{
+          paddingTop: insets.top + (isSmallPhone ? 12 : isTablet ? 20 : 16),
+        }}
       >
-        <View className="flex-row justify-between items-end mb-4">
-          <View>
-            <TouchableOpacity onPress={() => router.back()} className="mb-4">
-              <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                ← Back
-              </Text>
-            </TouchableOpacity>
-            <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-foreground">
-              MEMBERS
-            </Text>
-          </View>
-          <Button
-            title="NEW MEMBER"
-            size="sm"
+        {/* Back button */}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isTablet ? 'mb-4' : isSmallPhone ? 'mb-2' : 'mb-3'}
+        >
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground ${backSize}`}
+          >
+            ← Back
+          </Text>
+        </TouchableOpacity>
+
+        {/* Title row */}
+        <View
+          className={`flex-row items-baseline justify-between ${isTablet ? 'mb-5' : 'mb-3'}`}
+        >
+          <Text
+            className={`font-black uppercase tracking-tighter text-foreground ${headerSize}`}
+          >
+            MEMBERS
+          </Text>
+          <TouchableOpacity
             onPress={() => router.push('/(admin)/customers/create')}
-          />
+            className={`bg-foreground flex-row items-center ${isTablet ? 'px-4 py-2' : isSmallPhone ? 'px-2.5 py-1.5' : 'px-3 py-1.5'}`}
+          >
+            <Feather
+              name="plus"
+              size={isSmallPhone ? 12 : 14}
+              color="hsl(var(--background))"
+            />
+            <Text
+              className={`text-background font-bold uppercase tracking-wide ml-1 ${isTablet ? 'text-sm' : isSmallPhone ? 'text-[10px]' : 'text-xs'}`}
+            >
+              New
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Search & Filter */}
-        <View className="flex-row gap-3">
-          <View className="flex-1 bg-muted rounded-lg px-4 py-2 border border-border">
+        <View className={`flex-row ${isTablet ? 'gap-3' : 'gap-2'}`}>
+          <View
+            className={`flex-1 bg-muted border border-border ${isTablet ? 'px-4 py-2.5' : isSmallPhone ? 'px-3 py-2' : 'px-3 py-2'}`}
+          >
             <TextInput
-              placeholder="SEARCH MEMBER..."
+              placeholder="SEARCH..."
               value={search}
               onChangeText={setSearch}
-              className="font-bold text-foreground leading-tight"
+              className={`font-bold text-foreground ${searchSize}`}
               placeholderTextColor="hsl(var(--muted-foreground))"
             />
           </View>
           <TouchableOpacity
             onPress={toggleDebtFilter}
-            className={`px-4 py-2 rounded-lg border ${
+            className={`border justify-center ${
               showDebtOnly
                 ? 'bg-destructive/10 border-destructive'
                 : 'bg-background border-border'
-            } justify-center`}
+            } ${isTablet ? 'px-4 py-2.5' : isSmallPhone ? 'px-2 py-2' : 'px-3 py-2'}`}
           >
             <Text
-              className={`text-xs font-bold uppercase tracking-widest ${
+              className={`font-bold uppercase tracking-wide ${
                 showDebtOnly ? 'text-destructive' : 'text-muted-foreground'
-              }`}
+              } ${filterSize}`}
             >
-              Has Debt
+              Debt
             </Text>
           </TouchableOpacity>
         </View>
@@ -171,25 +255,33 @@ export default function CustomersScreen() {
         data={customers}
         renderItem={renderItem}
         keyExtractor={(item) => item?.id || Math.random().toString()}
-        contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
+        contentContainerStyle={{
+          padding: screenPadding,
+          paddingBottom: BOTTOM_NAV_HEIGHT + 20,
+          maxWidth: isTablet ? 800 : undefined,
+          alignSelf: isTablet ? 'center' : undefined,
+          width: isTablet ? '100%' : undefined,
+        }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />
         }
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={
-          !isLoading ? (
-            <View className="items-center mt-10">
-              <Text className="text-muted-foreground font-bold">
-                No members found.
-              </Text>
-            </View>
-          ) : null
+          isLoading ? (
+            <CustomerListInlineSkeleton count={6} />
+          ) : (
+            <EmptyStateInline
+              title="No Members"
+              message="Add members to track debts."
+              icon="👥"
+            />
+          )
         }
         ListFooterComponent={
           isFetchingNextPage ? (
-            <View className="py-6">
-              <Loading message="Loading more..." />
+            <View className="py-4">
+              <Loading message="Loading..." />
             </View>
           ) : null
         }

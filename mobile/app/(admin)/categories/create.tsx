@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useWindowDimensions, useColorScheme } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Input } from '@/components/ui';
@@ -24,6 +26,30 @@ export default function CreateCategoryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  const { width } = useWindowDimensions();
+  const isSmallPhone = width < 360;
+  const isTablet = width >= 768;
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const mutedIconColor = isDark ? '#A1A1AA' : '#71717A';
+
+  // Responsive sizes
+  const headerSize = isTablet
+    ? 'text-5xl'
+    : isSmallPhone
+      ? 'text-2xl'
+      : 'text-3xl';
+  const labelSize = isTablet
+    ? 'text-sm'
+    : isSmallPhone
+      ? 'text-[10px]'
+      : 'text-xs';
+  const inputHeight = isTablet ? 'h-14' : isSmallPhone ? 'h-10' : 'h-12';
+  const headerPadding = isTablet
+    ? 'px-8 pb-8'
+    : isSmallPhone
+      ? 'px-4 pb-4'
+      : 'px-6 pb-6';
 
   const {
     control,
@@ -91,15 +117,22 @@ export default function CreateCategoryScreen() {
     <View className="flex-1 bg-background">
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-border bg-background"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`bg-background border-b border-border ${headerPadding}`}
+        style={{ paddingTop: insets.top + (isSmallPhone ? 12 : 16) }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            ← Back
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isSmallPhone ? 'mb-2' : 'mb-4'}
+        >
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground font-body ${isSmallPhone ? 'text-[10px]' : 'text-xs'}`}
+          >
+            ← BACK
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
+        <Text
+          className={`font-black uppercase tracking-tighter text-foreground ${headerSize}`}
+        >
           NEW CATEGORY
         </Text>
       </View>
@@ -111,67 +144,77 @@ export default function CreateCategoryScreen() {
         <ScrollView
           contentContainerStyle={{
             padding: 24,
-            paddingBottom: insets.bottom + 180,
+            paddingBottom: insets.bottom + 20,
           }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6">
-            Category Details
-          </Text>
+          <View
+            className={`border border-border bg-muted/30 ${isSmallPhone ? 'p-4' : 'p-6'}`}
+          >
+            <Text
+              className={`font-bold uppercase tracking-widest text-muted-foreground mb-6 ${labelSize}`}
+            >
+              CATEGORY DETAILS
+            </Text>
 
-          <Controller
-            control={control}
-            name="name"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <View className="mb-6">
-                <Input
-                  label="CATEGORY NAME *"
-                  placeholder="E.g. Beverages, Snacks"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  error={errors.name?.message}
-                />
-              </View>
-            )}
-          />
+            <Controller
+              control={control}
+              name="name"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View className="mb-6">
+                  <Text
+                    className={`font-bold uppercase tracking-wide text-foreground mb-2 ${labelSize}`}
+                  >
+                    CATEGORY NAME *
+                  </Text>
+                  <Input
+                    placeholder="E.G. BEVERAGES"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    error={errors.name?.message}
+                    className={`rounded-none bg-background border-border ${inputHeight}`}
+                    placeholderTextColor={mutedIconColor}
+                  />
+                </View>
+              )}
+            />
 
-          <Controller
-            control={control}
-            name="description"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <View className="mb-6">
-                <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
-                  Description
-                </Text>
-                <TextInput
-                  className="border border-border rounded-none px-4 py-3 bg-muted text-base font-medium min-h-[100px] text-foreground"
-                  placeholder="What is this category for?"
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  multiline
-                  numberOfLines={3}
-                  placeholderTextColor="#9CA3AF"
-                />
-              </View>
-            )}
-          />
-        </ScrollView>
+            <Controller
+              control={control}
+              name="description"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <View>
+                  <Text
+                    className={`font-bold uppercase tracking-wide text-foreground mb-2 ${labelSize}`}
+                  >
+                    DESCRIPTION
+                  </Text>
+                  <TextInput
+                    className="border border-border rounded-none px-4 py-3 bg-background text-base text-foreground min-h-[100px]"
+                    placeholder="ENTER DESCRIPTION (OPTIONAL)"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    multiline
+                    numberOfLines={3}
+                    placeholderTextColor={mutedIconColor}
+                    textAlignVertical="top"
+                  />
+                </View>
+              )}
+            />
+          </View>
 
-        {/* Submit Button */}
-        <View
-          className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-4"
-          style={{ paddingBottom: insets.bottom + 90 }}
-        >
           <Button
             title="CREATE CATEGORY"
             fullWidth
-            size="lg"
             onPress={handleSubmit(onSubmit)}
             isLoading={isCreating}
+            className="rounded-none h-14 mt-6 mb-8"
+            textClassName="font-black tracking-widest text-lg"
           />
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );

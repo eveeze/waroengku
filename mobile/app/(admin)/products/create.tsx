@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useResponsive } from '@/hooks/useResponsive';
 import { BarcodeScanner } from '@/components/shared';
 import { Button, Card, Input, ImagePickerInput } from '@/components/ui';
 import { productSchema, ProductFormData } from '@/utils/validation';
@@ -26,6 +27,8 @@ import { useApi, ImageAsset } from '@/hooks';
 export default function CreateProductScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { breakpoints, screenPadding } = useResponsive();
+  const isTablet = breakpoints.isTablet;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [consignors, setConsignors] = useState<Consignor[]>([]);
@@ -179,15 +182,22 @@ export default function CreateProductScreen() {
 
       {/* Header */}
       <View
-        className="px-6 pb-6 border-b border-border"
-        style={{ paddingTop: insets.top + 24 }}
+        className={`border-b border-border ${isTablet ? 'px-8 pb-8' : 'px-6 pb-6'}`}
+        style={{ paddingTop: insets.top + (isTablet ? 28 : 24) }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-muted-foreground font-bold uppercase tracking-widest text-xs font-body">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isTablet ? 'mb-5' : 'mb-4'}
+        >
+          <Text
+            className={`text-muted-foreground font-bold uppercase tracking-widest font-body ${isTablet ? 'text-sm' : 'text-xs'}`}
+          >
             ← BACK TO LIST
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-heading font-black tracking-tighter text-foreground">
+        <Text
+          className={`font-heading font-black tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-4xl'}`}
+        >
           NEW PRODUCT
         </Text>
       </View>
@@ -198,14 +208,19 @@ export default function CreateProductScreen() {
       >
         <ScrollView
           contentContainerStyle={{
-            padding: 24,
-            paddingBottom: insets.bottom + 180,
+            padding: screenPadding,
+            paddingBottom: insets.bottom + 20,
+            maxWidth: isTablet ? 720 : undefined,
+            alignSelf: isTablet ? 'center' : undefined,
+            width: isTablet ? '100%' : undefined,
           }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Section: Image */}
-          <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-3 font-body">
+          <View className={isTablet ? 'mb-10' : 'mb-8'}>
+            <Text
+              className={`font-bold tracking-widest text-muted-foreground uppercase mb-3 font-body ${isTablet ? 'text-sm' : 'text-xs'}`}
+            >
               PRODUCT IMAGE
             </Text>
             <ImagePickerInput
@@ -218,8 +233,10 @@ export default function CreateProductScreen() {
           </View>
 
           {/* Section: Basic Info */}
-          <View className="mb-8">
-            <Text className="text-xs font-bold tracking-widest text-muted-foreground uppercase mb-3 font-body">
+          <View className={isTablet ? 'mb-10' : 'mb-8'}>
+            <Text
+              className={`font-bold tracking-widest text-muted-foreground uppercase mb-3 font-body ${isTablet ? 'text-sm' : 'text-xs'}`}
+            >
               BASIC INFORMATION
             </Text>
 
@@ -583,21 +600,16 @@ export default function CreateProductScreen() {
               />
             )}
           </View>
-        </ScrollView>
 
-        {/* Floating Submit Bar */}
-        <View
-          className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-4"
-          style={{ paddingBottom: insets.bottom + 90 }}
-        >
           <Button
             title="SAVE PRODUCT"
             fullWidth
             size="lg"
             onPress={handleSubmit(onSubmit)}
             isLoading={isSubmitting}
+            className="mt-6 mb-8 h-14"
           />
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );

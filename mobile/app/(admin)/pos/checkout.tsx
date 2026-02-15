@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useResponsive } from '@/hooks/useResponsive';
 import { useCartStore } from '@/stores/cartStore';
 import { createTransaction, getCustomers } from '@/api/endpoints';
 import { Customer, CreateTransactionRequest } from '@/api/types';
@@ -21,6 +22,8 @@ import { useApi } from '@/hooks/useApi';
 export default function CheckoutScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { breakpoints, screenPadding } = useResponsive();
+  const isTablet = breakpoints.isTablet;
   const {
     items,
     customer,
@@ -135,48 +138,74 @@ export default function CheckoutScreen() {
   return (
     <View className="flex-1 bg-background">
       {/* Scrollable Content */}
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: 120,
+          maxWidth: isTablet ? 720 : undefined,
+          alignSelf: isTablet ? 'center' : undefined,
+          width: isTablet ? '100%' : undefined,
+        }}
+      >
         {/* Header Area */}
         <View
-          className="px-6 pb-6 bg-background border-b border-border"
-          style={{ paddingTop: insets.top + 24 }}
+          className={`bg-background border-b border-border ${isTablet ? 'px-8 pb-8' : 'px-6 pb-6'}`}
+          style={{ paddingTop: insets.top + (isTablet ? 28 : 24) }}
         >
-          <TouchableOpacity onPress={() => router.back()} className="mb-6">
-            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className={isTablet ? 'mb-8' : 'mb-6'}
+          >
+            <Text
+              className={`font-bold uppercase tracking-widest text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+            >
               ← Back to POS
             </Text>
           </TouchableOpacity>
 
-          <Text className="text-muted-foreground font-bold uppercase tracking-widest text-xs mb-2">
+          <Text
+            className={`text-muted-foreground font-bold uppercase tracking-widest mb-2 ${isTablet ? 'text-sm' : 'text-xs'}`}
+          >
             Total Amount
           </Text>
-          <Text className="text-5xl font-black tracking-tighter text-foreground leading-tight">
+          <Text
+            className={`font-black tracking-tighter text-foreground leading-tight ${isTablet ? 'text-6xl' : 'text-5xl'}`}
+          >
             {formatCurrency(totalAmount)}
           </Text>
 
           {validationResult?.total_discount ? (
-            <Text className="text-green-600 font-bold mt-2">
+            <Text
+              className={`text-green-600 font-bold mt-2 ${isTablet ? 'text-lg' : 'text-base'}`}
+            >
               Discount Applied: -
               {formatCurrency(validationResult.total_discount)}
             </Text>
           ) : null}
         </View>
 
-        <View className="p-6">
+        <View className={isTablet ? 'p-8' : 'p-6'}>
           {/* Customer Section */}
           <TouchableOpacity
             onPress={() => setShowCustomerModal(true)}
-            className="flex-row items-center justify-between py-4 border-b border-border mb-8"
+            className={`flex-row items-center justify-between border-b border-border ${isTablet ? 'py-5 mb-10' : 'py-4 mb-8'}`}
           >
             <View>
-              <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">
+              <Text
+                className={`font-bold uppercase tracking-widest text-muted-foreground mb-1 ${isTablet ? 'text-sm' : 'text-xs'}`}
+              >
                 Customer
               </Text>
-              <Text className="text-xl font-bold text-foreground">
+              <Text
+                className={`font-bold text-foreground ${isTablet ? 'text-2xl' : 'text-xl'}`}
+              >
                 {customer ? customer.name : 'Walk-In Customer'}
               </Text>
             </View>
-            <Text className="text-2xl text-muted-foreground">→</Text>
+            <Text
+              className={`text-muted-foreground ${isTablet ? 'text-3xl' : 'text-2xl'}`}
+            >
+              →
+            </Text>
           </TouchableOpacity>
 
           {/* Payment Method */}

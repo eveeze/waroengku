@@ -159,6 +159,7 @@ export default function EditCustomerScreen() {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.name?.message}
+                className="rounded-none h-14"
               />
             )}
           />
@@ -175,6 +176,7 @@ export default function EditCustomerScreen() {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 keyboardType="phone-pad"
+                className="rounded-none h-14"
               />
             )}
           />
@@ -214,6 +216,7 @@ export default function EditCustomerScreen() {
                 onBlur={onBlur}
                 keyboardType="numeric"
                 helperText="Maximum allowed debt (Kasbon)"
+                className="rounded-none h-14"
               />
             )}
           />
@@ -263,6 +266,8 @@ export default function EditCustomerScreen() {
             size="lg"
             onPress={handleSubmit(onSubmit)}
             isLoading={isUpdating}
+            className="rounded-none h-14"
+            textClassName="font-black tracking-widest text-lg"
           />
         </ScrollView>
       </KeyboardAvoidingView>

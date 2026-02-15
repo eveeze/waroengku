@@ -7,12 +7,12 @@ import {
   TextInput,
   Image,
   Alert,
-  Dimensions,
   Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useApi } from '@/hooks/useApi';
+import { useResponsive } from '@/hooks/useResponsive';
 import {
   getProducts,
   getCategories,
@@ -21,24 +21,24 @@ import {
 } from '@/api/endpoints';
 import { Product, Category, ProductListParams } from '@/api/types';
 import { Loading } from '@/components/ui';
-import { BarcodeScanner } from '@/components/shared';
+import { BarcodeScanner, EmptyStateInline } from '@/components/shared';
 import { useCartStore } from '@/stores/cartStore';
 import { useOptimisticMutation } from '@/hooks';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { fetcher, fetchWithCache } from '@/api/client'; // useApi replaced
-
-// Screen Dimensions
-const { width } = Dimensions.get('window');
-const COLUMN_COUNT = 2;
-const GAP = 12;
-const PADDING = 20;
-const ITEM_WIDTH = (width - PADDING * 2 - GAP) / COLUMN_COUNT;
+import { fetcher, fetchWithCache } from '@/api/client';
+import { ProductListInlineSkeleton } from '@/components/skeletons';
 
 export default function POSScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { addItem, getItemCount, getTotal, items, updateQuantity, clearCart } =
     useCartStore();
+
+  // Responsive layout
+  const { gridColumns, getItemWidth, screenPadding, gap, breakpoints } =
+    useResponsive();
+  const isTablet = breakpoints.isTablet;
+  const ITEM_WIDTH = getItemWidth(gridColumns, gap, screenPadding);
 
   // State
   const [search, setSearch] = useState('');
@@ -206,7 +206,9 @@ export default function POSScreen() {
           className={`bg-background rounded-none border border-border overflow-hidden ${!hasStock ? 'opacity-50' : ''}`}
         >
           {/* Image Area */}
-          <View className="h-32 bg-muted items-center justify-center border-b border-border relative">
+          <View
+            className={`bg-muted items-center justify-center border-b border-border relative ${isTablet ? 'h-40' : 'h-32'}`}
+          >
             {item.image_url ? (
               <Image
                 source={{ uri: item.image_url }}
@@ -252,21 +254,25 @@ export default function POSScreen() {
           </View>
 
           {/* Content */}
-          <View className="p-3">
+          <View className={isTablet ? 'p-4' : 'p-3'}>
             <Text
-              className="font-medium text-foreground text-xs mb-1 h-8 leading-4"
+              className={`font-medium text-foreground mb-1 leading-4 ${isTablet ? 'text-sm h-10' : 'text-xs h-8'}`}
               numberOfLines={2}
             >
               {item.name}
             </Text>
-            <Text className="text-foreground font-black text-sm tracking-tight">
+            <Text
+              className={`text-foreground font-black tracking-tight ${isTablet ? 'text-base' : 'text-sm'}`}
+            >
               {formatCurrency(item.base_price)}
             </Text>
 
             {item.is_stock_active &&
               item.current_stock <= item.min_stock_alert &&
               item.current_stock > 0 && (
-                <Text className="text-[10px] text-destructive font-bold mt-1 uppercase tracking-wider">
+                <Text
+                  className={`text-destructive font-bold mt-1 uppercase tracking-wider ${isTablet ? 'text-xs' : 'text-[10px]'}`}
+                >
                   Only {item.current_stock} left
                 </Text>
               )}
@@ -287,21 +293,29 @@ export default function POSScreen() {
 
       {/* Top Bar */}
       <View
-        className="bg-background border-b border-border px-5 pb-4 z-10"
-        style={{ paddingTop: insets.top + 12 }}
+        className={`bg-background border-b border-border z-10 ${isTablet ? 'px-6 pb-5' : 'px-5 pb-4'}`}
+        style={{ paddingTop: insets.top + (isTablet ? 16 : 12) }}
       >
-        <View className="flex-row items-center mb-4 gap-3">
+        <View
+          className={`flex-row items-center ${isTablet ? 'mb-5 gap-4' : 'mb-4 gap-3'}`}
+        >
           <TouchableOpacity
             onPress={() => router.replace('/(admin)')}
-            className="w-10 h-10 items-center justify-center bg-muted rounded-full"
+            className={`items-center justify-center bg-muted rounded-full ${isTablet ? 'w-12 h-12' : 'w-10 h-10'}`}
           >
-            <Text className="text-lg text-foreground">←</Text>
+            <Text
+              className={`text-foreground ${isTablet ? 'text-xl' : 'text-lg'}`}
+            >
+              ←
+            </Text>
           </TouchableOpacity>
 
-          <View className="flex-1 flex-row items-center bg-muted border border-border rounded-lg px-4 h-12">
+          <View
+            className={`flex-1 flex-row items-center bg-muted border border-border rounded-lg ${isTablet ? 'px-5 h-14' : 'px-4 h-12'}`}
+          >
             <Text className="mr-3 opacity-50 text-foreground">🔍</Text>
             <TextInput
-              className="flex-1 text-base font-medium text-foreground h-full"
+              className={`flex-1 font-medium text-foreground h-full ${isTablet ? 'text-lg' : 'text-base'}`}
               placeholder="Search items..."
               placeholderTextColor="hsl(var(--muted-foreground))"
               value={search}
@@ -313,16 +327,20 @@ export default function POSScreen() {
 
           <TouchableOpacity
             onPress={() => setShowBarcodeScanner(true)}
-            className="bg-foreground w-12 h-12 rounded-lg items-center justify-center mr-2"
+            className={`bg-foreground rounded-lg items-center justify-center mr-2 ${isTablet ? 'w-14 h-14' : 'w-12 h-12'}`}
           >
-            <Text className="text-background text-xl">📷</Text>
+            <Text
+              className={`text-background ${isTablet ? 'text-2xl' : 'text-xl'}`}
+            >
+              📷
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => router.push('/(admin)/pos/held-carts')}
-            className="bg-muted w-12 h-12 rounded-lg items-center justify-center"
+            className={`bg-muted rounded-lg items-center justify-center ${isTablet ? 'w-14 h-14' : 'w-12 h-12'}`}
           >
-            <Text className="text-xl">📋</Text>
+            <Text className={isTablet ? 'text-2xl' : 'text-xl'}>📋</Text>
           </TouchableOpacity>
         </View>
 
@@ -332,18 +350,18 @@ export default function POSScreen() {
           showsHorizontalScrollIndicator={false}
           data={[{ id: undefined, name: 'ALL ITEMS' }, ...categories] as any[]}
           keyExtractor={(item) => item.id || 'all'}
-          contentContainerStyle={{ paddingRight: 20 }}
+          contentContainerStyle={{ paddingRight: screenPadding }}
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => handleCategorySelect(item.id)}
-              className={`px-4 py-2 rounded-md mr-2 border ${
+              className={`rounded-md mr-2 border ${isTablet ? 'px-5 py-2.5' : 'px-4 py-2'} ${
                 selectedCategory === item.id
                   ? 'bg-foreground border-foreground'
                   : 'bg-background border-border'
               }`}
             >
               <Text
-                className={`text-xs font-bold uppercase tracking-wider ${
+                className={`font-bold uppercase tracking-wider ${isTablet ? 'text-sm' : 'text-xs'} ${
                   selectedCategory === item.id
                     ? 'text-background'
                     : 'text-muted-foreground'
@@ -361,9 +379,10 @@ export default function POSScreen() {
         data={products}
         renderItem={renderProduct}
         keyExtractor={(item) => item.id}
-        numColumns={COLUMN_COUNT}
+        numColumns={gridColumns}
+        key={`pos-grid-${gridColumns}`}
         contentContainerStyle={{
-          padding: PADDING,
+          padding: screenPadding,
           paddingBottom: 120,
         }}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
@@ -374,16 +393,22 @@ export default function POSScreen() {
         }}
         onEndReachedThreshold={0.5}
         ListFooterComponent={
-          isLoading ? <Loading message="" /> : <View className="h-10" />
+          isFetchingNextPage ? (
+            <Loading message="" />
+          ) : (
+            <View className="h-10" />
+          )
         }
         ListEmptyComponent={
-          !isLoading ? (
-            <View className="items-center justify-center py-20">
-              <Text className="text-muted-foreground font-bold uppercase tracking-widest">
-                No Items Found
-              </Text>
-            </View>
-          ) : null
+          isLoading ? (
+            <ProductListInlineSkeleton count={isTablet ? 9 : 6} mode="grid" />
+          ) : (
+            <EmptyStateInline
+              title="No Items Found"
+              message="Try adjusting your search or category filter."
+              icon="🔍"
+            />
+          )
         }
       />
 

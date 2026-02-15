@@ -11,6 +11,9 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useWindowDimensions, useColorScheme } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { useResponsive } from '@/hooks/useResponsive';
 import { Header } from '@/components/shared';
 import { Button, Card, Input, Loading } from '@/components/ui';
 import { updateCategory, deleteCategory } from '@/api/endpoints/categories';
@@ -27,6 +30,13 @@ export default function CategoryDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  const { width } = useWindowDimensions();
+  const isSmallPhone = width < 360;
+  const isTablet = width >= 768;
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const mutedIconColor = isDark ? '#A1A1AA' : '#71717A';
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<Category | null>(null);
@@ -148,22 +158,47 @@ export default function CategoryDetailScreen() {
   };
 
   if (isLoading && !category) {
-    return <Loading fullScreen message="Memuat..." />;
+    return <Loading fullScreen message="LOADING..." />;
   }
+
+  // Responsive sizes
+  const headerSize = isTablet
+    ? 'text-5xl'
+    : isSmallPhone
+      ? 'text-2xl'
+      : 'text-3xl';
+  const labelSize = isTablet
+    ? 'text-sm'
+    : isSmallPhone
+      ? 'text-[10px]'
+      : 'text-xs';
+  const inputHeight = isTablet ? 'h-14' : isSmallPhone ? 'h-10' : 'h-12';
+  const headerPadding = isTablet
+    ? 'px-8 pb-8'
+    : isSmallPhone
+      ? 'px-4 pb-4'
+      : 'px-6 pb-6';
 
   return (
     <View className="flex-1 bg-background">
       {/* Swiss Header */}
       <View
-        className="px-6 pb-6 border-b border-border bg-background"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`bg-background border-b border-border ${headerPadding}`}
+        style={{ paddingTop: insets.top + (isSmallPhone ? 12 : 16) }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            ← Back
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isSmallPhone ? 'mb-2' : 'mb-4'}
+        >
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground font-body ${isSmallPhone ? 'text-[10px]' : 'text-xs'}`}
+          >
+            ← BACK
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
+        <Text
+          className={`font-black uppercase tracking-tighter text-foreground ${headerSize}`}
+        >
           EDIT CATEGORY
         </Text>
       </View>
@@ -175,65 +210,97 @@ export default function CategoryDetailScreen() {
         <ScrollView
           contentContainerStyle={{
             padding: 16,
-            paddingBottom: insets.bottom + 100,
+            paddingBottom: insets.bottom + 20,
           }}
           keyboardShouldPersistTaps="handled"
         >
-          <Card className="mb-4">
-            <Input
-              label="Nama Kategori *"
-              placeholder="Masukkan nama kategori"
-              value={name}
-              onChangeText={setName}
-            />
-
-            <View className="mt-3">
-              <Text className="text-sm font-medium text-muted-foreground mb-1.5">
-                Deskripsi
+          <Card className="mb-4 rounded-none border-x-0 border-t-0 p-0 shadow-none">
+            <View
+              className={`border border-border p-4 bg-muted/30 ${isSmallPhone ? 'p-3' : 'p-4'}`}
+            >
+              <Text
+                className={`font-bold uppercase tracking-wide text-muted-foreground mb-1.5 ${labelSize}`}
+              >
+                PROPERTIES
               </Text>
-              <TextInput
-                className="border border-border rounded-lg px-4 py-3 bg-muted text-base text-foreground"
-                placeholder="Deskripsi kategori (opsional)"
-                placeholderTextColor="#9CA3AF"
-                value={description}
-                onChangeText={setDescription}
-                multiline
-                numberOfLines={3}
-              />
+
+              <View className="mb-4">
+                <Text
+                  className={`font-bold uppercase tracking-wide text-foreground mb-2 ${labelSize}`}
+                >
+                  CATEGORY NAME *
+                </Text>
+                <Input
+                  placeholder="ENTER CATEGORY NAME"
+                  value={name}
+                  onChangeText={setName}
+                  className={`rounded-none bg-background border-border ${inputHeight}`}
+                  placeholderTextColor={mutedIconColor}
+                />
+              </View>
+
+              <View>
+                <Text
+                  className={`font-bold uppercase tracking-wide text-foreground mb-2 ${labelSize}`}
+                >
+                  DESCRIPTION
+                </Text>
+                <TextInput
+                  className="border border-border rounded-none px-4 py-3 bg-background text-base text-foreground min-h-[100px]"
+                  placeholder="ENTER DESCRIPTION (OPTIONAL)"
+                  placeholderTextColor={mutedIconColor}
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+              </View>
             </View>
           </Card>
 
           {category?.product_count !== undefined && (
-            <Card className="mb-4">
-              <View className="flex-row items-center justify-between">
-                <Text className="text-muted-foreground">Jumlah Produk</Text>
-                <Text className="text-lg font-semibold text-foreground">
+            <View
+              className={`mb-6 flex-row items-center justify-between border border-border bg-muted/30 ${isSmallPhone ? 'p-3' : 'p-4'}`}
+            >
+              <Text
+                className={`font-bold uppercase tracking-wide text-muted-foreground ${labelSize}`}
+              >
+                LINKED PRODUCTS
+              </Text>
+              <View className="flex-row items-baseline gap-1">
+                <Text
+                  className={`font-black text-foreground ${isSmallPhone ? 'text-xl' : 'text-2xl'}`}
+                >
                   {category.product_count}
                 </Text>
+                <Text
+                  className={`font-bold text-muted-foreground ${labelSize}`}
+                >
+                  ITEMS
+                </Text>
               </View>
-            </Card>
+            </View>
           )}
 
           <Button
-            title="Hapus Kategori"
-            variant="danger"
+            title="DELETE CATEGORY"
+            variant="outline"
+            className="border-destructive/50 rounded-none h-12"
+            textClassName="text-destructive font-bold tracking-widest"
             fullWidth
             onPress={handleDelete}
           />
-        </ScrollView>
 
-        {/* Submit Button */}
-        <View
-          className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-4 py-3"
-          style={{ paddingBottom: insets.bottom + 90 }}
-        >
           <Button
-            title="Simpan Perubahan"
+            title="SAVE CHANGES"
             fullWidth
             onPress={handleSubmit}
             isLoading={isUpdating}
+            className="rounded-none h-14 mt-6 mb-8"
+            textClassName="font-black tracking-widest text-lg"
           />
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );

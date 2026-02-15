@@ -10,13 +10,18 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
+import { useResponsive } from '@/hooks/useResponsive';
 import { fetcher } from '@/api/client';
 import { RefillableContainer } from '@/api/types';
-import { Loading, Button } from '@/components/ui';
+import { Button } from '@/components/ui';
+import { RefillableListInlineSkeleton } from '@/components/skeletons';
+import { EmptyStateInline } from '@/components/shared';
 
 export default function RefillablesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { breakpoints, screenPadding } = useResponsive();
+  const isTablet = breakpoints.isTablet;
 
   const {
     data: containers,
@@ -28,8 +33,12 @@ export default function RefillablesScreen() {
   });
 
   const renderItem = ({ item }: { item: RefillableContainer }) => (
-    <View className="bg-muted p-5 rounded-none mb-4 border border-border">
-      <View className="flex-row justify-between items-start mb-6">
+    <View
+      className={`bg-muted rounded-none border border-border ${isTablet ? 'p-6 mb-5' : 'p-5 mb-4'}`}
+    >
+      <View
+        className={`flex-row justify-between items-start ${isTablet ? 'mb-8' : 'mb-6'}`}
+      >
         <TouchableOpacity
           onPress={() =>
             router.push({
@@ -38,16 +47,20 @@ export default function RefillablesScreen() {
             })
           }
         >
-          <Text className="font-heading text-2xl text-foreground uppercase tracking-tighter font-black">
+          <Text
+            className={`font-heading text-foreground uppercase tracking-tighter font-black ${isTablet ? 'text-3xl' : 'text-2xl'}`}
+          >
             {item.container_type}
           </Text>
-          <Text className="text-muted-foreground text-[10px] font-bold mt-1 uppercase tracking-widest">
+          <Text
+            className={`text-muted-foreground font-bold mt-1 uppercase tracking-widest ${isTablet ? 'text-xs' : 'text-[10px]'}`}
+          >
             Ref: {item.id.substring(0, 8)} • Tap for History
           </Text>
         </TouchableOpacity>
         <Button
           title="ADJUST STOCK"
-          size="sm"
+          size={isTablet ? 'md' : 'sm'}
           variant="outline"
           onPress={() =>
             router.push({
@@ -63,20 +76,32 @@ export default function RefillablesScreen() {
         />
       </View>
 
-      <View className="flex-row gap-4">
-        <View className="flex-1 bg-background dark:bg-red-900/10 p-4 items-center border border-border dark:border-red-900/30 shadow-sm">
-          <Text className="text-red-500 font-black text-[10px] uppercase tracking-widest mb-1">
+      <View className={`flex-row ${isTablet ? 'gap-6' : 'gap-4'}`}>
+        <View
+          className={`flex-1 bg-background dark:bg-red-900/10 items-center border border-border dark:border-red-900/30 shadow-sm ${isTablet ? 'p-5' : 'p-4'}`}
+        >
+          <Text
+            className={`text-red-500 font-black uppercase tracking-widest mb-1 ${isTablet ? 'text-xs' : 'text-[10px]'}`}
+          >
             Empty (Void)
           </Text>
-          <Text className="text-4xl font-black text-red-600 dark:text-red-400 tracking-tighter">
+          <Text
+            className={`font-black text-red-600 dark:text-red-400 tracking-tighter ${isTablet ? 'text-5xl' : 'text-4xl'}`}
+          >
             {item.empty_count}
           </Text>
         </View>
-        <View className="flex-1 bg-background dark:bg-green-900/10 p-4 items-center border border-border dark:border-green-900/30 shadow-sm">
-          <Text className="text-green-600 font-black text-[10px] uppercase tracking-widest mb-1">
+        <View
+          className={`flex-1 bg-background dark:bg-green-900/10 items-center border border-border dark:border-green-900/30 shadow-sm ${isTablet ? 'p-5' : 'p-4'}`}
+        >
+          <Text
+            className={`text-green-600 font-black uppercase tracking-widest mb-1 ${isTablet ? 'text-xs' : 'text-[10px]'}`}
+          >
             Full (Ready)
           </Text>
-          <Text className="text-4xl font-black text-green-700 dark:text-green-400 tracking-tighter">
+          <Text
+            className={`font-black text-green-700 dark:text-green-400 tracking-tighter ${isTablet ? 'text-5xl' : 'text-4xl'}`}
+          >
             {item.full_count}
           </Text>
         </View>
@@ -89,25 +114,33 @@ export default function RefillablesScreen() {
       <StatusBar barStyle="default" />
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-border bg-background"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`border-b border-border bg-background ${isTablet ? 'px-8 py-8' : 'px-6 py-6'}`}
+        style={{ paddingTop: insets.top + (isTablet ? 20 : 16) }}
       >
-        <View className="flex-row justify-between items-center mb-4">
+        <View
+          className={`flex-row justify-between items-center ${isTablet ? 'mb-5' : 'mb-4'}`}
+        >
           <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            <Text
+              className={`font-bold uppercase tracking-widest text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+            >
               ← Back
             </Text>
           </TouchableOpacity>
           <Button
             title="+ NEW CONTAINER"
-            size="sm"
+            size={isTablet ? 'md' : 'sm'}
             onPress={() => router.push('/(admin)/refillables/create')}
           />
         </View>
-        <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-foreground">
+        <Text
+          className={`font-heading font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-4xl'}`}
+        >
           REFILLABLES
         </Text>
-        <Text className="text-muted-foreground text-xs font-bold mt-1 uppercase tracking-widest">
+        <Text
+          className={`text-muted-foreground font-bold mt-1 uppercase tracking-widest ${isTablet ? 'text-sm' : 'text-xs'}`}
+        >
           Track Gallons & Gas Cylinders
         </Text>
       </View>
@@ -116,19 +149,29 @@ export default function RefillablesScreen() {
         data={containers || []}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 24 }}
+        contentContainerStyle={{
+          padding: screenPadding,
+          maxWidth: isTablet ? 800 : undefined,
+          alignSelf: isTablet ? 'center' : undefined,
+          width: isTablet ? '100%' : undefined,
+        }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={refetch} />
         }
         ListEmptyComponent={
-          !isLoading ? (
-            <Text className="text-center text-muted-foreground mt-10 font-bold uppercase tracking-widest">
-              No containers found.
-            </Text>
-          ) : null
-        }
-        ListFooterComponent={
-          isLoading ? <Loading message="Loading..." /> : null
+          isLoading ? (
+            <RefillableListInlineSkeleton count={4} />
+          ) : (
+            <EmptyStateInline
+              title="No Containers"
+              message="Add containers to track gallons & gas cylinders."
+              icon="🪣"
+              action={{
+                label: 'Add Container',
+                onPress: () => router.push('/(admin)/refillables/create'),
+              }}
+            />
+          )
         }
       />
     </View>

@@ -2,54 +2,60 @@ import React from 'react';
 import {
   View,
   TouchableOpacity,
-  Dimensions,
-  Platform,
   StyleSheet,
-  Text, // fallback
+  useColorScheme,
 } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
-// Screen Dimensions
-const { width } = Dimensions.get('window');
-
 /**
- * Premium "Awwwards" Worthy Bottom Navigation
- * Floating Dock Style
+ * Premium Bottom Navigation - Black & White Swiss Minimalist
+ * Uses SafeAreaView wrapper for Android software nav buttons
  */
 export function BottomTabBar({
   state,
   descriptors,
   navigation,
 }: BottomTabBarProps) {
-  const insets = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  // Black & White theme only
+  const colors = {
+    background: isDark ? '#000000' : '#FFFFFF',
+    foreground: isDark ? '#FAFAFA' : '#18181B',
+    mutedForeground: isDark ? '#71717A' : '#A1A1AA',
+    border: isDark ? '#27272A' : '#E4E4E7',
+  };
 
   // Route Config
   const visibleRoutes = ['index', 'products', 'pos', 'transactions', 'menu'];
 
-  // HIDE TAB BAR ON POS SCREEN
-  // If the currently active tab is 'pos', we hide the bottom bar completely
-  // to give full screen real estate to the POS interface.
+  // Hide on POS
   const currentRouteName = state.routes[state.index].name;
   if (currentRouteName === 'pos') {
     return null;
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingBottom: insets.bottom + (Platform.OS === 'ios' ? 0 : 20) },
-      ]}
-      pointerEvents="box-none"
+    <SafeAreaView
+      edges={['bottom']}
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
     >
-      <View className="flex-row items-center bg-white dark:bg-zinc-900 w-[90%] h-[72px] rounded-3xl px-2 mb-2 shadow-lg shadow-black/10 border border-zinc-100 dark:border-white/10">
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+          },
+        ]}
+      >
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
 
-          // Filter hidden routes
           if (!visibleRoutes.includes(route.name)) return null;
 
           const onPress = () => {
@@ -71,49 +77,41 @@ export function BottomTabBar({
             });
           };
 
-          // Icon Selection
+          // Icon Mapping
           let iconName: keyof typeof Feather.glyphMap = 'circle';
-
-          // "asak menu lognya hamburger di logo warungku" -> Menu is Hamburger
           switch (route.name) {
             case 'index':
               iconName = 'home';
               break;
             case 'products':
-              iconName = 'package'; // Stock/Box
+              iconName = 'box';
               break;
             case 'pos':
-              iconName = 'zap'; // Fast/Action
+              iconName = 'zap';
               break;
             case 'transactions':
-              iconName = 'file-text'; // History/Receipt
+              iconName = 'file-text';
               break;
             case 'menu':
-              iconName = 'menu'; // Hamburger
+              iconName = 'menu';
               break;
           }
 
-          // Special Center Button (POS)
+          // POS Button (Center) - Black/White inverted
           if (route.name === 'pos') {
             return (
-              <View key={route.key} style={styles.posButtonContainer}>
-                <TouchableOpacity
-                  onPress={onPress}
-                  onLongPress={onLongPress}
-                  activeOpacity={0.9}
-                  className={`w-16 h-16 rounded-full items-center justify-center border-4 border-white dark:border-zinc-950 shadow-lg shadow-black/30 ${
-                    isFocused
-                      ? 'bg-zinc-800 dark:bg-zinc-200 scale-105'
-                      : 'bg-black dark:bg-white'
-                  }`}
-                >
-                  <Feather
-                    name={iconName}
-                    size={28}
-                    className="text-white dark:text-black ml-[1px]"
-                  />
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                key={route.key}
+                onPress={onPress}
+                onLongPress={onLongPress}
+                activeOpacity={0.85}
+                style={[
+                  styles.posButton,
+                  { backgroundColor: colors.foreground },
+                ]}
+              >
+                <Feather name="zap" size={24} color={colors.background} />
+              </TouchableOpacity>
             );
           }
 
@@ -124,64 +122,80 @@ export function BottomTabBar({
               accessibilityRole="button"
               accessibilityState={isFocused ? { selected: true } : {}}
               accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={(options as any).tabBarTestID}
               onPress={onPress}
               onLongPress={onLongPress}
-              className="flex-1 h-full items-center justify-center"
+              style={styles.tabItem}
               activeOpacity={0.7}
             >
-              <View
-                className={`p-2 rounded-xl ${
-                  isFocused ? 'bg-black/5 dark:bg-white/10' : ''
-                }`}
-              >
+              <View style={styles.tabInner}>
                 <Feather
                   name={iconName}
-                  size={24}
-                  color={
-                    isFocused
-                      ? Platform.OS === 'ios'
-                        ? '#000'
-                        : '#000'
-                      : '#A1A1AA'
-                  } // We handle color via class if possible, but Icon expects prop string. passing explicit color for now logic
-                  className={
-                    isFocused
-                      ? 'text-primary dark:text-primary-foreground'
-                      : 'text-zinc-400'
-                  }
+                  size={22}
+                  color={isFocused ? colors.foreground : colors.mutedForeground}
                 />
+                {/* Active Indicator - Small dot */}
+                {isFocused && (
+                  <View
+                    style={[
+                      styles.activeIndicator,
+                      { backgroundColor: colors.foreground },
+                    ]}
+                  />
+                )}
               </View>
-              {isFocused && (
-                <View className="absolute bottom-3 w-1 h-1 rounded-full bg-black dark:bg-white" />
-              )}
             </TouchableOpacity>
           );
         })}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
+// Export nav height for screen padding
+export const BOTTOM_NAV_HEIGHT = 72;
+
 const styles = StyleSheet.create({
+  safeArea: {
+    width: '100%',
+  },
   container: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    backgroundColor: 'transparent',
+    justifyContent: 'space-around',
+    height: 64,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
   },
-  dock: {
-    // Styling moved to className
-  },
-  // ... other styles removed/simplified
-  posButtonContainer: {
-    width: 72,
-    height: 72,
-    top: -20,
+  tabItem: {
+    flex: 1,
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  tabInner: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    paddingVertical: 8,
+  },
+  activeIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+  },
+  posButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });

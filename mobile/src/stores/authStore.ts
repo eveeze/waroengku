@@ -6,6 +6,10 @@ import { AuthUser, UserRole } from '@/api/types';
 import { login as apiLogin, logout as apiLogout } from '@/api/endpoints/auth';
 import { tokenStorage, storage } from '@/utils/storage';
 import { config } from '@/constants/config';
+import {
+  oneSignalLogin,
+  oneSignalLogout,
+} from '@/components/providers/OneSignalProvider';
 
 /**
  * Auth Store
@@ -98,6 +102,9 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: null,
           });
+
+          // Register with OneSignal using user ID
+          oneSignalLogin(response.user.id);
         } catch (error) {
           const message =
             error instanceof Error ? error.message : 'Login gagal';
@@ -111,10 +118,12 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      // Logout action
       logout: async () => {
         set({ isLoading: true });
         try {
+          // Logout from OneSignal first
+          oneSignalLogout();
+
           await apiLogout();
           await storage.removeItem(config.storage.user);
           set({

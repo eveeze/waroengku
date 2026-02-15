@@ -14,8 +14,10 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
 import { startOpnameSession } from '@/api/endpoints';
 import { OpnameSession, ApiResponse } from '@/api/types';
-import { Loading, Button } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { useOptimisticMutation } from '@/hooks';
+import { StockOpnameListInlineSkeleton } from '@/components/skeletons';
+import { EmptyStateInline } from '@/components/shared';
 
 export default function StockOpnameListScreen() {
   const router = useRouter();
@@ -126,17 +128,19 @@ export default function StockOpnameListScreen() {
           <RefreshControl refreshing={isLoading} onRefresh={refetch} />
         }
         ListEmptyComponent={
-          !isLoading ? (
-            <View className="items-center mt-12 bg-muted p-8 border border-border">
-              <Text className="text-3xl mb-2">📋</Text>
-              <Text className="text-foreground font-black uppercase tracking-wide mb-1">
-                No sessions found
-              </Text>
-              <Text className="text-muted-foreground text-xs font-bold uppercase tracking-widest">
-                Start a new session to begin accounting
-              </Text>
-            </View>
-          ) : null
+          isLoading ? (
+            <StockOpnameListInlineSkeleton count={5} />
+          ) : (
+            <EmptyStateInline
+              title="No Sessions Found"
+              message="Start a new session to begin accounting."
+              icon="📋"
+              action={{
+                label: 'New Session',
+                onPress: handleCreate,
+              }}
+            />
+          )
         }
       />
     </View>

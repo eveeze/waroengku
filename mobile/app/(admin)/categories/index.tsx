@@ -7,25 +7,33 @@ import {
   TouchableOpacity,
   Alert,
   StatusBar,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useOptimisticMutation } from '@/hooks';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchWithCache } from '@/api/client';
-import { deleteCategory } from '@/api/endpoints/categories';
+import { useQuery } from '@tanstack/react-query';
+import { getCategories, deleteCategory } from '@/api/endpoints/categories';
 import { Category, ApiResponse } from '@/api/types';
 import { Button } from '@/components/ui';
+import { EmptyStateInline } from '@/components/shared';
+import { CategoryListInlineSkeleton } from '@/components/skeletons';
+import { BOTTOM_NAV_HEIGHT } from '@/components/navigation/BottomTabBar';
 
 /**
  * Categories List Screen
- * Swiss Minimalist Refactor
+ * Swiss Minimalist + Small Phone Responsive
  */
 export default function CategoriesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { width } = useWindowDimensions();
 
-  // useQuery - TData must match the actual response body structure
+  // Responsive sizing
+  const isSmallPhone = width < 360;
+  const isTablet = width >= 768;
+
+  // useQuery
   const {
     data: response,
     isLoading,
@@ -33,11 +41,10 @@ export default function CategoriesScreen() {
     refetch,
   } = useQuery({
     queryKey: ['/categories'],
-    queryFn: ({ queryKey }) =>
-      fetchWithCache<ApiResponse<Category[]>>({ queryKey }),
+    queryFn: () => getCategories(),
   });
 
-  const categories = response?.data || [];
+  const categories = response || [];
 
   // Optimistic Delete
   const { mutate: mutateDelete } = useOptimisticMutation(
@@ -83,24 +90,76 @@ export default function CategoriesScreen() {
     );
   };
 
+  // Responsive sizes
+  const headerSize = isTablet
+    ? 'text-5xl'
+    : isSmallPhone
+      ? 'text-2xl'
+      : 'text-3xl';
+  const backSize = isTablet
+    ? 'text-sm'
+    : isSmallPhone
+      ? 'text-[10px]'
+      : 'text-xs';
+  const nameSize = isTablet
+    ? 'text-lg'
+    : isSmallPhone
+      ? 'text-sm'
+      : 'text-base';
+  const descSize = isTablet
+    ? 'text-sm'
+    : isSmallPhone
+      ? 'text-[10px]'
+      : 'text-xs';
+  const countSize = isTablet
+    ? 'text-xl'
+    : isSmallPhone
+      ? 'text-base'
+      : 'text-lg';
+  const labelSize = isTablet
+    ? 'text-[10px]'
+    : isSmallPhone
+      ? 'text-[8px]'
+      : 'text-[9px]';
+  const headerPadding = isTablet
+    ? 'px-8 pb-8'
+    : isSmallPhone
+      ? 'px-4 pb-4'
+      : 'px-6 pb-6';
+  const itemPadding = isTablet
+    ? 'px-8 py-6'
+    : isSmallPhone
+      ? 'px-4 py-4'
+      : 'px-6 py-5';
+  const iconSize = isTablet
+    ? 'w-10 h-10'
+    : isSmallPhone
+      ? 'w-6 h-6'
+      : 'w-8 h-8';
+
   const renderCategory = ({ item }: { item: Category }) => (
     <TouchableOpacity
       onPress={() => router.push(`/(admin)/categories/${item.id}`)}
       onLongPress={() => handleDelete(item)}
       className="mb-0 border-b border-border bg-background active:bg-muted"
     >
-      <View className="px-6 py-5 flex-row items-center justify-between">
+      <View className={`flex-row items-center justify-between ${itemPadding}`}>
         <View className="flex-row items-center flex-1">
-          <View className="w-8 h-8 bg-muted items-center justify-center mr-4">
-            <Text className="text-foreground text-xs">#</Text>
+          <View
+            className={`bg-muted items-center justify-center mr-3 ${iconSize}`}
+          >
+            <Text className={`text-foreground ${descSize}`}>#</Text>
           </View>
           <View className="flex-1">
-            <Text className="text-base font-heading font-bold text-foreground uppercase tracking-wide">
+            <Text
+              className={`font-heading font-bold text-foreground uppercase tracking-wide ${nameSize}`}
+              numberOfLines={1}
+            >
               {item.name}
             </Text>
             {item.description && (
               <Text
-                className="text-xs text-muted-foreground mt-1 font-body"
+                className={`text-muted-foreground mt-0.5 font-body ${descSize}`}
                 numberOfLines={1}
               >
                 {item.description}
@@ -110,11 +169,15 @@ export default function CategoriesScreen() {
         </View>
 
         {item.product_count !== undefined && (
-          <View className="items-end ml-4">
-            <Text className="text-lg font-heading font-black text-foreground tracking-tight">
+          <View className="items-end ml-3">
+            <Text
+              className={`font-heading font-black text-foreground tracking-tight ${countSize}`}
+            >
               {item.product_count}
             </Text>
-            <Text className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider font-body">
+            <Text
+              className={`font-bold text-muted-foreground uppercase tracking-wider font-body ${labelSize}`}
+            >
               Products
             </Text>
           </View>
@@ -127,27 +190,38 @@ export default function CategoriesScreen() {
     <View className="flex-1 bg-background">
       <StatusBar barStyle="default" />
 
-      {/* Header */}
+      {/* Header - Stacked layout for better spacing */}
       <View
-        className="bg-background border-b border-border px-6 pb-6"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`bg-background border-b border-border ${headerPadding}`}
+        style={{
+          paddingTop: insets.top + (isSmallPhone ? 12 : isTablet ? 20 : 16),
+        }}
       >
-        <View className="flex-row items-end justify-between">
-          <View>
-            <TouchableOpacity onPress={() => router.back()} className="mb-4">
-              <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground font-body">
-                ← Back
-              </Text>
-            </TouchableOpacity>
-            <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-foreground">
-              CATEGORIES
-            </Text>
-          </View>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isTablet ? 'mb-4' : isSmallPhone ? 'mb-2' : 'mb-3'}
+        >
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground font-body ${backSize}`}
+          >
+            ← Back
+          </Text>
+        </TouchableOpacity>
+
+        {/* Title and Button in row */}
+        <View className="flex-row items-baseline justify-between">
+          <Text
+            className={`font-heading font-black uppercase tracking-tighter text-foreground ${headerSize}`}
+          >
+            CATEGORIES
+          </Text>
           <TouchableOpacity
             onPress={() => router.push('/(admin)/categories/create')}
-            className="bg-foreground px-5 py-3 items-center justify-center"
+            className={`bg-foreground items-center justify-center ${isTablet ? 'px-5 py-3' : isSmallPhone ? 'px-3 py-2' : 'px-4 py-2.5'}`}
           >
-            <Text className="text-background font-bold text-xs uppercase tracking-widest font-heading">
+            <Text
+              className={`text-background font-bold uppercase tracking-widest font-heading ${isTablet ? 'text-sm' : isSmallPhone ? 'text-[10px]' : 'text-xs'}`}
+            >
               + NEW
             </Text>
           </TouchableOpacity>
@@ -159,29 +233,31 @@ export default function CategoriesScreen() {
         data={categories}
         renderItem={renderCategory}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: BOTTOM_NAV_HEIGHT + 20 }}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
         }
         ListEmptyComponent={
-          !isLoading ? (
-            <View className="items-center py-20 px-10">
-              <Text className="text-muted-foreground font-black text-6xl mb-4">
-                🏷️
-              </Text>
-              <Text className="text-foreground font-bold text-lg text-center uppercase tracking-wide mb-2">
-                No Categories
-              </Text>
-              <Text className="text-muted-foreground text-center text-sm">
-                Create categories to organize your products.
-              </Text>
-            </View>
-          ) : null
+          isLoading ? (
+            <CategoryListInlineSkeleton count={6} />
+          ) : (
+            <EmptyStateInline
+              title="No Categories"
+              message="Create categories to organize your products."
+              icon="🏷️"
+              action={{
+                label: 'Create Category',
+                onPress: () => router.push('/(admin)/categories/create'),
+              }}
+            />
+          )
         }
         ListFooterComponent={
           categories.length > 0 ? (
-            <View className="py-6 items-center border-t border-border mt-4">
-              <Text className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest font-body">
+            <View className="py-4 items-center border-t border-border mt-4">
+              <Text
+                className={`font-bold text-muted-foreground uppercase tracking-widest font-body ${labelSize}`}
+              >
                 Long press to delete category
               </Text>
             </View>

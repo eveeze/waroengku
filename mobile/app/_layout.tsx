@@ -11,6 +11,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
 import { OfflineNotice } from '@/components/shared';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { OneSignalProvider } from '@/components/providers/OneSignalProvider';
 
 import {
   useFonts,
@@ -80,19 +81,21 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <ThemeProvider>
-            <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-            <OfflineNotice />
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: 'transparent' },
-                animation: 'fade',
-              }}
-            >
-              <Stack.Screen name="index" />
-              <Stack.Screen name="(auth)" />
-              <Stack.Screen name="(admin)" />
-            </Stack>
+            <OneSignalProvider>
+              <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+              <OfflineNotice />
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: 'transparent' },
+                  animation: 'fade',
+                }}
+              >
+                <Stack.Screen name="index" />
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(admin)" />
+              </Stack>
+            </OneSignalProvider>
           </ThemeProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>

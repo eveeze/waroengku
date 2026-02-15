@@ -39,6 +39,7 @@ export default function AdminLayout() {
   return (
     <Tabs
       tabBar={(props) => <BottomTabBar {...props} />}
+      backBehavior="history"
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: 'transparent' },
@@ -85,6 +86,7 @@ export default function AdminLayout() {
       <Tabs.Screen name="stock-opname" options={{ href: null }} />
       <Tabs.Screen name="inventory" options={{ href: null }} />
       <Tabs.Screen name="consignment" options={{ href: null }} />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
     </Tabs>
   );
 }

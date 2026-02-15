@@ -6,3 +6,10 @@ export { useOptimisticMutation } from './useOptimisticMutation';
 export { useServerEvents } from './useServerEvents';
 export type { ImageAsset, UseImagePickerOptions } from './useImagePicker';
 export type { UseBarcodeOptions } from './useBarcodeScanner';
+export { useResponsive, useDeviceType, useIsTablet } from './useResponsive';
+export type {
+  DeviceType,
+  LayoutMode,
+  Breakpoints,
+  ResponsiveDimensions,
+} from './useResponsive';

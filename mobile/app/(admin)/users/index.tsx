@@ -14,8 +14,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
 import { getUsers, deleteUser } from '@/api/endpoints/users';
 import { User, UserListResponse } from '@/api/types';
-import { Loading } from '@/components/ui';
 import { useOptimisticMutation } from '@/hooks';
+import { UserListInlineSkeleton } from '@/components/skeletons';
+import { EmptyStateInline } from '@/components/shared';
 
 // Minimalist role labels
 const roleConfig: Record<string, string> = {
@@ -181,19 +182,19 @@ export default function UsersScreen() {
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.3}
         ListEmptyComponent={
-          !isLoading ? (
-            <View className="items-center py-20 px-10">
-              <Text className="text-muted-foreground font-black text-6xl mb-4">
-                👥
-              </Text>
-              <Text className="text-foreground font-bold text-lg text-center uppercase tracking-wide mb-2">
-                No Users Found
-              </Text>
-              <Text className="text-muted-foreground text-center text-sm">
-                Create users to manage your store.
-              </Text>
-            </View>
-          ) : null
+          isLoading && page === 1 ? (
+            <UserListInlineSkeleton count={6} />
+          ) : (
+            <EmptyStateInline
+              title="No Users Found"
+              message="Create users to manage your store."
+              icon="👥"
+              action={{
+                label: 'Create User',
+                onPress: () => router.push('/(admin)/users/create'),
+              }}
+            />
+          )
         }
         ListFooterComponent={
           allUsers.length > 0 ? (

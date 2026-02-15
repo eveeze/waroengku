@@ -88,7 +88,7 @@ export default function CreateCustomerScreen() {
         <ScrollView
           contentContainerStyle={{
             padding: 24,
-            paddingBottom: insets.bottom + 180,
+            paddingBottom: insets.bottom + 20,
           }}
           keyboardShouldPersistTaps="handled"
         >
@@ -109,6 +109,7 @@ export default function CreateCustomerScreen() {
                     onChangeText={onChange}
                     onBlur={onBlur}
                     error={errors.name?.message}
+                    className="rounded-none h-14"
                   />
                 </View>
               )}
@@ -126,6 +127,7 @@ export default function CreateCustomerScreen() {
                     onChangeText={onChange}
                     onBlur={onBlur}
                     keyboardType="phone-pad"
+                    className="rounded-none h-14"
                   />
                 </View>
               )}
@@ -172,6 +174,7 @@ export default function CreateCustomerScreen() {
                     <Text className="text-muted-foreground font-bold">Rp</Text>
                   }
                   helperText="Maximum debt allowed for this customer"
+                  className="rounded-none h-14"
                 />
               )}
             />
@@ -197,21 +200,16 @@ export default function CreateCustomerScreen() {
               )}
             />
           </View>
-        </ScrollView>
 
-        {/* Submit Button */}
-        <View
-          className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-4"
-          style={{ paddingBottom: insets.bottom + 90 }}
-        >
           <Button
             title="SAVE MEMBER"
             fullWidth
             size="lg"
             onPress={handleSubmit(onSubmit)}
             isLoading={isSubmitting}
+            className="mt-8 mb-8 h-14"
           />
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );

@@ -1,9 +1,11 @@
 import React from 'react';
 import { View, ViewProps, Text, TouchableOpacity } from 'react-native';
+import { useIsTablet } from '@/hooks/useResponsive';
 
 /**
  * Card Component
  * Reusable card container with optional header
+ * Responsive sizing for phones and tablets
  */
 
 interface CardAction {
@@ -27,6 +29,8 @@ export function Card({
   className,
   ...props
 }: CardProps) {
+  const isTablet = useIsTablet();
+
   return (
     <View
       className={`
@@ -37,15 +41,27 @@ export function Card({
       {...props}
     >
       {(title || subtitle || action || actions) && (
-        <View className="flex-row items-center justify-between px-5 py-4 border-b border-border">
+        <View
+          className={`flex-row items-center justify-between border-b border-border ${
+            isTablet ? 'px-6 py-5' : 'px-5 py-4'
+          }`}
+        >
           <View className="flex-1">
             {title && (
-              <Text className="text-xl font-heading font-black uppercase tracking-tight text-foreground">
+              <Text
+                className={`font-heading font-black uppercase tracking-tight text-foreground ${
+                  isTablet ? 'text-2xl' : 'text-xl'
+                }`}
+              >
                 {title}
               </Text>
             )}
             {subtitle && (
-              <Text className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground font-body mt-1">
+              <Text
+                className={`font-bold uppercase tracking-widest text-muted-foreground font-body mt-1 ${
+                  isTablet ? 'text-xs' : 'text-[10px]'
+                }`}
+              >
                 {subtitle}
               </Text>
             )}
@@ -55,9 +71,15 @@ export function Card({
               <TouchableOpacity
                 key={index}
                 onPress={item.onPress}
-                className="ml-3 px-3 py-1.5 bg-muted rounded-none border border-border"
+                className={`bg-muted rounded-none border border-border ${
+                  isTablet ? 'ml-4 px-4 py-2' : 'ml-3 px-3 py-1.5'
+                }`}
               >
-                <Text className="text-[10px] font-bold text-foreground uppercase tracking-widest font-heading">
+                <Text
+                  className={`font-bold text-foreground uppercase tracking-widest font-heading ${
+                    isTablet ? 'text-xs' : 'text-[10px]'
+                  }`}
+                >
                   {item.title}
                 </Text>
               </TouchableOpacity>
@@ -66,7 +88,7 @@ export function Card({
           </View>
         </View>
       )}
-      <View className="p-5">{children}</View>
+      <View className={isTablet ? 'p-6' : 'p-5'}>{children}</View>
     </View>
   );
 }

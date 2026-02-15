@@ -11,14 +11,18 @@ import {
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useResponsive } from '@/hooks/useResponsive';
 import { fetchWithCache } from '@/api/client';
 import { getCurrentSession } from '@/api/endpoints';
 import { DrawerSession, ApiResponse } from '@/api/types';
-import { Loading, Button } from '@/components/ui';
+import { Button } from '@/components/ui';
+import { CashFlowSkeleton } from '@/components/skeletons';
 
 export default function CashFlowScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { breakpoints, screenPadding } = useResponsive();
+  const isTablet = breakpoints.isTablet;
 
   const {
     data: response,
@@ -60,11 +64,7 @@ export default function CashFlowScreen() {
   };
 
   if (isLoading && !session) {
-    return (
-      <View className="flex-1 bg-background items-center justify-center">
-        <Loading message="Checking Register Status..." />
-      </View>
-    );
+    return <CashFlowSkeleton />;
   }
 
   const isOpen = session && session.status === 'open';
@@ -74,47 +74,65 @@ export default function CashFlowScreen() {
       <StatusBar barStyle="default" />
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-border flex-row justify-between items-end bg-background"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`border-b border-border flex-row justify-between items-end bg-background ${isTablet ? 'px-8 py-8' : 'px-6 py-6'}`}
+        style={{ paddingTop: insets.top + (isTablet ? 20 : 16) }}
       >
         <View>
-          <TouchableOpacity onPress={() => router.back()} className="mb-4">
-            <Text className="text-muted-foreground font-bold uppercase tracking-widest text-xs">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className={isTablet ? 'mb-5' : 'mb-4'}
+          >
+            <Text
+              className={`text-muted-foreground font-bold uppercase tracking-widest ${isTablet ? 'text-sm' : 'text-xs'}`}
+            >
               ← Back
             </Text>
           </TouchableOpacity>
-          <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-foreground">
+          <Text
+            className={`font-heading font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-4xl'}`}
+          >
             CASH REGISTER
           </Text>
         </View>
         <TouchableOpacity
           onPress={() => router.push('/(admin)/cash-flow/history')}
-          className="bg-muted px-4 py-2 rounded-full"
+          className={`bg-muted rounded-full ${isTablet ? 'px-5 py-3' : 'px-4 py-2'}`}
         >
-          <Text className="font-bold text-xs uppercase text-foreground">
+          <Text
+            className={`font-bold uppercase text-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+          >
             History
           </Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 24 }}
+        contentContainerStyle={{
+          padding: screenPadding,
+          maxWidth: isTablet ? 720 : undefined,
+          alignSelf: isTablet ? 'center' : undefined,
+          width: isTablet ? '100%' : undefined,
+        }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={refetch} />
         }
       >
         {/* Status Card */}
         <View
-          className={`p-6 rounded-2xl mb-8 ${isOpen ? 'bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-muted border border-border'}`}
+          className={`rounded-2xl ${isTablet ? 'p-8 mb-10' : 'p-6 mb-8'} ${isOpen ? 'bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-muted border border-border'}`}
         >
           <View className="flex-row justify-between items-center mb-4">
-            <Text className="font-bold uppercase tracking-widest text-muted-foreground text-xs">
+            <Text
+              className={`font-bold uppercase tracking-widest text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+            >
               Current Status
             </Text>
             <View
-              className={`px-3 py-1 rounded-full ${isOpen ? 'bg-green-500' : 'bg-muted'}`}
+              className={`rounded-full ${isTablet ? 'px-4 py-1.5' : 'px-3 py-1'} ${isOpen ? 'bg-green-500' : 'bg-muted'}`}
             >
-              <Text className="text-white dark:text-foreground text-[10px] font-black uppercase tracking-widest">
+              <Text
+                className={`text-white dark:text-foreground font-black uppercase tracking-widest ${isTablet ? 'text-xs' : 'text-[10px]'}`}
+              >
                 {isOpen ? 'OPEN' : 'CLOSED'}
               </Text>
             </View>
@@ -172,7 +190,9 @@ export default function CashFlowScreen() {
         </View>
 
         {/* Actions */}
-        <Text className="font-bold uppercase tracking-widest text-foreground text-xs mb-4">
+        <Text
+          className={`font-bold uppercase tracking-widest text-foreground mb-4 ${isTablet ? 'text-sm' : 'text-xs'}`}
+        >
           Actions
         </Text>
 

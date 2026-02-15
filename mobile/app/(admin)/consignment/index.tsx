@@ -10,13 +10,18 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
+import { useResponsive } from '@/hooks/useResponsive';
 import { fetchWithCache } from '@/api/client';
 import { Consignor, ApiResponse } from '@/api/types';
-import { Loading, Button } from '@/components/ui';
+import { Button } from '@/components/ui';
+import { ConsignmentListInlineSkeleton } from '@/components/skeletons';
+import { EmptyStateInline } from '@/components/shared';
 
 export default function ConsignorListScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { breakpoints, screenPadding } = useResponsive();
+  const isTablet = breakpoints.isTablet;
 
   const {
     data: response,
@@ -33,14 +38,18 @@ export default function ConsignorListScreen() {
   const renderItem = ({ item }: { item: Consignor }) => (
     <TouchableOpacity
       onPress={() => router.push(`/(admin)/consignment/${item.id}`)}
-      className="bg-card p-4 rounded-xl mb-3 border border-border"
+      className={`bg-card rounded-xl border border-border ${isTablet ? 'p-5 mb-4' : 'p-4 mb-3'}`}
     >
       <View className="flex-row justify-between items-start">
         <View>
-          <Text className="font-heading text-xl text-foreground uppercase tracking-tight">
+          <Text
+            className={`font-heading text-foreground uppercase tracking-tight ${isTablet ? 'text-2xl' : 'text-xl'}`}
+          >
             {item.name}
           </Text>
-          <Text className="text-muted-foreground text-xs font-bold mt-1">
+          <Text
+            className={`text-muted-foreground font-bold mt-1 ${isTablet ? 'text-sm' : 'text-xs'}`}
+          >
             {item.phone}
           </Text>
         </View>
@@ -48,7 +57,7 @@ export default function ConsignorListScreen() {
           className={`px-2 py-0.5 rounded-full ${item.is_active ? 'bg-green-100 dark:bg-green-900/20' : 'bg-muted'}`}
         >
           <Text
-            className={`text-[10px] font-bold uppercase ${item.is_active ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground'}`}
+            className={`font-bold uppercase ${item.is_active ? 'text-green-700 dark:text-green-400' : 'text-muted-foreground'} ${isTablet ? 'text-xs' : 'text-[10px]'}`}
           >
             {item.is_active ? 'Active' : 'Inactive'}
           </Text>
@@ -56,7 +65,9 @@ export default function ConsignorListScreen() {
       </View>
       {item.bank_name && (
         <View className="mt-2 pt-2 border-t border-border">
-          <Text className="text-muted-foreground text-xs">
+          <Text
+            className={`text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+          >
             {item.bank_name} - {item.bank_account}
           </Text>
         </View>
@@ -69,25 +80,34 @@ export default function ConsignorListScreen() {
       <StatusBar barStyle="default" />
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-border bg-background flex-row justify-between items-end"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`border-b border-border bg-background flex-row justify-between items-end ${isTablet ? 'px-8 py-8' : 'px-6 py-6'}`}
+        style={{ paddingTop: insets.top + (isTablet ? 20 : 16) }}
       >
         <View>
-          <TouchableOpacity onPress={() => router.back()} className="mb-4">
-            <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className={isTablet ? 'mb-5' : 'mb-4'}
+          >
+            <Text
+              className={`font-bold uppercase tracking-widest text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+            >
               ← Back
             </Text>
           </TouchableOpacity>
-          <Text className="text-4xl font-heading font-black uppercase tracking-tighter text-foreground">
+          <Text
+            className={`font-heading font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-4xl'}`}
+          >
             CONSIGNMENT
           </Text>
-          <Text className="text-muted-foreground text-xs font-bold mt-1 uppercase tracking-wide">
+          <Text
+            className={`text-muted-foreground font-bold mt-1 uppercase tracking-wide ${isTablet ? 'text-sm' : 'text-xs'}`}
+          >
             Manage Suppliers (Titip Jual)
           </Text>
         </View>
         <Button
           title="ADD NEW"
-          size="sm"
+          size={isTablet ? 'md' : 'sm'}
           onPress={() => router.push('/(admin)/consignment/create')}
         />
       </View>
@@ -96,7 +116,12 @@ export default function ConsignorListScreen() {
         data={consignors}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 24 }}
+        contentContainerStyle={{
+          padding: screenPadding,
+          maxWidth: isTablet ? 800 : undefined,
+          alignSelf: isTablet ? 'center' : undefined,
+          width: isTablet ? '100%' : undefined,
+        }}
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
@@ -105,13 +130,19 @@ export default function ConsignorListScreen() {
           />
         }
         ListEmptyComponent={
-          !isLoading ? (
-            <View className="items-center mt-10">
-              <Text className="text-muted-foreground font-bold">
-                No consignors found.
-              </Text>
-            </View>
-          ) : null
+          isLoading ? (
+            <ConsignmentListInlineSkeleton count={5} />
+          ) : (
+            <EmptyStateInline
+              title="No Consignors"
+              message="Add suppliers for consignment (titip jual)."
+              icon="🧳"
+              action={{
+                label: 'Add Consignor',
+                onPress: () => router.push('/(admin)/consignment/create'),
+              }}
+            />
+          )
         }
       />
     </View>

@@ -8,14 +8,20 @@ import {
   Alert,
   Platform,
   StatusBar,
+  useColorScheme,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/hooks/useAuth';
+import { useResponsive } from '@/hooks/useResponsive';
 import { useQuery } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
+import { getNotifications } from '@/api/endpoints';
 import { DashboardData } from '@/api/types';
-import { Loading } from '@/components/ui';
+import { Feather } from '@expo/vector-icons';
+import { DashboardSkeleton } from '@/components/skeletons';
+import { BOTTOM_NAV_HEIGHT } from '@/components/navigation/BottomTabBar';
 
 /**
  * Admin Dashboard Screen
@@ -25,11 +31,31 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, userName, logout } = useAuth();
+  const { breakpoints, gridColumns, getItemWidth, screenPadding, gap } =
+    useResponsive();
+  const isTablet = breakpoints.isTablet;
+  const { width } = useWindowDimensions();
+  const isSmallPhone = width < 360;
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  // Icon colors that work in both modes
+  const iconColor = isDark ? '#FAFAFA' : '#18181B';
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['/reports/dashboard'],
     queryFn: ({ queryKey }) => fetchWithCache<any>({ queryKey }),
   });
+
+  // Fetch notifications for unread count badge
+  const { data: notificationsData } = useQuery({
+    queryKey: ['/notifications'],
+    queryFn: () => getNotifications({ limit: 50 }),
+    refetchInterval: 60000, // Refresh every minute
+  });
+
+  const unreadNotifications =
+    notificationsData?.notifications?.filter((n) => !n.is_read).length ?? 0;
 
   // Data structure might be { success: true, data: {...} } or just {...} depending on backend.
   // fetchWithCache returns response.data (full body).
@@ -70,6 +96,11 @@ export default function DashboardScreen() {
   const outOfStockCount = dashboard?.out_of_stock_count ?? 0;
   const outstandingKasbon = dashboard?.total_outstanding_kasbon ?? 0;
 
+  // Show skeleton during initial load
+  if (isLoading && !dashboard) {
+    return <DashboardSkeleton />;
+  }
+
   return (
     <View className="flex-1 bg-background">
       <StatusBar barStyle="default" />
@@ -78,7 +109,7 @@ export default function DashboardScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingBottom: insets.bottom + 20,
+          paddingBottom: BOTTOM_NAV_HEIGHT + 16,
         }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={() => refetch()} />
@@ -86,24 +117,60 @@ export default function DashboardScreen() {
       >
         {/* Header Section */}
         <View
-          className="px-6 pb-6 bg-background"
-          style={{ paddingTop: insets.top + 20 }}
+          className={`bg-background ${isTablet ? 'px-8 pb-8' : isSmallPhone ? 'px-4 pb-4' : 'px-6 pb-6'}`}
+          style={{
+            paddingTop: insets.top + (isSmallPhone ? 12 : isTablet ? 24 : 16),
+          }}
         >
-          <View className="flex-row justify-between items-start mb-6">
-            <View>
-              <Text className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-1 font-body">
+          <View
+            className={`flex-row justify-between items-center ${isTablet ? 'mb-8' : isSmallPhone ? 'mb-3' : 'mb-5'}`}
+          >
+            <View className="flex-1 mr-3">
+              <Text
+                className={`font-bold uppercase tracking-[0.15em] text-muted-foreground mb-0.5 font-body ${isTablet ? 'text-xs' : 'text-[9px]'}`}
+              >
                 Welcome back,
               </Text>
-              <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
+              <Text
+                className={`font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : isSmallPhone ? 'text-2xl' : 'text-3xl'}`}
+                numberOfLines={1}
+              >
                 {userName}
               </Text>
             </View>
-            <TouchableOpacity
-              onPress={handleLogout}
-              className="w-10 h-10 items-center justify-center rounded-none bg-muted"
-            >
-              <Text className="text-lg text-foreground">→</Text>
-            </TouchableOpacity>
+            <View className="flex-row items-center gap-1.5">
+              <TouchableOpacity
+                onPress={() => router.push('/(admin)/notifications' as any)}
+                className={`items-center justify-center bg-muted relative ${isSmallPhone ? 'w-8 h-8' : 'w-10 h-10'}`}
+              >
+                <Feather
+                  name="bell"
+                  size={isSmallPhone ? 14 : 18}
+                  color={iconColor}
+                />
+                {unreadNotifications > 0 && (
+                  <View
+                    className={`absolute -top-1 -right-1 min-w-4 h-4 bg-destructive items-center justify-center ${isSmallPhone ? 'px-0.5' : 'px-1'}`}
+                  >
+                    <Text
+                      className={`font-bold text-destructive-foreground ${isSmallPhone ? 'text-[8px]' : 'text-[10px]'}`}
+                    >
+                      {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleLogout}
+                className={`items-center justify-center bg-muted ${isSmallPhone ? 'w-8 h-8' : 'w-10 h-10'}`}
+              >
+                <Feather
+                  name="log-out"
+                  size={isSmallPhone ? 14 : 18}
+                  color={iconColor}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Error Message */}
@@ -124,18 +191,28 @@ export default function DashboardScreen() {
           )}
 
           {/* Hero Metric: Today's Sales */}
-          <View className="py-2">
-            <Text className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2 font-body">
+          <View className={isTablet ? 'py-4' : isSmallPhone ? 'py-1' : 'py-2'}>
+            <Text
+              className={`font-bold uppercase tracking-[0.15em] text-muted-foreground mb-1 font-body ${isTablet ? 'text-xs' : isSmallPhone ? 'text-[8px]' : 'text-[10px]'}`}
+            >
               Today's Revenue
             </Text>
-            <Text className="text-6xl font-black tracking-tighter text-foreground leading-tight">
+            <Text
+              className={`font-black tracking-tighter text-foreground leading-tight ${isTablet ? 'text-7xl' : isSmallPhone ? 'text-4xl' : 'text-5xl'}`}
+            >
               {formatCurrency(todaySales)}
             </Text>
-            <View className="flex-row items-center gap-4 mt-2">
-              <Text className="text-sm font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-1 uppercase tracking-wide">
-                +{todayTransactions} Txns
+            <View
+              className={`flex-row items-center mt-1.5 ${isTablet ? 'gap-6' : isSmallPhone ? 'gap-2' : 'gap-3'}`}
+            >
+              <Text
+                className={`font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 uppercase tracking-wide ${isTablet ? 'text-base' : isSmallPhone ? 'text-[10px]' : 'text-xs'}`}
+              >
+                +{todayTransactions} Txn
               </Text>
-              <Text className="text-sm font-bold text-muted-foreground uppercase tracking-wide">
+              <Text
+                className={`font-bold text-muted-foreground uppercase tracking-wide ${isTablet ? 'text-base' : isSmallPhone ? 'text-[10px]' : 'text-xs'}`}
+              >
                 Profit: {formatCurrency(todayProfit)}
               </Text>
             </View>
@@ -192,8 +269,10 @@ export default function DashboardScreen() {
         )}
 
         {/* Main Navigation Grid */}
-        <View className="px-6 pb-6">
-          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
+        <View className={isTablet ? 'px-8 pb-8' : 'px-6 pb-6'}>
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground ${isTablet ? 'text-sm mb-6' : 'text-xs mb-4'}`}
+          >
             Quick Actions
           </Text>
 
@@ -201,36 +280,53 @@ export default function DashboardScreen() {
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={() => router.push('/(admin)/pos')}
-            className="mb-6 bg-foreground p-6 rounded-none relative overflow-hidden h-40 justify-between"
+            className={`bg-foreground rounded-none relative overflow-hidden justify-between ${isTablet ? 'mb-8 p-8 h-48' : 'mb-6 p-6 h-40'}`}
           >
             <View>
-              <Text className="text-background/60 font-bold uppercase tracking-widest text-xs mb-1">
+              <Text
+                className={`text-background/60 font-bold uppercase tracking-widest mb-1 ${isTablet ? 'text-sm' : 'text-xs'}`}
+              >
                 Point of Sale
               </Text>
-              <Text className="text-background font-black text-3xl tracking-tight">
+              <Text
+                className={`text-background font-black tracking-tight ${isTablet ? 'text-4xl' : 'text-3xl'}`}
+              >
                 OPEN CASHIER
               </Text>
             </View>
             <View className="flex-row items-center">
-              <Text className="text-background font-bold mr-2 uppercase tracking-widest text-xs">
+              <Text
+                className={`text-background font-bold mr-2 uppercase tracking-widest ${isTablet ? 'text-sm' : 'text-xs'}`}
+              >
                 Start Selling
               </Text>
-              <Text className="text-background text-lg">→</Text>
+              <Text
+                className={`text-background ${isTablet ? 'text-xl' : 'text-lg'}`}
+              >
+                →
+              </Text>
             </View>
           </TouchableOpacity>
 
-          <View className="flex-row flex-wrap gap-4">
+          <View
+            className={`flex-row flex-wrap ${isTablet ? 'gap-6' : 'gap-4'}`}
+          >
             {/* Products */}
             <TouchableOpacity
               onPress={() => router.push('/(admin)/products')}
-              className="flex-1 min-w-[140px] bg-muted p-5 aspect-square justify-between rounded-none"
+              style={{ width: isTablet ? '30%' : '47%' }}
+              className={`bg-muted aspect-square justify-between rounded-none ${isTablet ? 'p-6' : 'p-5'}`}
             >
-              <Text className="text-3xl">📦</Text>
+              <Feather name="box" size={isTablet ? 32 : 24} color={iconColor} />
               <View>
-                <Text className="font-heading text-lg text-foreground">
+                <Text
+                  className={`font-heading text-foreground ${isTablet ? 'text-xl' : 'text-lg'}`}
+                >
                   PRODUCTS
                 </Text>
-                <Text className="text-xs text-muted-foreground font-medium">
+                <Text
+                  className={`text-muted-foreground font-medium ${isTablet ? 'text-sm' : 'text-xs'}`}
+                >
                   Manage Inventory
                 </Text>
               </View>
@@ -239,14 +335,23 @@ export default function DashboardScreen() {
             {/* Customers */}
             <TouchableOpacity
               onPress={() => router.push('/(admin)/customers')}
-              className="flex-1 min-w-[140px] bg-muted p-5 aspect-square justify-between rounded-none"
+              style={{ width: isTablet ? '30%' : '47%' }}
+              className={`bg-muted aspect-square justify-between rounded-none ${isTablet ? 'p-6' : 'p-5'}`}
             >
-              <Text className="text-3xl">👥</Text>
+              <Feather
+                name="users"
+                size={isTablet ? 32 : 24}
+                color={iconColor}
+              />
               <View>
-                <Text className="font-heading text-lg text-foreground">
+                <Text
+                  className={`font-heading text-foreground ${isTablet ? 'text-xl' : 'text-lg'}`}
+                >
                   CUSTOMERS
                 </Text>
-                <Text className="text-xs text-muted-foreground font-medium">
+                <Text
+                  className={`text-muted-foreground font-medium ${isTablet ? 'text-sm' : 'text-xs'}`}
+                >
                   Manage Members
                 </Text>
               </View>
@@ -255,14 +360,23 @@ export default function DashboardScreen() {
             {/* Reports */}
             <TouchableOpacity
               onPress={() => router.push('/(admin)/reports')}
-              className="flex-1 min-w-[140px] bg-muted p-5 aspect-square justify-between rounded-none"
+              style={{ width: isTablet ? '30%' : '47%' }}
+              className={`bg-muted aspect-square justify-between rounded-none ${isTablet ? 'p-6' : 'p-5'}`}
             >
-              <Text className="text-3xl">📈</Text>
+              <Feather
+                name="bar-chart-2"
+                size={isTablet ? 32 : 24}
+                color={iconColor}
+              />
               <View>
-                <Text className="font-heading text-lg text-foreground">
+                <Text
+                  className={`font-heading text-foreground ${isTablet ? 'text-xl' : 'text-lg'}`}
+                >
                   REPORTS
                 </Text>
-                <Text className="text-xs text-muted-foreground font-medium">
+                <Text
+                  className={`text-muted-foreground font-medium ${isTablet ? 'text-sm' : 'text-xs'}`}
+                >
                   View Analytics
                 </Text>
               </View>
@@ -271,14 +385,23 @@ export default function DashboardScreen() {
             {/* Inventory */}
             <TouchableOpacity
               onPress={() => router.push('/(admin)/inventory')}
-              className="flex-1 min-w-[140px] bg-muted p-5 aspect-square justify-between rounded-none"
+              style={{ width: isTablet ? '30%' : '47%' }}
+              className={`bg-muted aspect-square justify-between rounded-none ${isTablet ? 'p-6' : 'p-5'}`}
             >
-              <Text className="text-3xl">🏭</Text>
+              <Feather
+                name="layers"
+                size={isTablet ? 32 : 24}
+                color={iconColor}
+              />
               <View>
-                <Text className="font-heading text-lg text-foreground">
+                <Text
+                  className={`font-heading text-foreground ${isTablet ? 'text-xl' : 'text-lg'}`}
+                >
                   INVENTORY
                 </Text>
-                <Text className="text-xs text-muted-foreground font-medium">
+                <Text
+                  className={`text-muted-foreground font-medium ${isTablet ? 'text-sm' : 'text-xs'}`}
+                >
                   Restock & Count
                 </Text>
               </View>

@@ -42,3 +42,6 @@ export * from './consignment';
 
 // Cash Flow
 export * from './cash_flow';
+
+// Notifications
+export * from './notifications';

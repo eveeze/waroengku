@@ -3,6 +3,15 @@ module.exports = {
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
+      // Responsive breakpoints
+      screens: {
+        xs: '320px',
+        sm: '375px',
+        md: '414px',
+        lg: '768px',
+        xl: '1024px',
+        '2xl': '1280px',
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

@@ -5,18 +5,29 @@ import {
   TouchableOpacity,
   RefreshControl,
   StatusBar,
+  useWindowDimensions,
+  useColorScheme,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
-import { getDashboard } from '@/api/endpoints/reports';
 import { DashboardData, ApiResponse } from '@/api/types';
-import { Loading } from '@/components/ui';
+import { ReportsSkeleton } from '@/components/skeletons';
+import { BOTTOM_NAV_HEIGHT } from '@/components/navigation/BottomTabBar';
 
 export default function ReportsHubScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { width } = useWindowDimensions();
+
+  // Responsive sizing
+  const isSmallPhone = width < 360;
+  const isTablet = width >= 768;
+  const colorScheme = useColorScheme();
+  const iconColor = colorScheme === 'dark' ? '#FAFAFA' : '#18181B';
+  const mutedIconColor = colorScheme === 'dark' ? '#A1A1AA' : '#71717A';
 
   const {
     data: response,
@@ -38,31 +49,88 @@ export default function ReportsHubScreen() {
     }).format(amount);
   };
 
-  const menuItems = [
+  const menuItems: {
+    title: string;
+    subtitle: string;
+    route: string;
+    icon: keyof typeof Feather.glyphMap;
+    value?: number;
+    isMoney?: boolean;
+    alert?: string | null;
+  }[] = [
     {
-      title: 'DAILY REPORT',
+      title: 'DAILY',
       subtitle: 'Sales & Transactions',
       route: '/(admin)/reports/daily',
-      icon: 'EARNINGS',
+      icon: 'calendar',
     },
     {
-      title: 'ACCOUNTS RECEIVABLE',
-      subtitle: 'Customer Debts (Kasbon)',
+      title: 'RECEIVABLE',
+      subtitle: 'Customer Debts',
       route: '/(admin)/reports/kasbon',
-      icon: 'DEBT',
+      icon: 'credit-card',
       value: dashboard?.total_outstanding_kasbon,
       isMoney: true,
     },
     {
-      title: 'INVENTORY VALUATION',
+      title: 'INVENTORY',
       subtitle: 'Stock Value & Low Stock',
       route: '/(admin)/reports/inventory',
-      icon: 'STOCK',
+      icon: 'package',
       alert: dashboard?.low_stock_count
-        ? `${dashboard.low_stock_count} LOW ITEM`
+        ? `${dashboard.low_stock_count} LOW`
         : null,
     },
   ];
+
+  // Responsive sizes
+  const headerSize = isTablet
+    ? 'text-5xl'
+    : isSmallPhone
+      ? 'text-2xl'
+      : 'text-3xl';
+  const backSize = isTablet
+    ? 'text-sm'
+    : isSmallPhone
+      ? 'text-[10px]'
+      : 'text-xs';
+  const heroSize = isTablet
+    ? 'text-6xl'
+    : isSmallPhone
+      ? 'text-4xl'
+      : 'text-5xl';
+  const labelSize = isTablet
+    ? 'text-sm'
+    : isSmallPhone
+      ? 'text-[10px]'
+      : 'text-xs';
+  const titleSize = isTablet
+    ? 'text-lg'
+    : isSmallPhone
+      ? 'text-sm'
+      : 'text-base';
+  const subtitleSize = isTablet
+    ? 'text-sm'
+    : isSmallPhone
+      ? 'text-[10px]'
+      : 'text-xs';
+  const valueSize = isTablet
+    ? 'text-2xl'
+    : isSmallPhone
+      ? 'text-lg'
+      : 'text-xl';
+  const headerPadding = isTablet
+    ? 'px-8 pb-6'
+    : isSmallPhone
+      ? 'px-4 pb-4'
+      : 'px-6 pb-5';
+  const screenPadding = isTablet ? 24 : isSmallPhone ? 12 : 16;
+  const iconSize = isTablet ? 24 : isSmallPhone ? 18 : 20;
+
+  // Show skeleton during initial load
+  if (isLoading && !dashboard) {
+    return <ReportsSkeleton />;
+  }
 
   return (
     <View className="flex-1 bg-background">
@@ -70,15 +138,24 @@ export default function ReportsHubScreen() {
 
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-border bg-background"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`border-b border-border bg-background ${headerPadding}`}
+        style={{
+          paddingTop: insets.top + (isSmallPhone ? 12 : isTablet ? 20 : 16),
+        }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isSmallPhone ? 'mb-2' : 'mb-3'}
+        >
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground ${backSize}`}
+          >
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
+        <Text
+          className={`font-black uppercase tracking-tighter text-foreground ${headerSize}`}
+        >
           REPORTS
         </Text>
       </View>
@@ -86,8 +163,11 @@ export default function ReportsHubScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          padding: 24,
-          paddingBottom: insets.bottom + 100,
+          padding: screenPadding,
+          paddingBottom: BOTTOM_NAV_HEIGHT + 20,
+          maxWidth: isTablet ? 800 : undefined,
+          alignSelf: isTablet ? 'center' : undefined,
+          width: isTablet ? '100%' : undefined,
         }}
         refreshControl={
           <RefreshControl
@@ -98,81 +178,93 @@ export default function ReportsHubScreen() {
         }
       >
         {/* Today Summary */}
-        <View className="mb-8 p-6 bg-foreground">
-          <Text className="text-background/60 text-xs font-bold uppercase tracking-widest mb-2">
-            Today's Performance
+        <View
+          className={`bg-foreground ${isTablet ? 'mb-8 p-6' : isSmallPhone ? 'mb-5 p-4' : 'mb-6 p-5'}`}
+        >
+          <Text
+            className={`text-background/60 font-bold uppercase tracking-widest mb-1 ${labelSize}`}
+          >
+            Today's Revenue
           </Text>
-          <Text className="text-4xl font-black text-background mb-4">
-            {dashboard?.today
-              ? formatCurrency(dashboard.today.total_sales)
-              : 'Rp 0'}
+          <Text
+            className={`text-background font-black tracking-tight ${heroSize}`}
+          >
+            {formatCurrency(dashboard?.today?.total_sales ?? 0)}
           </Text>
-
-          <View className="flex-row border-t border-background/20 pt-4">
-            <View className="flex-1">
-              <Text className="text-background/60 text-[10px] font-bold uppercase tracking-widest mb-1">
-                Transactions
-              </Text>
-              <Text className="text-background text-xl font-bold">
-                {dashboard?.today?.total_transactions || 0}
-              </Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-background/60 text-[10px] font-bold uppercase tracking-widest mb-1">
-                Est. Profit
-              </Text>
-              <Text className="text-green-400 text-xl font-bold">
-                {dashboard?.today
-                  ? formatCurrency(dashboard.today.estimated_profit)
-                  : 'Rp 0'}
-              </Text>
-            </View>
+          <View
+            className={`flex-row items-center mt-2 ${isTablet ? 'gap-4' : 'gap-3'}`}
+          >
+            <Text
+              className={`font-bold text-background/80 uppercase tracking-wide ${labelSize}`}
+            >
+              {dashboard?.today?.total_transactions ?? 0} Txns
+            </Text>
+            <Text className="text-background/40">•</Text>
+            <Text
+              className={`font-bold text-background/80 uppercase tracking-wide ${labelSize}`}
+            >
+              Profit: {formatCurrency(dashboard?.today?.estimated_profit ?? 0)}
+            </Text>
           </View>
         </View>
 
-        {/* Menu Grid */}
-        <View>
-          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
-            Analytics
-          </Text>
+        {/* Report Links */}
+        <View style={{ gap: isSmallPhone ? 8 : 12 }}>
           {menuItems.map((item, index) => (
             <TouchableOpacity
               key={index}
               onPress={() => router.push(item.route as any)}
-              className="mb-4 bg-background border border-border p-5 active:bg-muted"
+              className={`bg-muted border border-border flex-row items-center justify-between active:opacity-70 ${isTablet ? 'p-5' : isSmallPhone ? 'p-3' : 'p-4'}`}
             >
-              <View className="flex-row justify-between items-start mb-2">
-                <View className="bg-muted px-2 py-1">
-                  <Text className="text-[10px] font-black uppercase tracking-widest text-foreground">
-                    {item.icon}
+              <View
+                className="flex-row items-center flex-1"
+                style={{ gap: isSmallPhone ? 10 : 14 }}
+              >
+                <View
+                  className={`bg-background border border-border items-center justify-center ${isTablet ? 'w-12 h-12' : isSmallPhone ? 'w-9 h-9' : 'w-10 h-10'}`}
+                >
+                  <Feather name={item.icon} size={iconSize} color={iconColor} />
+                </View>
+                <View className="flex-1">
+                  <Text
+                    className={`font-bold text-foreground uppercase tracking-tight ${titleSize}`}
+                  >
+                    {item.title}
+                  </Text>
+                  <Text
+                    className={`text-muted-foreground font-medium ${subtitleSize}`}
+                    numberOfLines={1}
+                  >
+                    {item.subtitle}
                   </Text>
                 </View>
-                {/* Right Value or Arrow */}
-                {item.value !== undefined ? (
+              </View>
+
+              <View className="items-end ml-3">
+                {item.value !== undefined && (
                   <Text
-                    className={`font-bold ${item.title === 'ACCOUNTS RECEIVABLE' ? 'text-destructive' : 'text-foreground'}`}
+                    className={`font-black text-foreground tracking-tight ${valueSize}`}
                   >
                     {item.isMoney ? formatCurrency(item.value) : item.value}
                   </Text>
-                ) : (
-                  <Text className="text-muted-foreground font-bold">↗</Text>
+                )}
+                {item.alert && (
+                  <View className="bg-destructive/10 px-2 py-0.5 mt-1">
+                    <Text
+                      className={`text-destructive font-bold uppercase ${labelSize}`}
+                    >
+                      {item.alert}
+                    </Text>
+                  </View>
+                )}
+                {!item.value && !item.alert && (
+                  <Feather
+                    name="chevron-right"
+                    size={16}
+                    color={mutedIconColor}
+                  />
                 )}
               </View>
-
-              <Text className="text-lg font-black text-foreground uppercase tracking-tight mb-1">
-                {item.title}
-              </Text>
-              <Text className="text-xs text-muted-foreground font-medium">
-                {item.subtitle}
-              </Text>
-
-              {item.alert && (
-                <View className="mt-3 bg-red-100 dark:bg-red-900/30 self-start px-2 py-1">
-                  <Text className="text-[10px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wide">
-                    ⚠️ {item.alert}
-                  </Text>
-                </View>
-              )}
             </TouchableOpacity>
           ))}
         </View>
