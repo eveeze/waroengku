@@ -104,7 +104,7 @@ export default function ConsignorDetailScreen() {
           title="VIEW ASSOCIATED PRODUCTS"
           variant="outline"
           onPress={() => router.push(`/(admin)/products?consignor_id=${id}`)}
-          className="mb-4 rounded-none h-14"
+          className="mb-4 rounded-none"
           textClassName="font-bold tracking-widest"
         />
 
@@ -112,7 +112,7 @@ export default function ConsignorDetailScreen() {
           title="DELETE CONSIGNOR"
           variant="danger"
           onPress={handleDelete}
-          className="rounded-none h-14"
+          className="rounded-none"
           textClassName="font-bold tracking-widest"
         />
       </ScrollView>

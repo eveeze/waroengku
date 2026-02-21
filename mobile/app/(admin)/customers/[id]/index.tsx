@@ -57,14 +57,18 @@ export default function CustomerDetailScreen() {
   const customer = response?.data;
 
   const {
-    data: kasbonSummary,
+    data: kasbonSummaryResponse,
     isLoading: isLoadingKasbon,
     refetch: refetchKasbon,
   } = useQuery({
     queryKey: [`/kasbon/customers/${id}/summary`],
-    queryFn: ({ queryKey }) => fetchWithCache<KasbonSummary>({ queryKey }),
+    queryFn: ({ queryKey }) => fetchWithCache<any>({ queryKey }),
     enabled: !!id,
   });
+
+  const kasbonSummary = kasbonSummaryResponse?.data as
+    | KasbonSummary
+    | undefined;
 
   const isLoading = isLoadingCustomer || isLoadingKasbon;
 
@@ -104,12 +108,12 @@ export default function CustomerDetailScreen() {
     );
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | string) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0,
-    }).format(amount);
+    }).format(Number(amount) || 0);
   };
 
   if (isLoading && !customer) {

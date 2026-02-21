@@ -28,11 +28,13 @@ export default function RecordPaymentScreen() {
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
 
-  const { data: customer } = useQuery({
+  const { data: customerResponse } = useQuery({
     queryKey: [`/customers/${id}`],
-    queryFn: ({ queryKey }) => fetchWithCache<Customer>({ queryKey }),
+    queryFn: ({ queryKey }) => fetchWithCache<any>({ queryKey }),
     enabled: !!id,
   });
+
+  const customer = customerResponse?.data as Customer | undefined;
 
   const { data: summary } = useQuery({
     queryKey: [`/kasbon/customers/${id}/summary`],
@@ -101,12 +103,12 @@ export default function RecordPaymentScreen() {
     mutatePayment(amountNum);
   };
 
-  const formatCurrency = (val: number) => {
+  const formatCurrency = (val: number | string) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0,
-    }).format(val);
+    }).format(Number(val) || 0);
   };
 
   const setFullPayment = () => {

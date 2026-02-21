@@ -29,7 +29,7 @@ export const registerUserSchema = z.object({
     .string()
     .min(1, 'Password wajib diisi')
     .min(6, 'Password minimal 6 karakter'),
-  role: z.enum(['admin', 'cashier', 'inventory'], {
+  role: z.enum(['cashier', 'inventory'], {
     required_error: 'Role wajib dipilih',
   }),
 });

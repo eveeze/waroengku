@@ -207,7 +207,7 @@ export default function CreateCustomerScreen() {
             size="lg"
             onPress={handleSubmit(onSubmit)}
             isLoading={isSubmitting}
-            className="mt-8 mb-8 h-14"
+            className="mt-8 mb-8"
           />
         </ScrollView>
       </KeyboardAvoidingView>

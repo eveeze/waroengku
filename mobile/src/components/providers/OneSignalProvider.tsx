@@ -3,15 +3,23 @@
  * Best Practices Implementation for Android
  */
 import { useEffect, useRef } from 'react';
-import { Platform, AppState, AppStateStatus } from 'react-native';
+import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import {
-  LogLevel,
-  OneSignal,
-  NotificationClickEvent,
-  NotificationWillDisplayEvent,
-} from 'react-native-onesignal';
 import Constants from 'expo-constants';
+
+// Conditionally import OneSignal to avoid native module errors in Expo Go
+let OneSignal: any;
+let LogLevel: any;
+
+try {
+  if (Constants.appOwnership !== 'expo') {
+    const OneSignalPackage = require('react-native-onesignal');
+    OneSignal = OneSignalPackage.OneSignal;
+    LogLevel = OneSignalPackage.LogLevel;
+  }
+} catch (e) {
+  console.warn('[OneSignal] Failed to load react-native-onesignal:', e);
+}
 
 // Get OneSignal App ID from environment or constants
 const ONESIGNAL_APP_ID =
@@ -28,8 +36,18 @@ export function OneSignalProvider({ children }: OneSignalProviderProps) {
   const isInitialized = useRef(false);
 
   useEffect(() => {
-    // Only initialize once and only on native platforms
-    if (isInitialized.current || Platform.OS === 'web') {
+    // Skip if running in Expo Go or Web
+    const isExpoGo = Constants.appOwnership === 'expo';
+
+    if (isExpoGo || Platform.OS === 'web') {
+      if (!isInitialized.current) {
+        console.log('[OneSignal] Disabled in Expo Go/Web environment');
+        isInitialized.current = true;
+      }
+      return;
+    }
+
+    if (isInitialized.current || !OneSignal) {
       return;
     }
 
@@ -44,7 +62,7 @@ export function OneSignalProvider({ children }: OneSignalProviderProps) {
     isInitialized.current = true;
 
     // Enable verbose logging in development
-    if (__DEV__) {
+    if (__DEV__ && LogLevel) {
       OneSignal.Debug.setLogLevel(LogLevel.Verbose);
     }
 
@@ -55,49 +73,46 @@ export function OneSignalProvider({ children }: OneSignalProviderProps) {
     OneSignal.Notifications.requestPermission(true);
 
     // Handle notification clicks
-    OneSignal.Notifications.addEventListener(
-      'click',
-      (event: NotificationClickEvent) => {
-        console.log('[OneSignal] Notification clicked:', event);
+    OneSignal.Notifications.addEventListener('click', (event: any) => {
+      console.log('[OneSignal] Notification clicked:', event);
 
-        const data = event.notification.additionalData as Record<string, any>;
+      const data = event.notification.additionalData as Record<string, any>;
 
-        if (data) {
-          // Navigate based on notification type
-          switch (data.type) {
-            case 'low_stock':
-              if (data.product_id) {
-                router.push(`/(admin)/products/${data.product_id}` as any);
-              } else {
-                router.push('/(admin)/products' as any);
-              }
-              break;
+      if (data) {
+        // Navigate based on notification type
+        switch (data.type) {
+          case 'low_stock':
+            if (data.product_id) {
+              router.push(`/(admin)/products/${data.product_id}` as any);
+            } else {
+              router.push('/(admin)/products' as any);
+            }
+            break;
 
-            case 'new_transaction':
-              if (data.transaction_id) {
-                router.push(
-                  `/(admin)/transactions/${data.transaction_id}` as any,
-                );
-              } else {
-                router.push('/(admin)/transactions' as any);
-              }
-              break;
+          case 'new_transaction':
+            if (data.transaction_id) {
+              router.push(
+                `/(admin)/transactions/${data.transaction_id}` as any,
+              );
+            } else {
+              router.push('/(admin)/transactions' as any);
+            }
+            break;
 
-            default:
-              // Default: open notifications screen
-              router.push('/(admin)/notifications' as any);
-          }
-        } else {
-          // No data: open notifications screen
-          router.push('/(admin)/notifications' as any);
+          default:
+            // Default: open notifications screen
+            router.push('/(admin)/notifications' as any);
         }
-      },
-    );
+      } else {
+        // No data: open notifications screen
+        router.push('/(admin)/notifications' as any);
+      }
+    });
 
     // Handle foreground notifications (show in-app)
     OneSignal.Notifications.addEventListener(
       'foregroundWillDisplay',
-      (event: NotificationWillDisplayEvent) => {
+      (event: any) => {
         console.log('[OneSignal] Foreground notification:', event);
         // Display the notification (default behavior)
         event.preventDefault();
@@ -108,18 +123,20 @@ export function OneSignalProvider({ children }: OneSignalProviderProps) {
     // Log subscription changes
     OneSignal.User.pushSubscription.addEventListener(
       'change',
-      (subscription) => {
+      (subscription: any) => {
         console.log('[OneSignal] Subscription changed:', subscription);
       },
     );
 
     return () => {
       // Cleanup listeners
-      OneSignal.Notifications.removeEventListener('click', () => {});
-      OneSignal.Notifications.removeEventListener(
-        'foregroundWillDisplay',
-        () => {},
-      );
+      if (OneSignal) {
+        OneSignal.Notifications.removeEventListener('click', () => {});
+        OneSignal.Notifications.removeEventListener(
+          'foregroundWillDisplay',
+          () => {},
+        );
+      }
     };
   }, [router]);
 
@@ -131,7 +148,8 @@ export function OneSignalProvider({ children }: OneSignalProviderProps) {
  * Links notifications to your backend user ID
  */
 export const oneSignalLogin = (userId: string) => {
-  if (Platform.OS === 'web') return;
+  if (Platform.OS === 'web' || Constants.appOwnership === 'expo' || !OneSignal)
+    return;
 
   try {
     OneSignal.login(userId);
@@ -145,7 +163,8 @@ export const oneSignalLogin = (userId: string) => {
  * Logout user from OneSignal (call on logout)
  */
 export const oneSignalLogout = () => {
-  if (Platform.OS === 'web') return;
+  if (Platform.OS === 'web' || Constants.appOwnership === 'expo' || !OneSignal)
+    return;
 
   try {
     OneSignal.logout();
@@ -159,7 +178,8 @@ export const oneSignalLogout = () => {
  * Get current player/subscription ID
  */
 export const getOneSignalPlayerId = async (): Promise<string | null> => {
-  if (Platform.OS === 'web') return null;
+  if (Platform.OS === 'web' || Constants.appOwnership === 'expo' || !OneSignal)
+    return null;
 
   try {
     const id = await OneSignal.User.pushSubscription.getIdAsync();

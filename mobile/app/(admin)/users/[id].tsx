@@ -17,10 +17,8 @@ import { User, ApiResponse, UserListResponse } from '@/api/types';
 import { useOptimisticMutation } from '@/hooks';
 
 const roles = [
-  { value: 'admin', label: 'ADMIN' },
   { value: 'cashier', label: 'CASHIER' },
   { value: 'inventory', label: 'INVENTORY' },
-  { value: 'kitchen', label: 'GKITCHEN' },
 ];
 
 /**
@@ -248,7 +246,7 @@ export default function UserDetailScreen() {
                 title="SAVE NEW ROLE"
                 onPress={handleUpdateRole}
                 isLoading={isUpdating}
-                className="rounded-none h-14"
+                className="rounded-none"
                 textClassName="font-black tracking-widest text-lg"
               />
               <Text className="text-center text-[10px] text-muted-foreground mt-2 font-bold uppercase tracking-widest">
@@ -266,7 +264,7 @@ export default function UserDetailScreen() {
           <Button
             title="DELETE USER PERMANENTLY"
             variant="outline"
-            className="border-red-500 rounded-none h-14"
+            className="border-red-500 rounded-none"
             textClassName="text-red-500 font-bold tracking-widest"
             onPress={handleDelete}
             isLoading={isDeleting}

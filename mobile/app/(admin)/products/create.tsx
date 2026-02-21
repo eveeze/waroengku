@@ -607,7 +607,8 @@ export default function CreateProductScreen() {
             size="lg"
             onPress={handleSubmit(onSubmit)}
             isLoading={isSubmitting}
-            className="mt-6 mb-8 h-14"
+            className="mt-6 mb-8"
+            textClassName="font-black tracking-widest text-lg"
           />
         </ScrollView>
       </KeyboardAvoidingView>

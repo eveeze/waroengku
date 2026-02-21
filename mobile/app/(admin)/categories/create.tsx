@@ -44,7 +44,6 @@ export default function CreateCategoryScreen() {
     : isSmallPhone
       ? 'text-[10px]'
       : 'text-xs';
-  const inputHeight = isTablet ? 'h-14' : isSmallPhone ? 'h-10' : 'h-12';
   const headerPadding = isTablet
     ? 'px-8 pb-8'
     : isSmallPhone
@@ -71,7 +70,7 @@ export default function CreateCategoryScreen() {
       }),
     {
       queryKey: ['/categories'],
-      updater: (old: ApiResponse<Category[]> | undefined, newData) => {
+      updater: (old: Category[] | undefined, newData) => {
         const optimisticCategory: Category = {
           id: 'temp-' + Date.now(),
           name: newData.name,
@@ -85,17 +84,11 @@ export default function CreateCategoryScreen() {
 
         // If query hasn't run yet, initialize structure
         if (!old) {
-          return {
-            success: true,
-            data: [optimisticCategory],
-          };
+          return [optimisticCategory];
         }
 
         // Append to existing data list
-        return {
-          ...old,
-          data: [...old.data, optimisticCategory],
-        };
+        return [...old, optimisticCategory];
       },
       invalidates: true,
       onSuccess: () => {
@@ -173,7 +166,7 @@ export default function CreateCategoryScreen() {
                     onChangeText={onChange}
                     onBlur={onBlur}
                     error={errors.name?.message}
-                    className={`rounded-none bg-background border-border ${inputHeight}`}
+                    className="rounded-none bg-background border-border"
                     placeholderTextColor={mutedIconColor}
                   />
                 </View>
@@ -211,7 +204,7 @@ export default function CreateCategoryScreen() {
             fullWidth
             onPress={handleSubmit(onSubmit)}
             isLoading={isCreating}
-            className="rounded-none h-14 mt-6 mb-8"
+            className="rounded-none mt-6 mb-8"
             textClassName="font-black tracking-widest text-lg"
           />
         </ScrollView>

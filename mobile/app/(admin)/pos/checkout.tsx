@@ -140,7 +140,7 @@ export default function CheckoutScreen() {
       {/* Scrollable Content */}
       <ScrollView
         contentContainerStyle={{
-          paddingBottom: 120,
+          paddingBottom: insets.bottom + 20,
           maxWidth: isTablet ? 720 : undefined,
           alignSelf: isTablet ? 'center' : undefined,
           width: isTablet ? '100%' : undefined,
@@ -354,23 +354,18 @@ export default function CheckoutScreen() {
               onChangeText={setNotes}
             />
           </View>
+
+          <Button
+            title={`PAY ${formatCurrency(totalAmount)}`}
+            fullWidth
+            size="lg"
+            onPress={handleProcessPayment}
+            isLoading={isSubmitting}
+            disabled={isInsufficient}
+            className="mt-10 mb-8"
+          />
         </View>
       </ScrollView>
-
-      {/* Floating Action Button */}
-      <View
-        className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-4"
-        style={{ paddingBottom: insets.bottom + 12 }}
-      >
-        <Button
-          title={`PAY ${formatCurrency(totalAmount)}`}
-          fullWidth
-          size="lg"
-          onPress={handleProcessPayment}
-          isLoading={isSubmitting}
-          disabled={isInsufficient}
-        />
-      </View>
 
       {/* Customer Modal */}
       <Modal

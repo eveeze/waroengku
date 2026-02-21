@@ -132,7 +132,7 @@ export default function CreateConsignorScreen() {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.name?.message}
-                className="rounded-none h-14"
+                className="rounded-none"
               />
             )}
           />
@@ -151,7 +151,7 @@ export default function CreateConsignorScreen() {
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={errors.phone?.message}
-                className="rounded-none h-14"
+                className="rounded-none"
               />
             )}
           />
@@ -199,7 +199,7 @@ export default function CreateConsignorScreen() {
             onPress={handleSubmit(onSubmit)}
             isLoading={isPending}
             size="lg"
-            className="rounded-none h-14 mt-6 mb-8"
+            className="rounded-none mt-6 mb-8"
             textClassName="font-black tracking-widest text-lg"
           />
         </ScrollView>

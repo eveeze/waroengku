@@ -74,41 +74,44 @@ export default function CashFlowScreen() {
       <StatusBar barStyle="default" />
       {/* Header */}
       <View
-        className={`border-b border-border flex-row justify-between items-end bg-background ${isTablet ? 'px-8 py-8' : 'px-6 py-6'}`}
+        className={`border-b border-border bg-background ${isTablet ? 'px-8 py-8' : 'px-6 py-6'}`}
         style={{ paddingTop: insets.top + (isTablet ? 20 : 16) }}
       >
-        <View>
+        <View className="flex-row justify-between items-end">
+          <View>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              className={isTablet ? 'mb-4' : 'mb-3'}
+            >
+              <Text
+                className={`font-bold uppercase tracking-widest text-muted-foreground font-body ${isTablet ? 'text-xs' : 'text-[10px]'}`}
+              >
+                ← BACK
+              </Text>
+            </TouchableOpacity>
+            <Text
+              className={`font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-3xl'}`}
+            >
+              CASH REGISTER
+            </Text>
+          </View>
           <TouchableOpacity
-            onPress={() => router.back()}
-            className={isTablet ? 'mb-5' : 'mb-4'}
+            onPress={() => router.push('/(admin)/cash-flow/history')}
+            className={`border border-border items-center justify-center ${isTablet ? 'px-5 py-3' : 'px-4 py-2'}`}
           >
             <Text
-              className={`text-muted-foreground font-bold uppercase tracking-widest ${isTablet ? 'text-sm' : 'text-xs'}`}
+              className={`font-bold uppercase tracking-widest text-foreground font-body ${isTablet ? 'text-xs' : 'text-[10px]'}`}
             >
-              ← Back
+              HISTORY
             </Text>
           </TouchableOpacity>
-          <Text
-            className={`font-heading font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-4xl'}`}
-          >
-            CASH REGISTER
-          </Text>
         </View>
-        <TouchableOpacity
-          onPress={() => router.push('/(admin)/cash-flow/history')}
-          className={`bg-muted rounded-full ${isTablet ? 'px-5 py-3' : 'px-4 py-2'}`}
-        >
-          <Text
-            className={`font-bold uppercase text-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
-          >
-            History
-          </Text>
-        </TouchableOpacity>
       </View>
 
       <ScrollView
         contentContainerStyle={{
-          padding: screenPadding,
+          padding: isTablet ? 32 : 24,
+          paddingBottom: insets.bottom + 40,
           maxWidth: isTablet ? 720 : undefined,
           alignSelf: isTablet ? 'center' : undefined,
           width: isTablet ? '100%' : undefined,
@@ -119,19 +122,19 @@ export default function CashFlowScreen() {
       >
         {/* Status Card */}
         <View
-          className={`rounded-2xl ${isTablet ? 'p-8 mb-10' : 'p-6 mb-8'} ${isOpen ? 'bg-green-50 border border-green-200 dark:bg-green-900/20 dark:border-green-800' : 'bg-muted border border-border'}`}
+          className={`border border-border ${isTablet ? 'p-8 mb-10' : 'p-6 mb-8'} ${isOpen ? 'bg-muted/10' : 'bg-muted/30'}`}
         >
-          <View className="flex-row justify-between items-center mb-4">
+          <View className="flex-row justify-between items-center mb-6 border-b border-border pb-4">
             <Text
-              className={`font-bold uppercase tracking-widest text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+              className={`font-bold uppercase tracking-widest text-muted-foreground font-body ${isTablet ? 'text-xs' : 'text-[10px]'}`}
             >
-              Current Status
+              CURRENT STATUS
             </Text>
             <View
-              className={`rounded-full ${isTablet ? 'px-4 py-1.5' : 'px-3 py-1'} ${isOpen ? 'bg-green-500' : 'bg-muted'}`}
+              className={`border items-center justify-center px-3 py-1 ${isOpen ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-muted border-border'}`}
             >
               <Text
-                className={`text-white dark:text-foreground font-black uppercase tracking-widest ${isTablet ? 'text-xs' : 'text-[10px]'}`}
+                className={`font-black uppercase tracking-widest ${isTablet ? 'text-[10px]' : 'text-[9px]'} ${isOpen ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}
               >
                 {isOpen ? 'OPEN' : 'CLOSED'}
               </Text>
@@ -140,50 +143,56 @@ export default function CashFlowScreen() {
 
           {isOpen ? (
             <View>
-              <Text className="text-5xl font-heading text-foreground mb-1">
+              <Text
+                className={`font-black text-foreground tracking-tighter mb-1 ${isTablet ? 'text-6xl' : 'text-4xl'}`}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
                 {formatCurrency(
                   session.actual_balance || session.opening_balance,
                 )}
               </Text>
-              <Text className="text-xs font-bold text-muted-foreground text-right">
-                Est. Cash in Drawer
+              <Text
+                className={`font-bold uppercase tracking-widest text-muted-foreground font-body ${isTablet ? 'text-xs mt-2' : 'text-[10px] mt-1'}`}
+              >
+                EST. CASH IN DRAWER
               </Text>
 
-              <View className="mt-6 pt-6 border-t border-green-200 dark:border-green-800">
-                <View className="flex-row justify-between mb-2">
-                  <Text className="text-muted-foreground font-medium">
-                    Opening Balance
+              <View className="mt-8 pt-6 border-t border-border gap-4">
+                <View className="flex-row justify-between items-baseline">
+                  <Text className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    OPENING BALANCE
                   </Text>
-                  <Text className="font-bold text-foreground">
+                  <Text className="text-sm font-black text-foreground">
                     {formatCurrency(session.opening_balance)}
                   </Text>
                 </View>
-                <View className="flex-row justify-between mb-2">
-                  <Text className="text-muted-foreground font-medium">
-                    Opened At
+                <View className="flex-row justify-between items-baseline">
+                  <Text className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    OPENED AT
                   </Text>
-                  <Text className="font-bold text-foreground text-xs">
-                    {formatDate(session.opened_at)}
+                  <Text className="text-xs font-bold text-foreground">
+                    {formatDate(session.opened_at).toUpperCase()}
                   </Text>
                 </View>
-                <View className="flex-row justify-between">
-                  <Text className="text-muted-foreground font-medium">
-                    Opened By
+                <View className="flex-row justify-between items-baseline">
+                  <Text className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    OPENED BY
                   </Text>
-                  <Text className="font-bold text-foreground">
+                  <Text className="text-sm font-black text-foreground uppercase">
                     {session.opened_by}
                   </Text>
                 </View>
               </View>
             </View>
           ) : (
-            <View className="items-center py-4">
-              <Text className="text-lg font-bold text-foreground mb-2">
-                Register is Closed
+            <View className="items-center py-6">
+              <Text className="text-xl font-black uppercase tracking-tight text-foreground mb-3">
+                REGISTER IS CLOSED
               </Text>
-              <Text className="text-muted-foreground text-center">
-                Open the register to start processing transactions and recording
-                cash flow.
+              <Text className="text-xs font-bold uppercase tracking-wide text-muted-foreground text-center leading-relaxed px-4">
+                OPEN THE REGISTER TO START PROCESSING TRANSACTIONS AND RECORDING
+                CASH FLOW.
               </Text>
             </View>
           )}
@@ -191,29 +200,36 @@ export default function CashFlowScreen() {
 
         {/* Actions */}
         <Text
-          className={`font-bold uppercase tracking-widest text-foreground mb-4 ${isTablet ? 'text-sm' : 'text-xs'}`}
+          className={`font-bold uppercase tracking-widest text-muted-foreground mb-6 font-body ${isTablet ? 'text-xs' : 'text-[10px]'}`}
         >
-          Actions
+          QUICK ACTIONS
         </Text>
 
         <View className="gap-4">
           {!isOpen ? (
             <Button
               title="OPEN REGISTER"
-              size="lg"
+              fullWidth
               onPress={() => router.push('/(admin)/cash-flow/open')}
+              className="rounded-none mt-2"
+              textClassName="font-black tracking-widest text-lg"
             />
           ) : (
             <>
               <Button
                 title="RECORD EXPENSE / IN"
                 variant="outline"
+                fullWidth
                 onPress={() => router.push('/(admin)/cash-flow/record')}
+                className="rounded-none"
+                textClassName="font-black tracking-widest"
               />
               <Button
                 title="CLOSE REGISTER"
                 variant="danger"
-                className="mt-4"
+                fullWidth
+                className="rounded-none mt-4"
+                textClassName="font-black tracking-widest"
                 onPress={() => router.push('/(admin)/cash-flow/close')}
               />
             </>

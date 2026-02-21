@@ -55,8 +55,8 @@ export const Input = forwardRef<RNTextInput, InputProps>(
           <RNTextInput
             ref={ref}
             className={`
-              flex-1 font-bold text-foreground font-heading
-              ${isTablet ? 'py-4 text-lg' : 'py-3.5 text-base'}
+              flex-1 font-black text-foreground font-heading
+              ${isTablet ? 'py-5 text-2xl' : 'py-4 text-xl'}
               ${className || ''}
             `}
             placeholderTextColor="hsl(var(--muted-foreground))"

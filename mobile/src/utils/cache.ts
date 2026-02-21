@@ -14,11 +14,19 @@ export const apiCache = {
    * Generate cache key from URL and params
    */
   getKey: (url: string, params?: any): string => {
-    const sortedParams = params
-      ? Object.keys(params)
+    let sortedParams = {};
+    if (params && typeof params === 'object') {
+      try {
+        sortedParams = Object.keys(params)
           .sort()
-          .reduce((r: any, k) => ((r[k] = params[k]), r), {})
-      : {};
+          .reduce((r: any, k) => ((r[k] = params[k]), r), {});
+      } catch (e) {
+        sortedParams = params;
+      }
+    } else if (params) {
+      sortedParams = { value: params };
+    }
+
     return `${CACHE_PREFIX}${url}_${JSON.stringify(sortedParams)}`;
   },
 

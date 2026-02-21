@@ -66,18 +66,18 @@ const phoneSizeStyles: Record<
   { container: string; text: string; icon: string }
 > = {
   sm: {
-    container: 'px-4 py-2 rounded-sm',
-    text: 'text-sm font-medium tracking-tight',
+    container: 'px-4 py-2.5 rounded-sm',
+    text: 'text-sm font-bold tracking-tight uppercase',
     icon: 'mr-1.5',
   },
   md: {
-    container: 'px-5 py-3 rounded-md',
-    text: 'text-base font-semibold tracking-tight',
+    container: 'px-6 py-4 rounded-md',
+    text: 'text-lg font-black tracking-widest uppercase',
     icon: 'mr-2',
   },
   lg: {
-    container: 'px-8 py-4 rounded-lg',
-    text: 'text-lg font-bold tracking-tight',
+    container: 'px-8 py-5 rounded-lg',
+    text: 'text-xl font-black tracking-widest uppercase',
     icon: 'mr-3',
   },
 };
@@ -88,18 +88,18 @@ const tabletSizeStyles: Record<
   { container: string; text: string; icon: string }
 > = {
   sm: {
-    container: 'px-5 py-2.5 rounded-sm',
-    text: 'text-base font-medium tracking-tight',
+    container: 'px-6 py-3 rounded-sm',
+    text: 'text-base font-bold tracking-tight uppercase',
     icon: 'mr-2',
   },
   md: {
-    container: 'px-6 py-3.5 rounded-md',
-    text: 'text-lg font-semibold tracking-tight',
+    container: 'px-8 py-5 rounded-md',
+    text: 'text-xl font-black tracking-widest uppercase',
     icon: 'mr-2.5',
   },
   lg: {
-    container: 'px-10 py-5 rounded-lg',
-    text: 'text-xl font-bold tracking-tight',
+    container: 'px-12 py-6 rounded-lg',
+    text: 'text-2xl font-black tracking-widest uppercase',
     icon: 'mr-3',
   },
 };

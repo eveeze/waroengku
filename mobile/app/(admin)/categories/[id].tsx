@@ -113,12 +113,9 @@ export default function CategoryDetailScreen() {
     async () => deleteCategory(id!),
     {
       queryKey: ['/categories'],
-      updater: (old: ApiResponse<Category[]> | undefined) => {
+      updater: (old: Category[] | undefined) => {
         if (!old) return old;
-        return {
-          ...old,
-          data: old.data.filter((c) => c.id !== id),
-        };
+        return old.filter((c) => c.id !== id);
       },
       onSuccess: () => {
         Alert.alert('Berhasil', 'Kategori berhasil dihapus');
@@ -172,7 +169,6 @@ export default function CategoryDetailScreen() {
     : isSmallPhone
       ? 'text-[10px]'
       : 'text-xs';
-  const inputHeight = isTablet ? 'h-14' : isSmallPhone ? 'h-10' : 'h-12';
   const headerPadding = isTablet
     ? 'px-8 pb-8'
     : isSmallPhone
@@ -234,7 +230,7 @@ export default function CategoryDetailScreen() {
                   placeholder="ENTER CATEGORY NAME"
                   value={name}
                   onChangeText={setName}
-                  className={`rounded-none bg-background border-border ${inputHeight}`}
+                  className="rounded-none bg-background border-border"
                   placeholderTextColor={mutedIconColor}
                 />
               </View>
@@ -286,7 +282,7 @@ export default function CategoryDetailScreen() {
           <Button
             title="DELETE CATEGORY"
             variant="outline"
-            className="border-destructive/50 rounded-none h-12"
+            className="border-destructive/50 rounded-none"
             textClassName="text-destructive font-bold tracking-widest"
             fullWidth
             onPress={handleDelete}
@@ -297,7 +293,7 @@ export default function CategoryDetailScreen() {
             fullWidth
             onPress={handleSubmit}
             isLoading={isUpdating}
-            className="rounded-none h-14 mt-6 mb-8"
+            className="rounded-none mt-6 mb-8"
             textClassName="font-black tracking-widest text-lg"
           />
         </ScrollView>

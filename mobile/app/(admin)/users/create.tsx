@@ -19,10 +19,8 @@ import { useOptimisticMutation } from '@/hooks';
 import { User, UserListResponse } from '@/api/types';
 
 const roles = [
-  { value: 'admin', label: 'Admin', description: 'Full access + Management' },
   { value: 'cashier', label: 'Cashier', description: 'POS & Transactions' },
   { value: 'inventory', label: 'Inventory', description: 'Stock & Products' },
-  { value: 'kitchen', label: 'Kitchen', description: 'Order Prep' },
 ];
 
 export default function CreateUserScreen() {
@@ -111,7 +109,7 @@ export default function CreateUserScreen() {
         <ScrollView
           contentContainerStyle={{
             padding: 24,
-            paddingBottom: insets.bottom + 180,
+            paddingBottom: insets.bottom + 20,
           }}
           keyboardShouldPersistTaps="handled"
         >
@@ -217,20 +215,16 @@ export default function CreateUserScreen() {
               )}
             />
           </View>
-        </ScrollView>
 
-        <View
-          className="absolute bottom-0 left-0 right-0 bg-background border-t border-border px-6 py-4"
-          style={{ paddingBottom: insets.bottom + 90 }}
-        >
           <Button
             title="SIMPAN AKUN USER"
             fullWidth
             size="lg"
             onPress={handleSubmit(onSubmit)}
             isLoading={isSubmitting}
+            className="mt-6 mb-8"
           />
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );

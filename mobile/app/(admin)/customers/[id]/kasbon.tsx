@@ -28,11 +28,13 @@ export default function KasbonHistoryScreen() {
 
   const [filter, setFilter] = useState<'all' | 'debt' | 'payment'>('all');
 
-  const { data: customer } = useQuery({
+  const { data: customerResponse } = useQuery({
     queryKey: [`/customers/${id}`],
-    queryFn: ({ queryKey }) => fetchWithCache<Customer>({ queryKey }),
+    queryFn: ({ queryKey }) => fetchWithCache<any>({ queryKey }),
     enabled: !!id,
   });
+
+  const customer = customerResponse?.data as Customer | undefined;
 
   const { data: summary } = useQuery({
     queryKey: [`/kasbon/customers/${id}/summary`],
@@ -88,12 +90,12 @@ export default function KasbonHistoryScreen() {
     setFilter(newFilter);
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | string) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
       minimumFractionDigits: 0,
-    }).format(amount);
+    }).format(Number(amount) || 0);
   };
 
   const formatDate = (dateStr: string) => {
@@ -107,6 +109,8 @@ export default function KasbonHistoryScreen() {
   };
 
   const renderEntry = ({ item }: { item: KasbonEntry }) => {
+    if (!item) return null;
+
     const isDebt = item.type === 'debt';
     return (
       <View className="mb-3 p-4 bg-secondary border border-border rounded-xl">
@@ -217,7 +221,7 @@ export default function KasbonHistoryScreen() {
       <FlatList
         data={entries}
         renderItem={renderEntry}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item?.id || `fallback-key-${index}`}
         contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />

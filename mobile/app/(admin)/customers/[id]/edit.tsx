@@ -39,11 +39,14 @@ export default function EditCustomerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const { data: customer, isLoading } = useQuery({
+  const { data: customerResponse, isLoading } = useQuery({
     queryKey: [`/customers/${id}`],
-    queryFn: ({ queryKey }) => fetchWithCache<Customer>({ queryKey }),
+    // The API returns an ApiResponse, so we type it as such or extract .data later
+    queryFn: ({ queryKey }) => fetchWithCache<any>({ queryKey }),
     enabled: !!id,
   });
+
+  const customer = customerResponse?.data as Customer | undefined;
 
   const {
     control,
@@ -90,17 +93,20 @@ export default function EditCustomerScreen() {
       }),
     {
       queryKey: [`/customers/${id}`],
-      updater: (old: Customer | undefined, newData: FormData) => {
-        if (!old) return undefined; // Should not happen if data loaded
+      updater: (old: any | undefined, newData: FormData) => {
+        if (!old || !old.data) return old;
         return {
           ...old,
-          name: newData.name,
-          phone: newData.phone || undefined,
-          address: newData.address || undefined,
-          notes: newData.notes || undefined,
-          credit_limit: Number(newData.credit_limit) || 0,
-          is_active: newData.is_active,
-        } as Customer;
+          data: {
+            ...old.data,
+            name: newData.name,
+            phone: newData.phone || undefined,
+            address: newData.address || undefined,
+            notes: newData.notes || undefined,
+            credit_limit: Number(newData.credit_limit) || 0,
+            is_active: newData.is_active,
+          },
+        };
       },
       onSuccess: () => {
         Alert.alert('SUCCESS', 'Customer updated successfully');
@@ -266,7 +272,7 @@ export default function EditCustomerScreen() {
             size="lg"
             onPress={handleSubmit(onSubmit)}
             isLoading={isUpdating}
-            className="rounded-none h-14"
+            className="rounded-none"
             textClassName="font-black tracking-widest text-lg"
           />
         </ScrollView>

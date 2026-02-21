@@ -51,12 +51,9 @@ export default function CategoriesScreen() {
     async (id: string) => deleteCategory(id),
     {
       queryKey: ['/categories'],
-      updater: (old: ApiResponse<Category[]> | undefined, id: string) => {
+      updater: (old: Category[] | undefined, id: string) => {
         if (!old) return old;
-        return {
-          ...old,
-          data: old.data.filter((c) => c.id !== id),
-        };
+        return old.filter((c) => c.id !== id);
       },
       onSuccess: () => {
         Alert.alert('SUCCESS', 'Category deleted successfully');
