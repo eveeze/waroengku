@@ -51,6 +51,7 @@ export default function CustomersScreen() {
         per_page: 20,
         search: params?.search || undefined,
         has_debt: params?.showDebtOnly || undefined,
+        is_active: true, // Only fetch active customers
       });
     },
     initialPageParam: 1,

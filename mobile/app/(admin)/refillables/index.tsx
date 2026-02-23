@@ -37,9 +37,10 @@ export default function RefillablesScreen() {
       className={`bg-muted rounded-none border border-border ${isTablet ? 'p-6 mb-5' : 'p-5 mb-4'}`}
     >
       <View
-        className={`flex-row justify-between items-start ${isTablet ? 'mb-8' : 'mb-6'}`}
+        className={`flex-row justify-between items-center ${isTablet ? 'mb-8' : 'mb-6'}`}
       >
         <TouchableOpacity
+          className="flex-1 pr-4"
           onPress={() =>
             router.push({
               pathname: '/(admin)/refillables/[id]/movements',
@@ -49,11 +50,14 @@ export default function RefillablesScreen() {
         >
           <Text
             className={`font-heading text-foreground uppercase tracking-tighter font-black ${isTablet ? 'text-3xl' : 'text-2xl'}`}
+            numberOfLines={1}
+            adjustsFontSizeToFit
           >
             {item.container_type}
           </Text>
           <Text
             className={`text-muted-foreground font-bold mt-1 uppercase tracking-widest ${isTablet ? 'text-xs' : 'text-[10px]'}`}
+            numberOfLines={1}
           >
             Ref: {item.id.substring(0, 8)} • Tap for History
           </Text>
@@ -62,6 +66,8 @@ export default function RefillablesScreen() {
           title="ADJUST STOCK"
           size={isTablet ? 'md' : 'sm'}
           variant="outline"
+          className="flex-shrink-0"
+          textClassName={isTablet ? '' : 'text-[10px]'}
           onPress={() =>
             router.push({
               pathname: '/(admin)/refillables/adjust',
@@ -117,32 +123,40 @@ export default function RefillablesScreen() {
         className={`border-b border-border bg-background ${isTablet ? 'px-8 py-8' : 'px-6 py-6'}`}
         style={{ paddingTop: insets.top + (isTablet ? 20 : 16) }}
       >
-        <View
-          className={`flex-row justify-between items-center ${isTablet ? 'mb-5' : 'mb-4'}`}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isTablet ? 'mb-5' : 'mb-4'}
         >
-          <TouchableOpacity onPress={() => router.back()}>
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+          >
+            ← BACK
+          </Text>
+        </TouchableOpacity>
+
+        <View className="flex-row justify-between items-center">
+          <View className="flex-1 pr-4">
             <Text
-              className={`font-bold uppercase tracking-widest text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+              className={`font-heading font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-3xl'}`}
+              numberOfLines={1}
+              adjustsFontSizeToFit
             >
-              ← Back
+              REFILLABLES
             </Text>
-          </TouchableOpacity>
+            <Text
+              className={`text-muted-foreground font-bold mt-1 uppercase tracking-widest ${isTablet ? 'text-sm' : 'text-[10px]'}`}
+            >
+              Track Gallons & Gas
+            </Text>
+          </View>
           <Button
-            title="+ NEW CONTAINER"
+            title="+ NEW"
             size={isTablet ? 'md' : 'sm'}
+            className="rounded-full px-5 bg-foreground items-center justify-center flex-shrink-0"
+            textClassName="text-background font-black tracking-widest"
             onPress={() => router.push('/(admin)/refillables/create')}
           />
         </View>
-        <Text
-          className={`font-heading font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-4xl'}`}
-        >
-          REFILLABLES
-        </Text>
-        <Text
-          className={`text-muted-foreground font-bold mt-1 uppercase tracking-widest ${isTablet ? 'text-sm' : 'text-xs'}`}
-        >
-          Track Gallons & Gas Cylinders
-        </Text>
       </View>
 
       <FlatList

@@ -221,7 +221,7 @@ export default function KasbonHistoryScreen() {
       <FlatList
         data={entries}
         renderItem={renderEntry}
-        keyExtractor={(item, index) => item?.id || `fallback-key-${index}`}
+        keyExtractor={(item, index) => item?.id || index.toString()}
         contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />

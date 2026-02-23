@@ -14,6 +14,7 @@ export default function CustomerDetailLayout() {
       <Stack.Screen name="edit" />
       <Stack.Screen name="kasbon" />
       <Stack.Screen name="payment" />
+      <Stack.Screen name="transactions" />
     </Stack>
   );
 }

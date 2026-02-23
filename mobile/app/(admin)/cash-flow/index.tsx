@@ -77,30 +77,38 @@ export default function CashFlowScreen() {
         className={`border-b border-border bg-background ${isTablet ? 'px-8 py-8' : 'px-6 py-6'}`}
         style={{ paddingTop: insets.top + (isTablet ? 20 : 16) }}
       >
-        <View className="flex-row justify-between items-end">
-          <View>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              className={isTablet ? 'mb-4' : 'mb-3'}
-            >
-              <Text
-                className={`font-bold uppercase tracking-widest text-muted-foreground font-body ${isTablet ? 'text-xs' : 'text-[10px]'}`}
-              >
-                ← BACK
-              </Text>
-            </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isTablet ? 'mb-5' : 'mb-4'}
+        >
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground font-body ${isTablet ? 'text-sm' : 'text-xs'}`}
+          >
+            ← BACK
+          </Text>
+        </TouchableOpacity>
+
+        <View className="flex-row justify-between items-center">
+          <View className="flex-1 pr-4">
             <Text
-              className={`font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-3xl'}`}
+              className={`font-heading font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-3xl'}`}
+              numberOfLines={1}
+              adjustsFontSizeToFit
             >
               CASH REGISTER
+            </Text>
+            <Text
+              className={`text-muted-foreground font-bold mt-1 uppercase tracking-widest ${isTablet ? 'text-sm' : 'text-[10px]'}`}
+            >
+              Drawer Management
             </Text>
           </View>
           <TouchableOpacity
             onPress={() => router.push('/(admin)/cash-flow/history')}
-            className={`border border-border items-center justify-center ${isTablet ? 'px-5 py-3' : 'px-4 py-2'}`}
+            className={`border border-border items-center justify-center rounded-full flex-shrink-0 ${isTablet ? 'px-5 py-3' : 'px-4 py-2'}`}
           >
             <Text
-              className={`font-bold uppercase tracking-widest text-foreground font-body ${isTablet ? 'text-xs' : 'text-[10px]'}`}
+              className={`font-bold uppercase tracking-widest text-foreground ${isTablet ? 'text-xs' : 'text-[10px]'}`}
             >
               HISTORY
             </Text>

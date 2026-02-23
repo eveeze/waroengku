@@ -1,18 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useApi } from '@/hooks/useApi';
-import { recordCashFlow, getCashFlowCategories } from '@/api/endpoints';
+import { recordCashFlow } from '@/api/endpoints';
 import { Button, Input, Loading } from '@/components/ui';
+import { useResponsive } from '@/hooks/useResponsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function RecordCashFlowScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { breakpoints } = useResponsive();
+  const isTablet = breakpoints.isTablet;
+
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-
-  // TODO: Add Category Selection
-  // const { data: categories } = useApi(getCashFlowCategories, { executeOnMount: true });
 
   const { isLoading, execute: submitRecord } = useApi(recordCashFlow);
 
@@ -35,50 +45,69 @@ export default function RecordCashFlowScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background p-6 justify-center">
-      <Text className="text-2xl font-black uppercase text-center mb-6 text-foreground">
-        Record Cash Flow
-      </Text>
+    <KeyboardAvoidingView
+      className="flex-1 bg-background"
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          padding: isTablet ? 40 : 24,
+          paddingTop: insets.top + (isTablet ? 40 : 24),
+          paddingBottom: insets.bottom + 24,
+        }}
+      >
+        <View className={`w-full ${isTablet ? 'max-w-md self-center' : ''}`}>
+          <Text
+            className={`font-black uppercase text-center mb-8 text-foreground ${isTablet ? 'text-4xl' : 'text-3xl'}`}
+          >
+            RECORD CASH
+          </Text>
 
-      <View className="flex-row gap-4 mb-6">
-        <Button
-          title="EXPENSE (OUT)"
-          variant={type === 'expense' ? 'danger' : 'outline'}
-          className="flex-1"
-          onPress={() => setType('expense')}
-        />
-        <Button
-          title="INCOME (IN)"
-          variant={type === 'income' ? 'primary' : 'outline'}
-          className="flex-1"
-          onPress={() => setType('income')}
-        />
-      </View>
+          <View className="flex-row gap-4 mb-6">
+            <Button
+              title="EXPENSE (OUT)"
+              variant={type === 'expense' ? 'danger' : 'outline'}
+              className="flex-1"
+              onPress={() => setType('expense')}
+            />
+            <Button
+              title="INCOME (IN)"
+              variant={type === 'income' ? 'primary' : 'outline'}
+              className="flex-1"
+              onPress={() => setType('income')}
+            />
+          </View>
 
-      <Input
-        label="AMOUNT"
-        placeholder="0"
-        keyboardType="numeric"
-        value={amount}
-        onChangeText={setAmount}
-        autoFocus
-      />
+          <Input
+            label="AMOUNT"
+            placeholder="0"
+            keyboardType="numeric"
+            value={amount}
+            onChangeText={setAmount}
+            autoFocus
+          />
 
-      <Input
-        label="DESCRIPTION"
-        placeholder="e.g. Buying supplies..."
-        value={description}
-        onChangeText={setDescription}
-      />
+          <View className="mt-4">
+            <Input
+              label="DESCRIPTION"
+              placeholder="e.g. Buying supplies..."
+              value={description}
+              onChangeText={setDescription}
+            />
+          </View>
 
-      <View className="gap-3 mt-6">
-        <Button title="SAVE" onPress={handleSubmit} isLoading={isLoading} />
-        <Button
-          title="CANCEL"
-          variant="outline"
-          onPress={() => router.back()}
-        />
-      </View>
-    </View>
+          <View className="gap-3 mt-10">
+            <Button title="SAVE" onPress={handleSubmit} isLoading={isLoading} />
+            <Button
+              title="CANCEL"
+              variant="outline"
+              onPress={() => router.back()}
+            />
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

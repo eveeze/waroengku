@@ -42,3 +42,12 @@ export async function updateConsignor(
 ): Promise<Consignor> {
   return apiCall<Consignor>('put', `/consignors/${id}`, data);
 }
+
+/**
+ * Delete Consignor (Soft Delete)
+ * DELETE /api/v1/consignors/{id}
+ */
+export async function deleteConsignor(id: string): Promise<boolean> {
+  await apiCall('delete', `/consignors/${id}`);
+  return true;
+}

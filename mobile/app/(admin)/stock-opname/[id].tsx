@@ -19,12 +19,15 @@ import { OpnameSession } from '@/api/types';
 import { Loading, Button, Input } from '@/components/ui';
 import { BarcodeScanner } from '@/components/shared';
 import { useOptimisticMutation } from '@/hooks';
+import { useResponsive } from '@/hooks/useResponsive';
 
 export default function StockOpnameSessionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  const { breakpoints } = useResponsive();
+  const isTablet = breakpoints.isTablet;
 
   const [showScanner, setShowScanner] = useState(false);
   const [barcodeInput, setBarcodeInput] = useState('');
@@ -131,15 +134,28 @@ export default function StockOpnameSessionScreen() {
 
       {/* Swiss Header */}
       <View
-        className="px-6 py-6 border-b border-border bg-background"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`border-b border-border bg-background ${
+          isTablet ? 'px-8 py-8' : 'px-6 py-6'
+        }`}
+        style={{ paddingTop: insets.top + (isTablet ? 20 : 16) }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            ← Back
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isTablet ? 'mb-4' : 'mb-3'}
+        >
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground font-body ${
+              isTablet ? 'text-xs' : 'text-[10px]'
+            }`}
+          >
+            ← BACK
           </Text>
         </TouchableOpacity>
-        <Text className="text-3xl font-black uppercase tracking-tighter text-foreground">
+        <Text
+          className={`font-black uppercase tracking-tighter text-foreground ${
+            isTablet ? 'text-5xl' : 'text-3xl'
+          }`}
+        >
           SESSION #{session.session_number}
         </Text>
         <View className="flex-row items-center mt-2 gap-2">
@@ -157,7 +173,10 @@ export default function StockOpnameSessionScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 24 }}
+        contentContainerStyle={{
+          padding: isTablet ? 40 : 24,
+          paddingBottom: insets.bottom + 40,
+        }}
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
@@ -166,72 +185,96 @@ export default function StockOpnameSessionScreen() {
           />
         }
       >
-        {isActive ? (
-          <View>
-            <View className="bg-muted p-6 rounded-none mb-8 border border-border">
-              <Text className="text-center font-black uppercase text-xl mb-4 text-foreground tracking-tight">
-                Record Count
-              </Text>
+        <View className={`w-full ${isTablet ? 'max-w-xl self-center' : ''}`}>
+          {isActive ? (
+            <View>
+              <View className="bg-muted p-6 rounded-none mb-8 border border-border">
+                <Text className="text-center font-black uppercase text-xl mb-4 text-foreground tracking-tight">
+                  Record Count
+                </Text>
 
-              {!productCode ? (
-                <View className="flex-row gap-2 mb-4">
-                  <View className="flex-1">
-                    <Input
-                      placeholder="Scan/Type Barcode"
-                      value={barcodeInput}
-                      onChangeText={setBarcodeInput}
-                      onSubmitEditing={() => setProductCode(barcodeInput)}
-                    />
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => setShowScanner(true)}
-                    className="w-12 h-12 bg-foreground items-center justify-center"
-                  >
-                    <Text className="text-background text-xl">📷</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <View className="mb-4">
-                  <View className="flex-row justify-between items-center mb-2">
-                    <Text className="text-xs font-bold uppercase text-muted-foreground tracking-widest">
-                      Product
-                    </Text>
-                    <TouchableOpacity onPress={() => setProductCode('')}>
-                      <Text className="text-destructive font-bold text-xs uppercase tracking-widest">
-                        CHANGE
-                      </Text>
+                {!productCode ? (
+                  <View className="flex-row gap-2 mb-4">
+                    <View className="flex-1">
+                      <Input
+                        placeholder="Scan/Type Barcode"
+                        value={barcodeInput}
+                        onChangeText={setBarcodeInput}
+                        onSubmitEditing={() => setProductCode(barcodeInput)}
+                      />
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => setShowScanner(true)}
+                      className="w-12 h-12 bg-foreground items-center justify-center"
+                    >
+                      <Text className="text-background text-xl">📷</Text>
                     </TouchableOpacity>
                   </View>
-                  <Text className="text-2xl font-black text-foreground bg-background p-4 border border-border text-center uppercase tracking-tight">
-                    {productCode}
-                  </Text>
-                </View>
-              )}
+                ) : (
+                  <View className="mb-4">
+                    <View className="flex-row justify-between items-center mb-2">
+                      <Text className="text-xs font-bold uppercase text-muted-foreground tracking-widest">
+                        Product
+                      </Text>
+                      <TouchableOpacity onPress={() => setProductCode('')}>
+                        <Text className="text-destructive font-bold text-xs uppercase tracking-widest">
+                          CHANGE
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text className="text-2xl font-black text-foreground bg-background p-4 border border-border text-center uppercase tracking-tight">
+                      {productCode}
+                    </Text>
+                  </View>
+                )}
 
-              {productCode && (
-                <View>
-                  <Input
-                    label="PHYSICAL COUNT"
-                    placeholder="0"
-                    keyboardType="numeric"
-                    value={qty}
-                    onChangeText={setQty}
-                    autoFocus
-                  />
-                  <Button
-                    title="SUBMIT COUNT"
-                    className="mt-4"
-                    onPress={handleManualSubmit}
-                    isLoading={isSubmitting}
-                  />
-                </View>
-              )}
+                {productCode && (
+                  <View>
+                    <Input
+                      label="PHYSICAL COUNT"
+                      placeholder="0"
+                      keyboardType="numeric"
+                      value={qty}
+                      onChangeText={setQty}
+                      autoFocus
+                    />
+                    <Button
+                      title="SUBMIT COUNT"
+                      className="mt-4"
+                      onPress={handleManualSubmit}
+                      isLoading={isSubmitting}
+                    />
+                  </View>
+                )}
+              </View>
+
+              <View className="gap-3">
+                <Button
+                  title="VIEW VARIANCE REPORT & FINALIZE"
+                  variant="outline"
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(admin)/stock-opname/variance',
+                      params: { id: session.id },
+                    })
+                  }
+                />
+                <Button
+                  title="CANCEL SESSION"
+                  variant="ghost"
+                  textClassName="text-destructive font-bold uppercase tracking-widest"
+                  onPress={handleCancelSession}
+                  isLoading={isCancelling}
+                />
+              </View>
             </View>
-
-            <View className="gap-3">
+          ) : (
+            <View className="items-center py-10">
+              <Text className="text-muted-foreground font-bold mb-4 uppercase tracking-widest">
+                Session is {session.status}
+              </Text>
               <Button
-                title="VIEW VARIANCE REPORT & FINALIZE"
-                variant="outline"
+                title="VIEW REPORT"
                 onPress={() =>
                   router.push({
                     pathname: '/(admin)/stock-opname/variance',
@@ -239,31 +282,9 @@ export default function StockOpnameSessionScreen() {
                   })
                 }
               />
-              <Button
-                title="CANCEL SESSION"
-                variant="ghost"
-                textClassName="text-destructive font-bold uppercase tracking-widest"
-                onPress={handleCancelSession}
-                isLoading={isCancelling}
-              />
             </View>
-          </View>
-        ) : (
-          <View className="items-center py-10">
-            <Text className="text-muted-foreground font-bold mb-4 uppercase tracking-widest">
-              Session is {session.status}
-            </Text>
-            <Button
-              title="VIEW REPORT"
-              onPress={() =>
-                router.push({
-                  pathname: '/(admin)/stock-opname/variance',
-                  params: { id: session.id },
-                })
-              }
-            />
-          </View>
-        )}
+          )}
+        </View>
       </ScrollView>
     </View>
   );

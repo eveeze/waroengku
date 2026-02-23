@@ -11,6 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
+import { useResponsive } from '@/hooks/useResponsive';
 import { fetchWithCache } from '@/api/client';
 import { startOpnameSession } from '@/api/endpoints';
 import { OpnameSession, ApiResponse } from '@/api/types';
@@ -22,6 +23,8 @@ import { EmptyStateInline } from '@/components/shared';
 export default function StockOpnameListScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { breakpoints, screenPadding } = useResponsive();
+  const isTablet = breakpoints.isTablet;
 
   const {
     data: response,
@@ -73,20 +76,38 @@ export default function StockOpnameListScreen() {
   const renderItem = ({ item }: { item: OpnameSession }) => (
     <TouchableOpacity
       onPress={() => router.push(`/(admin)/stock-opname/${item.id}`)}
-      className="bg-muted p-4 rounded-none mb-3 border border-border flex-row justify-between items-center"
+      className={`bg-muted rounded-none border border-border flex-row justify-between items-center ${
+        isTablet ? 'p-6 mb-5' : 'p-4 mb-3'
+      }`}
     >
       <View>
-        <Text className="font-body font-black text-lg text-foreground uppercase tracking-tight">
+        <Text
+          className={`font-body font-black text-foreground uppercase tracking-tight ${
+            isTablet ? 'text-2xl' : 'text-lg'
+          }`}
+        >
           Session #{item.session_number}
         </Text>
-        <Text className="text-muted-foreground font-body text-xs font-bold mt-1 tracking-wide uppercase">
+        <Text
+          className={`text-muted-foreground font-body font-bold mt-1 tracking-wide uppercase ${
+            isTablet ? 'text-sm' : 'text-xs'
+          }`}
+        >
           {new Date(item.created_at).toLocaleDateString()} • {item.created_by}
         </Text>
       </View>
       <View
-        className={`px-3 py-1 ${item.status === 'active' ? 'bg-foreground' : 'bg-muted'}`}
+        className={`px-3 py-1 ${
+          item.status === 'active'
+            ? 'bg-foreground'
+            : 'bg-transparent border border-border'
+        }`}
       >
-        <Text className="text-background text-[10px] font-bold uppercase tracking-widest font-body">
+        <Text
+          className={`font-bold uppercase tracking-widest font-body ${
+            isTablet ? 'text-xs' : 'text-[10px]'
+          } ${item.status === 'active' ? 'text-background' : 'text-foreground'}`}
+        >
           {item.status}
         </Text>
       </View>
@@ -96,23 +117,42 @@ export default function StockOpnameListScreen() {
   return (
     <View className="flex-1 bg-background">
       <StatusBar barStyle="default" />
-      {/* Swiss Header */}
+      {/* Header */}
       <View
-        className="px-6 py-6 border-b border-border bg-background"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`border-b border-border bg-background ${isTablet ? 'px-8 py-8' : 'px-6 py-6'}`}
+        style={{ paddingTop: insets.top + (isTablet ? 20 : 16) }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            ← Back
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isTablet ? 'mb-5' : 'mb-4'}
+        >
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+          >
+            ← BACK
           </Text>
         </TouchableOpacity>
-        <View className="flex-row justify-between items-end">
-          <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
-            STOCK OPNAME
-          </Text>
+
+        <View className="flex-row justify-between items-center">
+          <View className="flex-1 pr-4">
+            <Text
+              className={`font-heading font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-3xl'}`}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
+              STOCK OPNAME
+            </Text>
+            <Text
+              className={`text-muted-foreground font-bold mt-1 uppercase tracking-widest ${isTablet ? 'text-sm' : 'text-[10px]'}`}
+            >
+              Manage Inventory
+            </Text>
+          </View>
           <Button
-            title="NEW SESSION"
-            size="sm"
+            title="+ NEW"
+            size={isTablet ? 'md' : 'sm'}
+            className="rounded-full px-5 bg-foreground items-center justify-center flex-shrink-0"
+            textClassName="text-background font-black tracking-widest"
             onPress={handleCreate}
             isLoading={isCreating}
           />
@@ -123,9 +163,19 @@ export default function StockOpnameListScreen() {
         data={sessions}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 24 }}
+        contentContainerStyle={{
+          padding: screenPadding,
+          paddingBottom: insets.bottom + 40,
+          maxWidth: isTablet ? 800 : undefined,
+          alignSelf: isTablet ? 'center' : undefined,
+          width: isTablet ? '100%' : undefined,
+        }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={refetch}
+            tintColor="#888"
+          />
         }
         ListEmptyComponent={
           isLoading ? (

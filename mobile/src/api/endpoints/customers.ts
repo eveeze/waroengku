@@ -24,6 +24,11 @@ export async function getCustomers(
     '/customers',
     {
       params,
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      },
     },
   );
   return response.data;

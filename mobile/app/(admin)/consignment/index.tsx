@@ -24,16 +24,18 @@ export default function ConsignorListScreen() {
   const isTablet = breakpoints.isTablet;
 
   const {
-    data: response,
+    data: rawData,
     isLoading,
     refetch,
   } = useQuery({
     queryKey: ['/consignors'],
-    queryFn: ({ queryKey }) =>
-      fetchWithCache<ApiResponse<Consignor[]>>({ queryKey }),
+    queryFn: ({ queryKey }) => fetchWithCache<any>({ queryKey }),
   });
 
-  const consignors = response?.data || [];
+  // Bulletproof mapping in case it's wrapped in ApiResponse or not
+  const consignors: Consignor[] = Array.isArray(rawData)
+    ? rawData
+    : rawData?.data || [];
 
   const renderItem = ({ item }: { item: Consignor }) => (
     <TouchableOpacity
@@ -80,36 +82,43 @@ export default function ConsignorListScreen() {
       <StatusBar barStyle="default" />
       {/* Header */}
       <View
-        className={`border-b border-border bg-background flex-row justify-between items-end ${isTablet ? 'px-8 py-8' : 'px-6 py-6'}`}
+        className={`border-b border-border bg-background ${isTablet ? 'px-8 py-8' : 'px-6 py-6'}`}
         style={{ paddingTop: insets.top + (isTablet ? 20 : 16) }}
       >
-        <View>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className={isTablet ? 'mb-5' : 'mb-4'}
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isTablet ? 'mb-5' : 'mb-4'}
+        >
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
           >
+            ← BACK
+          </Text>
+        </TouchableOpacity>
+
+        <View className="flex-row justify-between items-center">
+          <View className="flex-1 pr-4">
             <Text
-              className={`font-bold uppercase tracking-widest text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+              className={`font-heading font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-3xl'}`}
+              numberOfLines={1}
+              adjustsFontSizeToFit
             >
-              ← Back
+              CONSIGNMENT
             </Text>
-          </TouchableOpacity>
-          <Text
-            className={`font-heading font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-4xl'}`}
-          >
-            CONSIGNMENT
-          </Text>
-          <Text
-            className={`text-muted-foreground font-bold mt-1 uppercase tracking-wide ${isTablet ? 'text-sm' : 'text-xs'}`}
-          >
-            Manage Suppliers (Titip Jual)
-          </Text>
+            <Text
+              className={`text-muted-foreground font-bold mt-1 uppercase tracking-widest ${isTablet ? 'text-sm' : 'text-[10px]'}`}
+            >
+              Manage Suppliers (Titip Jual)
+            </Text>
+          </View>
+          <Button
+            title="+ NEW"
+            size={isTablet ? 'md' : 'sm'}
+            className="rounded-full px-5 bg-foreground items-center justify-center flex-shrink-0"
+            textClassName="text-background font-black tracking-widest"
+            onPress={() => router.push('/(admin)/consignment/create')}
+          />
         </View>
-        <Button
-          title="ADD NEW"
-          size={isTablet ? 'md' : 'sm'}
-          onPress={() => router.push('/(admin)/consignment/create')}
-        />
       </View>
 
       <FlatList

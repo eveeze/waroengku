@@ -5,10 +5,12 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
+  StatusBar,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
+import { useResponsive } from '@/hooks/useResponsive';
 import { getRefillableMovements } from '@/api/endpoints';
 import { RefillableMovement } from '@/api/types';
 import { Loading } from '@/components/ui';
@@ -17,6 +19,9 @@ export default function RefillableMovementsScreen() {
   const router = useRouter();
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const insets = useSafeAreaInsets();
+  const { breakpoints, screenPadding } = useResponsive();
+  const isTablet = breakpoints.isTablet;
+  const isSmallPhone = breakpoints.isSmall;
 
   const {
     data: movements,
@@ -36,19 +41,31 @@ export default function RefillableMovementsScreen() {
   };
 
   const renderItem = ({ item }: { item: RefillableMovement }) => (
-    <View className="bg-background p-4 border-b border-border flex-row justify-between items-start">
+    <View
+      className={`bg-background border-b border-border flex-row justify-between items-start ${
+        isTablet ? 'p-6' : 'p-4'
+      }`}
+    >
       <View className="flex-1 mr-4">
         <View className="flex-row items-center mb-1">
           <View className="bg-muted px-2 py-0.5 mr-2">
-            <Text className="text-[10px] uppercase font-bold text-muted-foreground">
+            <Text
+              className={`uppercase font-bold text-muted-foreground ${
+                isTablet ? 'text-xs' : 'text-[10px]'
+              }`}
+            >
               {item.actor_name || 'System'}
             </Text>
           </View>
-          <Text className="text-xs text-muted-foreground">
+          <Text
+            className={`text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+          >
             {formatDate(item.created_at)}
           </Text>
         </View>
-        <Text className="text-foreground font-medium">
+        <Text
+          className={`text-foreground font-medium ${isTablet ? 'text-lg' : 'text-base'}`}
+        >
           {item.notes || 'No notes'}
         </Text>
       </View>
@@ -56,6 +73,8 @@ export default function RefillableMovementsScreen() {
         {item.empty_change !== 0 && (
           <Text
             className={`font-mono font-bold ${
+              isTablet ? 'text-lg' : 'text-base'
+            } ${
               item.empty_change > 0
                 ? 'text-red-600 dark:text-red-400'
                 : 'text-green-600 dark:text-green-400'
@@ -68,6 +87,8 @@ export default function RefillableMovementsScreen() {
         {item.full_change !== 0 && (
           <Text
             className={`font-mono font-bold ${
+              isTablet ? 'text-lg' : 'text-base'
+            } ${
               item.full_change > 0
                 ? 'text-green-600 dark:text-green-400'
                 : 'text-red-600 dark:text-red-400'
@@ -83,20 +104,40 @@ export default function RefillableMovementsScreen() {
 
   return (
     <View className="flex-1 bg-background">
+      <StatusBar barStyle="default" />
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-border bg-background"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`border-b border-border bg-background ${
+          isTablet ? 'px-8 py-8' : 'px-6 py-6'
+        }`}
+        style={{ paddingTop: insets.top + (isTablet ? 20 : 16) }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            ← Back
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isTablet ? 'mb-5' : 'mb-4'}
+        >
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground font-body ${
+              isTablet ? 'text-sm' : 'text-xs'
+            }`}
+          >
+            ← BACK
           </Text>
         </TouchableOpacity>
-        <Text className="text-muted-foreground font-bold uppercase text-xs mb-1 tracking-widest">
+        <Text
+          className={`text-muted-foreground font-bold uppercase tracking-widest ${
+            isTablet ? 'text-sm mb-2' : 'text-xs mb-1'
+          }`}
+        >
           Movement History
         </Text>
-        <Text className="text-3xl font-black uppercase text-foreground tracking-tighter">
+        <Text
+          className={`font-black uppercase text-foreground tracking-tighter ${
+            isTablet ? 'text-5xl' : 'text-3xl'
+          }`}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
           {name || 'Unknown'}
         </Text>
       </View>
@@ -105,6 +146,13 @@ export default function RefillableMovementsScreen() {
         data={movements || []}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{
+          padding: isTablet ? 32 : 16,
+          paddingBottom: insets.bottom + 40,
+          maxWidth: isTablet ? 800 : undefined,
+          alignSelf: isTablet ? 'center' : undefined,
+          width: isTablet ? '100%' : undefined,
+        }}
         refreshControl={
           <RefreshControl
             refreshing={isLoading}
@@ -114,8 +162,12 @@ export default function RefillableMovementsScreen() {
         }
         ListEmptyComponent={
           !isLoading ? (
-            <View className="p-8 items-center">
-              <Text className="text-muted-foreground font-bold uppercase tracking-widest text-center">
+            <View className={`p-8 items-center ${isTablet ? 'mt-10' : 'mt-5'}`}>
+              <Text
+                className={`text-muted-foreground font-bold uppercase tracking-widest text-center ${
+                  isTablet ? 'text-sm' : 'text-xs'
+                }`}
+              >
                 No movements found.
               </Text>
             </View>

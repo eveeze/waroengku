@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { createConsignor } from '@/api/endpoints';
 import { Button, Input } from '@/components/ui';
 import { useOptimisticMutation } from '@/hooks';
+import { useResponsive } from '@/hooks/useResponsive';
 import { ApiResponse, Consignor } from '@/api/types';
 
 const schema = z.object({
@@ -30,6 +31,8 @@ type FormData = z.infer<typeof schema>;
 export default function CreateConsignorScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { breakpoints } = useResponsive();
+  const isTablet = breakpoints.isTablet;
 
   const {
     control,
@@ -55,10 +58,7 @@ export default function CreateConsignorScreen() {
       }),
     {
       queryKey: ['/consignors'],
-      updater: (
-        old: ApiResponse<Consignor[]> | undefined,
-        newData: FormData,
-      ) => {
+      updater: (old: any, newData: FormData) => {
         const optimisticConsignor: Consignor = {
           id: 'temp-' + Date.now(),
           name: newData.name,
@@ -73,15 +73,18 @@ export default function CreateConsignorScreen() {
         };
 
         if (!old) {
-          return {
-            success: true,
-            data: [optimisticConsignor],
-          };
+          return [optimisticConsignor];
         }
 
+        // if array directly
+        if (Array.isArray(old)) {
+          return [...old, optimisticConsignor];
+        }
+
+        // if wrapped in Object (e.g. ApiResponse)
         return {
           ...old,
-          data: [...old.data, optimisticConsignor],
+          data: [...(old.data || []), optimisticConsignor],
         };
       },
       invalidates: true,
@@ -103,15 +106,22 @@ export default function CreateConsignorScreen() {
     <View className="flex-1 bg-background">
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-border bg-background"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`border-b border-border bg-background ${isTablet ? 'px-8 py-8' : 'px-6 py-6'}`}
+        style={{ paddingTop: insets.top + (isTablet ? 20 : 16) }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isTablet ? 'mb-5' : 'mb-4'}
+        >
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+          >
             ← Back
           </Text>
         </TouchableOpacity>
-        <Text className="text-4xl font-black uppercase tracking-tighter text-foreground">
+        <Text
+          className={`font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-4xl'}`}
+        >
           ADD CONSIGNOR
         </Text>
       </View>
@@ -120,88 +130,96 @@ export default function CreateConsignorScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <ScrollView contentContainerStyle={{ padding: 24 }}>
-          <Controller
-            control={control}
-            name="name"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="NAME *"
-                placeholder="Supplier Name"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                error={errors.name?.message}
-                className="rounded-none"
-              />
-            )}
-          />
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            padding: isTablet ? 40 : 24,
+            paddingBottom: insets.bottom + 24,
+          }}
+        >
+          <View className={`w-full ${isTablet ? 'max-w-md self-center' : ''}`}>
+            <Controller
+              control={control}
+              name="name"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="NAME *"
+                  placeholder="Supplier Name"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  error={errors.name?.message}
+                  className="rounded-none"
+                />
+              )}
+            />
 
-          <View className="h-4" />
+            <View className="h-4" />
 
-          <Controller
-            control={control}
-            name="phone"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="PHONE NUMBER *"
-                placeholder="08..."
-                keyboardType="phone-pad"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                error={errors.phone?.message}
-                className="rounded-none"
-              />
-            )}
-          />
+            <Controller
+              control={control}
+              name="phone"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="PHONE NUMBER *"
+                  placeholder="08..."
+                  keyboardType="phone-pad"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  error={errors.phone?.message}
+                  className="rounded-none"
+                />
+              )}
+            />
 
-          <View className="h-8" />
-          <Text className="text-muted-foreground font-bold text-xs uppercase mb-4">
-            Bank Details (Optional)
-          </Text>
+            <View className="h-8" />
+            <Text className="text-muted-foreground font-bold text-xs uppercase mb-4">
+              Bank Details (Optional)
+            </Text>
 
-          <Controller
-            control={control}
-            name="bank_name"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="BANK NAME"
-                placeholder="e.g. BCA, Mandiri"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-              />
-            )}
-          />
+            <Controller
+              control={control}
+              name="bank_name"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="BANK NAME"
+                  placeholder="e.g. BCA, Mandiri"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                />
+              )}
+            />
 
-          <View className="h-4" />
+            <View className="h-4" />
 
-          <Controller
-            control={control}
-            name="bank_account"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="ACCOUNT NUMBER"
-                placeholder="123..."
-                keyboardType="numeric"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-              />
-            )}
-          />
+            <Controller
+              control={control}
+              name="bank_account"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <Input
+                  label="ACCOUNT NUMBER"
+                  placeholder="123..."
+                  keyboardType="numeric"
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                />
+              )}
+            />
 
-          <View className="h-8" />
+            <View className="h-8" />
 
-          <Button
-            title="SAVE SUPPLIER"
-            onPress={handleSubmit(onSubmit)}
-            isLoading={isPending}
-            size="lg"
-            className="rounded-none mt-6 mb-8"
-            textClassName="font-black tracking-widest text-lg"
-          />
+            <Button
+              title="SAVE SUPPLIER"
+              onPress={handleSubmit(onSubmit)}
+              isLoading={isPending}
+              size="lg"
+              className="rounded-none mt-6 mb-8"
+              textClassName="font-black tracking-widest text-lg"
+            />
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

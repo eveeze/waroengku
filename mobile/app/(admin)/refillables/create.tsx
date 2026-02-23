@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useResponsive } from '@/hooks/useResponsive';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getProducts, createRefillableContainer } from '@/api/endpoints';
 import { Product } from '@/api/types';
@@ -21,6 +22,8 @@ export default function CreateRefillableScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  const { breakpoints } = useResponsive();
+  const isTablet = breakpoints.isTablet;
 
   const [containerType, setContainerType] = useState('');
   const [emptyCount, setEmptyCount] = useState('');
@@ -85,15 +88,24 @@ export default function CreateRefillableScreen() {
     <View className="flex-1 bg-background">
       {/* Header */}
       <View
-        className="px-6 py-6 border-b border-border bg-background"
-        style={{ paddingTop: insets.top + 16 }}
+        className={`border-b border-border bg-background ${isTablet ? 'px-8 py-8' : 'px-6 py-6'}`}
+        style={{ paddingTop: insets.top + (isTablet ? 20 : 16) }}
       >
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Text className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            ← Cancel
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className={isTablet ? 'mb-5' : 'mb-4'}
+        >
+          <Text
+            className={`font-bold uppercase tracking-widest text-muted-foreground ${isTablet ? 'text-sm' : 'text-xs'}`}
+          >
+            ← CANCEL
           </Text>
         </TouchableOpacity>
-        <Text className="text-3xl font-black uppercase text-foreground tracking-tighter">
+        <Text
+          className={`font-black uppercase tracking-tighter text-foreground ${isTablet ? 'text-5xl' : 'text-3xl'}`}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
           NEW CONTAINER
         </Text>
       </View>
@@ -102,69 +114,79 @@ export default function CreateRefillableScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <ScrollView contentContainerStyle={{ padding: 24 }}>
-          {/* Container Type Name */}
-          <Input
-            label="CONTAINER NAME"
-            placeholder="e.g. Galon Aqua, Gas 3kg"
-            value={containerType}
-            onChangeText={setContainerType}
-          />
-
-          {/* Product Selection */}
-          <View className="mb-6">
-            <Text className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-2">
-              LINKED PRODUCT
-            </Text>
-            <TouchableOpacity
-              onPress={() => setProductModalVisible(true)}
-              className="bg-muted border border-border p-4 rounded-none"
-            >
-              <Text
-                className={`font-bold ${
-                  selectedProduct ? 'text-foreground' : 'text-muted-foreground'
-                }`}
-              >
-                {selectedProduct ? selectedProduct.name : 'Select Product...'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Initial Stock */}
-          <View className="flex-row gap-4 mb-4">
-            <View className="flex-1">
-              <Input
-                label="INITIAL EMPTY"
-                placeholder="0"
-                keyboardType="numeric"
-                value={emptyCount}
-                onChangeText={setEmptyCount}
-              />
-            </View>
-            <View className="flex-1">
-              <Input
-                label="INITIAL FULL"
-                placeholder="0"
-                keyboardType="numeric"
-                value={fullCount}
-                onChangeText={setFullCount}
-              />
-            </View>
-          </View>
-
-          <Input
-            label="NOTES (OPTIONAL)"
-            placeholder="e.g. Initial stock take"
-            value={notes}
-            onChangeText={setNotes}
-          />
-
-          <View className="mt-8">
-            <Button
-              title="CREATE CONTAINER"
-              onPress={handleCreate}
-              isLoading={isCreating}
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            padding: isTablet ? 40 : 24,
+            paddingBottom: insets.bottom + 24,
+          }}
+        >
+          <View className={`w-full ${isTablet ? 'max-w-md self-center' : ''}`}>
+            {/* Container Type Name */}
+            <Input
+              label="CONTAINER NAME"
+              placeholder="e.g. Galon Aqua, Gas 3kg"
+              value={containerType}
+              onChangeText={setContainerType}
             />
+
+            {/* Product Selection */}
+            <View className="mb-6 mt-4">
+              <Text className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-2">
+                LINKED PRODUCT
+              </Text>
+              <TouchableOpacity
+                onPress={() => setProductModalVisible(true)}
+                className="bg-muted border border-border p-4 rounded-none"
+              >
+                <Text
+                  className={`font-bold ${
+                    selectedProduct
+                      ? 'text-foreground'
+                      : 'text-muted-foreground'
+                  }`}
+                >
+                  {selectedProduct ? selectedProduct.name : 'Select Product...'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Initial Stock */}
+            <View className="flex-row gap-4 mb-4">
+              <View className="flex-1">
+                <Input
+                  label="INITIAL EMPTY"
+                  placeholder="0"
+                  keyboardType="numeric"
+                  value={emptyCount}
+                  onChangeText={setEmptyCount}
+                />
+              </View>
+              <View className="flex-1">
+                <Input
+                  label="INITIAL FULL"
+                  placeholder="0"
+                  keyboardType="numeric"
+                  value={fullCount}
+                  onChangeText={setFullCount}
+                />
+              </View>
+            </View>
+
+            <Input
+              label="NOTES (OPTIONAL)"
+              placeholder="e.g. Initial stock take"
+              value={notes}
+              onChangeText={setNotes}
+            />
+
+            <View className="mt-8">
+              <Button
+                title="CREATE CONTAINER"
+                onPress={handleCreate}
+                isLoading={isCreating}
+              />
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

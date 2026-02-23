@@ -9,17 +9,11 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
 import { deleteCustomer } from '@/api/endpoints/customers';
 import { Button, Loading } from '@/components/ui';
-import {
-  Customer,
-  KasbonSummary,
-  ApiResponse,
-  PaginatedResponse,
-} from '@/api/types';
-import { useOptimisticMutation } from '@/hooks';
+import { Customer, KasbonSummary, ApiResponse } from '@/api/types';
 
 export default function CustomerDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -77,21 +71,48 @@ export default function CustomerDetailScreen() {
     refetchKasbon();
   };
 
-  const { mutate: mutateDelete } = useOptimisticMutation(
-    async () => deleteCustomer(id!),
-    {
-      queryKey: ['/customers'],
-      updater: (old: any) => old, // Infinite query invalidation handles removal
-      invalidates: true,
-      onSuccess: () => {
+  const { mutate: mutateDelete } = useMutation({
+    mutationFn: async () => deleteCustomer(id!),
+    onSuccess: async () => {
+      // 1. Clear physical async storage cache ONLY for customers
+      try {
+        const { apiCache } = await import('@/utils/cache');
+        await apiCache.clearByPrefix('/customers');
+      } catch (e) {
+        // ignore
+      }
+
+      // 2. Optimistic Update directly on onSuccess (Scenario A)
+      // This strictly removes the deleted ID from the React Query memory
+      queryClient.setQueriesData(
+        { queryKey: ['/customers'] },
+        (oldData: any) => {
+          if (!oldData || !oldData.pages) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              data: page.data.filter(
+                (c: Customer) => String(c.id) !== String(id),
+              ),
+            })),
+          };
+        },
+      );
+
+      // 3. Remove the detail query for this specific customer so it doesn't linger
+      queryClient.removeQueries({ queryKey: ['/customers', id] });
+
+      // Navigate back
+      router.back();
+      setTimeout(() => {
         Alert.alert('SUCCESS', 'Customer deleted successfully');
-        router.back();
-      },
-      onError: (err: Error) => {
-        Alert.alert('ERROR', err.message || 'Failed to delete customer');
-      },
+      }, 100);
     },
-  );
+    onError: (err: Error) => {
+      Alert.alert('ERROR', err.message || 'Failed to delete customer');
+    },
+  });
 
   const handleDelete = () => {
     Alert.alert(
@@ -232,10 +253,17 @@ export default function CustomerDetailScreen() {
         {/* Actions - Kasbon Related */}
         <View className="gap-3">
           <Button
-            title="VIEW HISTORY"
+            title="KASBON HISTORY"
             variant="outline"
             fullWidth
             onPress={() => router.push(`/(admin)/customers/${id}/kasbon`)}
+          />
+          <View className="h-2" />
+          <Button
+            title="TRANSACTION HISTORY"
+            variant="outline"
+            fullWidth
+            onPress={() => router.push(`/(admin)/customers/${id}/transactions`)}
           />
           {hasDebt && (
             <Button

@@ -1,12 +1,25 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useApi } from '@/hooks/useApi';
 import { openDrawer } from '@/api/endpoints';
 import { Button, Input } from '@/components/ui';
+import { useResponsive } from '@/hooks/useResponsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function OpenDrawerScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { breakpoints } = useResponsive();
+  const isTablet = breakpoints.isTablet;
+
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -32,42 +45,58 @@ export default function OpenDrawerScreen() {
   };
 
   return (
-    <View
-      className="flex-1 bg-background p-6 justify-center"
-      style={{ marginBottom: 100 }}
+    <KeyboardAvoidingView
+      className="flex-1 bg-background"
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <Text className="text-2xl font-black uppercase text-center mb-6 text-foreground">
-        Open Register
-      </Text>
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          padding: isTablet ? 40 : 24,
+          paddingTop: insets.top + (isTablet ? 40 : 24),
+          paddingBottom: insets.bottom + 24,
+        }}
+      >
+        <View className={`w-full ${isTablet ? 'max-w-md self-center' : ''}`}>
+          <Text
+            className={`font-black uppercase text-center mb-8 text-foreground ${isTablet ? 'text-4xl' : 'text-3xl'}`}
+          >
+            OPEN REGISTER
+          </Text>
 
-      <Input
-        label="OPENING BALANCE"
-        placeholder="0"
-        keyboardType="numeric"
-        value={amount}
-        onChangeText={setAmount}
-        autoFocus
-      />
+          <Input
+            label="OPENING BALANCE"
+            placeholder="0"
+            keyboardType="numeric"
+            value={amount}
+            onChangeText={setAmount}
+            autoFocus
+          />
 
-      <Input
-        label="NOTES (OPTIONAL)"
-        placeholder="e.g. Shift start..."
-        value={notes}
-        onChangeText={setNotes}
-      />
+          <View className="mt-4">
+            <Input
+              label="NOTES (OPTIONAL)"
+              placeholder="e.g. Shift start..."
+              value={notes}
+              onChangeText={setNotes}
+            />
+          </View>
 
-      <View className="gap-3 mt-6">
-        <Button
-          title="OPEN REGISTER"
-          onPress={handleOpen}
-          isLoading={isLoading}
-        />
-        <Button
-          title="CANCEL"
-          variant="outline"
-          onPress={() => router.back()}
-        />
-      </View>
-    </View>
+          <View className="gap-3 mt-10">
+            <Button
+              title="OPEN REGISTER"
+              onPress={handleOpen}
+              isLoading={isLoading}
+            />
+            <Button
+              title="CANCEL"
+              variant="outline"
+              onPress={() => router.back()}
+            />
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }

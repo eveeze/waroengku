@@ -86,4 +86,21 @@ export const apiCache = {
       console.error('Cache clear error:', error);
     }
   },
+
+  /**
+   * Clear API cache by URL prefix
+   */
+  clearByPrefix: async (urlPrefix: string): Promise<void> => {
+    try {
+      const keys = await AsyncStorage.getAllKeys();
+      // Cache keys are formatted as: CACHE_PREFIX + url + _ + params
+      const prefixToMatch = `${CACHE_PREFIX}${urlPrefix}`;
+      const cacheKeys = keys.filter((key) => key.startsWith(prefixToMatch));
+      if (cacheKeys.length > 0) {
+        await AsyncStorage.multiRemove(cacheKeys);
+      }
+    } catch (error) {
+      console.error('Cache clearByPrefix error:', error);
+    }
+  },
 };
