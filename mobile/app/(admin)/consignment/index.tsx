@@ -7,12 +7,12 @@ import {
   RefreshControl,
   StatusBar,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useResponsive } from '@/hooks/useResponsive';
-import { fetchWithCache } from '@/api/client';
-import { Consignor, ApiResponse } from '@/api/types';
+import { getConsignors } from '@/api/endpoints/consignment';
+import { Consignor } from '@/api/types';
 import { Button } from '@/components/ui';
 import { ConsignmentListInlineSkeleton } from '@/components/skeletons';
 import { EmptyStateInline } from '@/components/shared';
@@ -20,22 +20,29 @@ import { EmptyStateInline } from '@/components/shared';
 export default function ConsignorListScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   const { breakpoints, screenPadding } = useResponsive();
   const isTablet = breakpoints.isTablet;
 
   const {
-    data: rawData,
+    data: consignors = [],
     isLoading,
     refetch,
-  } = useQuery({
+  } = useQuery<Consignor[]>({
     queryKey: ['/consignors'],
-    queryFn: ({ queryKey }) => fetchWithCache<any>({ queryKey }),
+    queryFn: getConsignors,
+    staleTime: 0,
+    gcTime: 0, // Disable cache retention completely when unmounted
+    refetchOnMount: 'always',
   });
 
-  // Bulletproof mapping in case it's wrapped in ApiResponse or not
-  const consignors: Consignor[] = Array.isArray(rawData)
-    ? rawData
-    : rawData?.data || [];
+  // Force refetch on screen focus to clear out ghosted data after router.back()
+  useFocusEffect(
+    useCallback(() => {
+      queryClient.invalidateQueries({ queryKey: ['/consignors'] });
+      refetch();
+    }, [refetch, queryClient]),
+  );
 
   const renderItem = ({ item }: { item: Consignor }) => (
     <TouchableOpacity

@@ -10,8 +10,9 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { getCustomers } from '@/api/endpoints/customers';
 import { Customer, PaginatedResponse } from '@/api/types';
@@ -23,6 +24,7 @@ import { BOTTOM_NAV_HEIGHT } from '@/components/navigation/BottomTabBar';
 export default function CustomersScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { width } = useWindowDimensions();
 
   // Responsive sizing
@@ -61,7 +63,18 @@ export default function CustomersScreen() {
       }
       return undefined;
     },
+    staleTime: 0,
+    gcTime: 0, // Disable cache retention completely when unmounted
+    refetchOnMount: 'always',
   });
+
+  // Force refetch on screen focus to clear out ghosted data after router.back()
+  useFocusEffect(
+    useCallback(() => {
+      queryClient.invalidateQueries({ queryKey: ['/customers'] });
+      refetch();
+    }, [refetch, queryClient]),
+  );
 
   const customers = (data?.pages.flatMap((page) => page.data) || []).filter(
     (c) => !!c,

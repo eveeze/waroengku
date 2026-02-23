@@ -10,7 +10,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchWithCache } from '@/api/client';
+import { fetchWithCache, etagCache } from '@/api/client';
 import { deleteCustomer } from '@/api/endpoints/customers';
 import { Button, Loading } from '@/components/ui';
 import { Customer, KasbonSummary, ApiResponse } from '@/api/types';
@@ -78,6 +78,7 @@ export default function CustomerDetailScreen() {
       try {
         const { apiCache } = await import('@/utils/cache');
         await apiCache.clearByPrefix('/customers');
+        etagCache.clear(); // Force network fetch without 304 response
       } catch (e) {
         // ignore
       }
@@ -103,8 +104,12 @@ export default function CustomerDetailScreen() {
       // 3. Remove the detail query for this specific customer so it doesn't linger
       queryClient.removeQueries({ queryKey: ['/customers', id] });
 
-      // Navigate back
-      router.back();
+      // 4. Force a background refetch to ensure true sync
+      queryClient.invalidateQueries({ queryKey: ['/customers'] });
+
+      // Navigate exactly to the list screen, destroying the back-stack momentarily
+      router.replace('/(admin)/customers');
+
       setTimeout(() => {
         Alert.alert('SUCCESS', 'Customer deleted successfully');
       }, 100);

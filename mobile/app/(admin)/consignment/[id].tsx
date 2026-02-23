@@ -4,9 +4,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Header } from '@/components/shared';
 import { Button, Loading, Card } from '@/components/ui';
-import { fetcher } from '@/api/client';
-import { deleteConsignor } from '@/api/endpoints/consignment';
-import { Consignor, ApiResponse } from '@/api/types';
+import { fetcher, etagCache } from '@/api/client';
+import { deleteConsignor, getConsignorById } from '@/api/endpoints/consignment';
+import { Consignor } from '@/api/types';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useMutation } from '@tanstack/react-query';
 
@@ -23,15 +23,13 @@ export default function ConsignorDetailScreen() {
   // Using fetcher<Consignor> suggests unwrapped data.
   const { data: consignor, isLoading } = useQuery({
     queryKey: [`/consignors/${id}`],
-    queryFn: ({ queryKey }) => fetcher<Consignor>({ queryKey }),
+    queryFn: () => getConsignorById(id as string),
     enabled: !!id,
     initialData: () => {
       // Find in list cache: ['/consignors']
-      const listResponse = queryClient.getQueryData<ApiResponse<Consignor[]>>([
-        '/consignors',
-      ]);
-      if (listResponse?.data && Array.isArray(listResponse.data)) {
-        return listResponse.data.find((c) => c.id === id);
+      const listCache = queryClient.getQueryData<Consignor[]>(['/consignors']);
+      if (listCache && Array.isArray(listCache)) {
+        return listCache.find((c) => String(c.id) === String(id));
       }
       return undefined;
     },
@@ -40,36 +38,78 @@ export default function ConsignorDetailScreen() {
   const { mutate: mutateDelete } = useMutation({
     mutationFn: async () => deleteConsignor(id!),
     onSuccess: async () => {
+      console.log('[DEBUG DELETE] >>> onSuccess fired for id:', id);
+
       // 1. Clear physical async storage cache ONLY for consignors
       try {
         const { apiCache } = await import('@/utils/cache');
         await apiCache.clearByPrefix('/consignors');
+        etagCache.clear();
+        console.log('[DEBUG DELETE] Step 1: apiCache + etagCache cleared');
       } catch (e) {
-        // ignore
+        console.log('[DEBUG DELETE] Step 1 ERROR:', e);
       }
 
-      // 2. Strict cache overwrite to immediately remove it from view
-      queryClient.setQueriesData(
-        { queryKey: ['/consignors'] },
-        (oldData: any) => {
-          if (!oldData || !oldData.data) return oldData;
-          return {
-            ...oldData,
-            data: oldData.data.filter(
-              (c: Consignor) => String(c.id) !== String(id),
-            ),
-          };
+      // 2. Check what's in the cache BEFORE mutation
+      const cacheBefore = queryClient.getQueryData<Consignor[]>([
+        '/consignors',
+      ]);
+      console.log('[DEBUG DELETE] Step 2 BEFORE setQueryData:', {
+        hasCacheData: !!cacheBefore,
+        type: typeof cacheBefore,
+        isArray: Array.isArray(cacheBefore),
+        count: Array.isArray(cacheBefore) ? cacheBefore.length : 'N/A',
+        ids: Array.isArray(cacheBefore) ? cacheBefore.map((c) => c.id) : 'N/A',
+      });
+
+      // Mutate the local cache
+      queryClient.setQueryData(
+        ['/consignors'],
+        (oldData: Consignor[] | undefined) => {
+          if (!oldData) {
+            console.log(
+              '[DEBUG DELETE] setQueryData: oldData is FALSY, returning []',
+            );
+            return [];
+          }
+          const filtered = oldData.filter(
+            (c: Consignor) => String(c.id) !== String(id),
+          );
+          console.log(
+            '[DEBUG DELETE] setQueryData: filtered',
+            oldData.length,
+            '->',
+            filtered.length,
+          );
+          return filtered;
         },
       );
 
-      // 3. Remove the detail query for this specific consignor so it doesn't linger
-      queryClient.removeQueries({ queryKey: [`/consignors/${id}`] });
+      // Check what's in the cache AFTER mutation
+      const cacheAfter = queryClient.getQueryData<Consignor[]>(['/consignors']);
+      console.log('[DEBUG DELETE] Step 2 AFTER setQueryData:', {
+        count: Array.isArray(cacheAfter) ? cacheAfter.length : 'N/A',
+        ids: Array.isArray(cacheAfter) ? cacheAfter.map((c) => c.id) : 'N/A',
+      });
 
-      // 4. Force a background refetch to ensure true sync
-      queryClient.invalidateQueries({ queryKey: ['/consignors'] });
+      // 3. Remove the detail query
+      queryClient.removeQueries({
+        queryKey: [`/consignors/${id}`],
+        exact: true,
+      });
+      console.log('[DEBUG DELETE] Step 3: detail query removed');
 
-      Alert.alert('Success', 'Consignor deleted');
-      router.back();
+      // 4. Force refetch
+      queryClient.invalidateQueries({ queryKey: ['/consignors'], exact: true });
+      console.log('[DEBUG DELETE] Step 4: invalidateQueries fired');
+
+      // Navigate
+      console.log('[DEBUG DELETE] Step 5: navigating via router.replace...');
+      router.replace('/(admin)/consignment');
+
+      setTimeout(() => {
+        Alert.alert('Success', 'Consignor deleted');
+      }, 100);
     },
     onError: () => Alert.alert('Error', 'Failed to delete'),
   });
