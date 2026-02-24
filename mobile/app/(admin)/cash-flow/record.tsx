@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { useApi } from '@/hooks/useApi';
 import { recordCashFlow } from '@/api/endpoints';
 import { Button, Input, Loading } from '@/components/ui';
+import { useQueryClient } from '@tanstack/react-query';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -23,6 +24,7 @@ export default function RecordCashFlowScreen() {
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
+  const queryClient = useQueryClient();
 
   const { isLoading, execute: submitRecord } = useApi(recordCashFlow);
 
@@ -37,6 +39,7 @@ export default function RecordCashFlowScreen() {
         description,
         created_by: 'Admin',
       });
+      queryClient.invalidateQueries({ queryKey: ['cashFlowEntries'] });
       router.back();
       Alert.alert('Success', 'Recorded successfully');
     } catch {

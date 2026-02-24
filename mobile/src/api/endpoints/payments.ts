@@ -1,7 +1,8 @@
 import apiClient, { apiCall } from '../client';
 import {
-  SnapTokenRequest,
-  SnapTokenResponse,
+  QrisChargeRequest,
+  QrisChargeResponse,
+  QrisPaymentStatus,
   ManualVerifyRequest,
   PaymentStatus,
 } from '../types';
@@ -12,14 +13,23 @@ import {
  */
 
 /**
- * Generate Snap Token for Midtrans
- * POST /api/v1/payments/snap
+ * Generate QRIS QR Code (Midtrans Core API)
+ * POST /api/v1/payments/qris/charge
  */
-export async function generateSnapToken(
-  data: SnapTokenRequest,
-): Promise<SnapTokenResponse> {
-  const response = await apiClient.post('/payments/snap', data);
-  return response.data.data;
+export async function chargeQris(
+  data: QrisChargeRequest,
+): Promise<QrisChargeResponse> {
+  return apiCall<QrisChargeResponse>('post', '/payments/qris/charge', data);
+}
+
+/**
+ * Get QRIS Payment Status (for polling)
+ * GET /api/v1/payments/{payment_id}/status
+ */
+export async function getQrisPaymentStatus(
+  paymentId: string,
+): Promise<QrisPaymentStatus> {
+  return apiCall<QrisPaymentStatus>('get', `/payments/status/${paymentId}`);
 }
 
 /**

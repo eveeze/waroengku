@@ -39,8 +39,11 @@ export default function StockOpnameSessionScreen() {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: [`/opname-sessions/${id}`],
-    queryFn: ({ queryKey }) => fetchWithCache<OpnameSession>({ queryKey }),
+    queryKey: [`/stock-opname/sessions/${id}`],
+    queryFn: async ({ queryKey }) => {
+      const res = await fetchWithCache<{ data: OpnameSession }>({ queryKey });
+      return res.data;
+    },
     enabled: !!id,
   });
 
@@ -54,7 +57,7 @@ export default function StockOpnameSessionScreen() {
           notes: 'Manual Entry',
         }),
       {
-        queryKey: [`/opname-sessions/${id}`],
+        queryKey: [`/stock-opname/sessions/${id}`],
         updater: (old: OpnameSession | undefined) => old,
         invalidates: true,
         onSuccess: () => {
@@ -67,7 +70,7 @@ export default function StockOpnameSessionScreen() {
           setQty('');
           setBarcodeInput('');
           queryClient.invalidateQueries({
-            queryKey: [`/opname-sessions/${id}/variance`],
+            queryKey: [`/stock-opname/sessions/${id}/variance`],
           });
         },
         onError: (err: Error) => {
@@ -78,7 +81,7 @@ export default function StockOpnameSessionScreen() {
 
   const { mutate: mutateCancel, isPending: isCancelling } =
     useOptimisticMutation(async () => cancelOpnameSession(id!), {
-      queryKey: ['/opname-sessions'],
+      queryKey: ['/stock-opname/sessions'],
       updater: (old: any) => old,
       onSuccess: () => {
         Alert.alert('Session Cancelled');
@@ -121,7 +124,7 @@ export default function StockOpnameSessionScreen() {
     );
   }
 
-  const isActive = session.status === 'active';
+  const isActive = session.status === 'in_progress';
 
   return (
     <View className="flex-1 bg-background">
@@ -155,10 +158,12 @@ export default function StockOpnameSessionScreen() {
           className={`font-black uppercase tracking-tighter text-foreground ${
             isTablet ? 'text-5xl' : 'text-3xl'
           }`}
+          numberOfLines={1}
+          adjustsFontSizeToFit
         >
           SESSION #{session.session_number}
         </Text>
-        <View className="flex-row items-center mt-2 gap-2">
+        <View className="flex-row flex-wrap items-center mt-2 gap-2 pr-2">
           <View
             className={`px-2 py-0.5 ${isActive ? 'bg-foreground' : 'bg-muted-foreground'}`}
           >
@@ -166,7 +171,10 @@ export default function StockOpnameSessionScreen() {
               {session.status}
             </Text>
           </View>
-          <Text className="text-muted-foreground text-xs font-bold uppercase tracking-widest">
+          <Text
+            className="text-muted-foreground text-[10px] sm:text-xs font-bold uppercase tracking-widest flex-shrink"
+            numberOfLines={2}
+          >
             {session.created_by}
           </Text>
         </View>
@@ -201,11 +209,14 @@ export default function StockOpnameSessionScreen() {
                         value={barcodeInput}
                         onChangeText={setBarcodeInput}
                         onSubmitEditing={() => setProductCode(barcodeInput)}
+                        className={`font-body font-bold ${isTablet ? 'text-lg py-3' : 'text-sm py-2'}`}
                       />
                     </View>
                     <TouchableOpacity
                       onPress={() => setShowScanner(true)}
-                      className="w-12 h-12 bg-foreground items-center justify-center"
+                      className={`bg-foreground items-center justify-center rounded-lg border border-border ${
+                        isTablet ? 'w-14 h-14' : 'w-11 h-11'
+                      }`}
                     >
                       <Text className="text-background text-xl">📷</Text>
                     </TouchableOpacity>
@@ -237,6 +248,7 @@ export default function StockOpnameSessionScreen() {
                       value={qty}
                       onChangeText={setQty}
                       autoFocus
+                      className={isTablet ? 'text-3xl' : 'text-2xl'}
                     />
                     <Button
                       title="SUBMIT COUNT"

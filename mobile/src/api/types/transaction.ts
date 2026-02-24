@@ -7,7 +7,8 @@ export interface TransactionItem {
   product_name?: string;
   unit?: string;
   unit_price?: number;
-  total_amount?: number; // Renamed from subtotal
+  total_amount?: number;
+  subtotal?: number; // Backend sends this for per-item total
   tier_name?: string;
 }
 

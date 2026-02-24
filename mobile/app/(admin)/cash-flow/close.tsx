@@ -9,8 +9,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useApi } from '@/hooks/useApi';
-import { closeDrawer, getCurrentSession } from '@/api/endpoints';
+import { closeDrawer, getCurrentSession, getCashFlows } from '@/api/endpoints';
 import { Button, Input, Loading } from '@/components/ui';
+import { CashFlowEntry } from '@/api/types';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,13 +23,37 @@ export default function CloseDrawerScreen() {
   const isTablet = breakpoints.isTablet;
 
   const [amount, setAmount] = useState('');
+  const queryClient = useQueryClient();
 
   const {
     data: session,
     isLoading: isLoadingSession,
     execute: fetchSession,
   } = useApi(getCurrentSession);
+
+  const { data: flowsRes, isLoading: isLoadingFlows } = useQuery({
+    queryKey: ['cashFlowEntries', session?.id], // Keep using session for backwards compat in query
+    queryFn: () => getCashFlows({ session_id: session?.id, per_page: 200 }),
+    enabled: !!session?.id,
+  });
+
   const { isLoading, execute: submitClose } = useApi(closeDrawer);
+
+  const cashFlows: CashFlowEntry[] = Array.isArray(flowsRes?.data)
+    ? flowsRes.data
+    : Array.isArray(flowsRes)
+      ? flowsRes
+      : [];
+  const totalIncome = cashFlows
+    .filter((entry) => entry.type === 'income')
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const totalExpense = cashFlows
+    .filter((entry) => entry.type === 'expense')
+    .reduce((sum, entry) => sum + entry.amount, 0);
+
+  const expectedCash = session
+    ? session.opening_balance + totalIncome - totalExpense
+    : 0;
 
   useEffect(() => {
     fetchSession();
@@ -40,8 +66,9 @@ export default function CloseDrawerScreen() {
       await submitClose({
         session_id: session.id,
         closing_balance: Number(amount),
-        closed_by: 'Admin', // TODO: Auth
+        closed_by: 'Admin', // TODO: Get from auth context
       });
+      queryClient.invalidateQueries({ queryKey: ['cashFlowCurrentSession'] });
       router.back();
       Alert.alert('Success', 'Register closed successfully');
     } catch {
@@ -80,12 +107,14 @@ export default function CloseDrawerScreen() {
             </Text>
             <Text
               className={`text-center font-black text-foreground ${isTablet ? 'text-5xl' : 'text-4xl'}`}
+              numberOfLines={1}
+              adjustsFontSizeToFit
             >
               {new Intl.NumberFormat('id-ID', {
                 style: 'currency',
                 currency: 'IDR',
                 minimumFractionDigits: 0,
-              }).format(session?.actual_balance || 0)}
+              }).format(expectedCash)}
             </Text>
           </View>
 

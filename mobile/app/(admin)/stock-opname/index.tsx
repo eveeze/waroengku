@@ -31,7 +31,7 @@ export default function StockOpnameListScreen() {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ['/opname-sessions'],
+    queryKey: ['/stock-opname/sessions'],
     queryFn: ({ queryKey }) =>
       fetchWithCache<ApiResponse<OpnameSession[]>>({ queryKey }),
   });
@@ -41,19 +41,28 @@ export default function StockOpnameListScreen() {
   const { mutate: mutateCreate, isPending: isCreating } = useOptimisticMutation(
     async (payload: any) => startOpnameSession(payload),
     {
-      queryKey: ['/opname-sessions'],
-      updater: (old: OpnameSession[] | undefined, variables: any) => {
+      queryKey: ['/stock-opname/sessions'],
+      updater: (
+        old: ApiResponse<OpnameSession[]> | undefined,
+        variables: any,
+      ) => {
         // Optimistic update
         const optimisticSession: OpnameSession = {
           id: 'optimistic-' + Date.now(),
           session_number: 'PENDING',
-          status: 'active',
+          status: 'in_progress',
           created_by: variables.created_by,
           notes: variables.notes,
           created_at: new Date().toISOString(),
         };
-        if (!old) return [optimisticSession];
-        return [optimisticSession, ...old];
+        if (!old || !old.data) {
+          return {
+            success: true,
+            message: 'Optimistic',
+            data: [optimisticSession],
+          };
+        }
+        return { ...old, data: [optimisticSession, ...old.data] };
       },
       onSuccess: (data) => {
         if (data) {
@@ -80,11 +89,13 @@ export default function StockOpnameListScreen() {
         isTablet ? 'p-6 mb-5' : 'p-4 mb-3'
       }`}
     >
-      <View>
+      <View className="flex-1 pr-4">
         <Text
           className={`font-body font-black text-foreground uppercase tracking-tight ${
             isTablet ? 'text-2xl' : 'text-lg'
           }`}
+          numberOfLines={1}
+          adjustsFontSizeToFit
         >
           Session #{item.session_number}
         </Text>
@@ -98,7 +109,7 @@ export default function StockOpnameListScreen() {
       </View>
       <View
         className={`px-3 py-1 ${
-          item.status === 'active'
+          item.status === 'in_progress'
             ? 'bg-foreground'
             : 'bg-transparent border border-border'
         }`}
@@ -106,7 +117,7 @@ export default function StockOpnameListScreen() {
         <Text
           className={`font-bold uppercase tracking-widest font-body ${
             isTablet ? 'text-xs' : 'text-[10px]'
-          } ${item.status === 'active' ? 'text-background' : 'text-foreground'}`}
+          } ${item.status === 'in_progress' ? 'text-background' : 'text-foreground'}`}
         >
           {item.status}
         </Text>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -12,12 +12,10 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useFocusEffect } from '@react-navigation/native';
 import { fetchWithCache } from '@/api/client';
-import {
-  cancelTransaction,
-  generateSnapToken,
-  manualVerifyPayment,
-} from '@/api/endpoints';
+import { cancelTransaction, manualVerifyPayment } from '@/api/endpoints';
+import { chargeQris } from '@/api/endpoints/payments';
 import { Transaction, PaginatedResponse, TransactionItem } from '@/api/types';
 import { Button, Loading } from '@/components/ui';
 import { useOptimisticMutation } from '@/hooks';
@@ -39,7 +37,7 @@ export default function TransactionDetailScreen() {
       return result.data;
     },
     enabled: !!id,
-    initialData: () => {
+    placeholderData: () => {
       // Search in infinite query cache
       const queries = queryClient
         .getQueryCache()
@@ -56,6 +54,14 @@ export default function TransactionDetailScreen() {
       return undefined;
     },
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      if (id) {
+        refetch();
+      }
+    }, [id, refetch]),
+  );
 
   // Optimistic Cancel
   const { mutate: mutateCancel, isPending: isCancelling } =
@@ -79,18 +85,14 @@ export default function TransactionDetailScreen() {
     if (!transaction) return;
     setIsRetrying(true);
     try {
-      // Assuming generateSnapToken is an async function returning { redirect_url ... }
-      // Ideally we should import useApi or just call it directly since we don't need caching for this action
-      // But standard way is to just call the function.
-      const token = await generateSnapToken({
-        order_id: transaction.invoice_number,
-        gross_amount: transaction.total_amount,
+      const result = await chargeQris({
+        transaction_id: transaction.id,
       });
 
-      if (token && token.redirect_url) {
-        Linking.openURL(token.redirect_url);
+      if (result && result.qr_code_url) {
+        Linking.openURL(result.qr_code_url);
       } else {
-        Alert.alert('Error', 'Could not generate payment link');
+        Alert.alert('Error', 'Could not generate QR code');
       }
     } catch {
       Alert.alert('Error', 'Failed to initiate payment');
@@ -265,15 +267,16 @@ export default function TransactionDetailScreen() {
               >
                 <View className="flex-1 pr-4">
                   <Text className="font-bold text-foreground text-sm uppercase mb-1">
-                    {item.product_name}
+                    {item.product_name || 'Unknown Product'}
                   </Text>
                   <Text className="text-xs text-muted-foreground font-medium">
-                    {item.quantity} {item.unit} x{' '}
+                    {item.quantity}
+                    {item.unit ? ` ${item.unit}` : ''} x{' '}
                     {formatCurrency(item.unit_price || 0)}
                   </Text>
                 </View>
                 <Text className="font-bold text-foreground text-sm">
-                  {formatCurrency(item.total_amount || 0)}
+                  {formatCurrency(item.subtotal || item.total_amount || 0)}
                 </Text>
               </View>
             ))}

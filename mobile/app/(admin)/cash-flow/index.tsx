@@ -13,8 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useResponsive } from '@/hooks/useResponsive';
 import { fetchWithCache } from '@/api/client';
-import { getCurrentSession } from '@/api/endpoints';
-import { DrawerSession, ApiResponse } from '@/api/types';
+import { getCurrentSession, getCashFlows } from '@/api/endpoints';
+import { DrawerSession, ApiResponse, CashFlowEntry } from '@/api/types';
 import { Button } from '@/components/ui';
 import { CashFlowSkeleton } from '@/components/skeletons';
 
@@ -25,26 +25,54 @@ export default function CashFlowScreen() {
   const isTablet = breakpoints.isTablet;
 
   const {
-    data: response,
-    isLoading,
-    refetch,
+    data: session,
+    isLoading: isLoadingSession,
+    refetch: refetchSession,
   } = useQuery({
-    queryKey: ['/cash-flow/session/current'],
-    queryFn: ({ queryKey }) =>
-      fetchWithCache<ApiResponse<DrawerSession>>({ queryKey }),
+    queryKey: ['cashFlowCurrentSession'],
+    queryFn: getCurrentSession,
   });
 
-  const session = response?.data;
+  // Automatically fetch cash flows for the current session to compute expected cash
+  const {
+    data: flowsRes,
+    isLoading: isLoadingFlows,
+    refetch: refetchFlows,
+  } = useQuery({
+    queryKey: ['cashFlowEntries', session?.id],
+    queryFn: () => getCashFlows({ session_id: session?.id, per_page: 200 }),
+    enabled: !!session?.id,
+  });
 
-  // Removed manual loadData and useFocusEffect in favor of useQuery
-  // useQuery will auto-refetch on focus by default in React Query v5 (if configured)
-  // or we can use useFocusEffect to refetch if needed, but standard query is usually enough.
-  // Actually, for React Native, focus refetching often needs setup or useFocusEffect + refetch.
-  // Let's add explicit refetch on focus for safety.
+  console.log('--- DIAGNOSTIC CASH FLOW ---');
+  console.log('Session Data:', JSON.stringify(session, null, 2));
+  console.log('Flows Data:', JSON.stringify(flowsRes, null, 2));
+
+  const cashFlows: CashFlowEntry[] = Array.isArray(flowsRes?.data)
+    ? flowsRes.data
+    : Array.isArray(flowsRes)
+      ? flowsRes
+      : [];
+
+  const totalIncome = cashFlows
+    .filter((entry) => entry.type === 'income')
+    .reduce((sum, entry) => sum + entry.amount, 0);
+
+  const totalExpense = cashFlows
+    .filter((entry) => entry.type === 'expense')
+    .reduce((sum, entry) => sum + entry.amount, 0);
+
+  const expectedCash = session
+    ? session.opening_balance + totalIncome - totalExpense
+    : 0;
+
+  const isLoading = isLoadingSession || (!!session && isLoadingFlows);
+
   useFocusEffect(
     useCallback(() => {
-      refetch();
-    }, []),
+      refetchSession();
+      if (session?.id) refetchFlows();
+    }, [session?.id, refetchSession, refetchFlows]),
   );
 
   const formatCurrency = (amount: number) => {
@@ -125,7 +153,13 @@ export default function CashFlowScreen() {
           width: isTablet ? '100%' : undefined,
         }}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={refetch} />
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={() => {
+              refetchSession();
+              if (session?.id) refetchFlows();
+            }}
+          />
         }
       >
         {/* Status Card */}
@@ -156,9 +190,7 @@ export default function CashFlowScreen() {
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
-                {formatCurrency(
-                  session.actual_balance || session.opening_balance,
-                )}
+                {formatCurrency(expectedCash)}
               </Text>
               <Text
                 className={`font-bold uppercase tracking-widest text-muted-foreground font-body ${isTablet ? 'text-xs mt-2' : 'text-[10px] mt-1'}`}
@@ -172,7 +204,23 @@ export default function CashFlowScreen() {
                     OPENING BALANCE
                   </Text>
                   <Text className="text-sm font-black text-foreground">
-                    {formatCurrency(session.opening_balance)}
+                    {formatCurrency(session?.opening_balance || 0)}
+                  </Text>
+                </View>
+                <View className="flex-row justify-between items-baseline">
+                  <Text className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 dark:text-emerald-400">
+                    TOTAL INCOME (SALES + IN)
+                  </Text>
+                  <Text className="text-sm font-black text-emerald-500 dark:text-emerald-400">
+                    +{formatCurrency(totalIncome)}
+                  </Text>
+                </View>
+                <View className="flex-row justify-between items-baseline">
+                  <Text className="text-[10px] font-bold uppercase tracking-widest text-red-500 dark:text-red-400">
+                    TOTAL EXPENSES / OUT
+                  </Text>
+                  <Text className="text-sm font-black text-red-500 dark:text-red-400">
+                    -{formatCurrency(totalExpense)}
                   </Text>
                 </View>
                 <View className="flex-row justify-between items-baseline">
@@ -180,7 +228,7 @@ export default function CashFlowScreen() {
                     OPENED AT
                   </Text>
                   <Text className="text-xs font-bold text-foreground">
-                    {formatDate(session.opened_at).toUpperCase()}
+                    {formatDate(session?.opened_at).toUpperCase()}
                   </Text>
                 </View>
                 <View className="flex-row justify-between items-baseline">
@@ -188,7 +236,7 @@ export default function CashFlowScreen() {
                     OPENED BY
                   </Text>
                   <Text className="text-sm font-black text-foreground uppercase">
-                    {session.opened_by}
+                    {session?.opened_by}
                   </Text>
                 </View>
               </View>

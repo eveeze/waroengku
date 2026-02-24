@@ -1,7 +1,7 @@
 export interface OpnameSession {
   id: string;
   session_number: string;
-  status: 'active' | 'completed' | 'cancelled';
+  status: 'draft' | 'in_progress' | 'completed' | 'cancelled';
   notes?: string;
   created_by: string;
   created_at: string;

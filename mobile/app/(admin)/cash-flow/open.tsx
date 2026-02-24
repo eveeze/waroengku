@@ -13,6 +13,7 @@ import { openDrawer } from '@/api/endpoints';
 import { Button, Input } from '@/components/ui';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function OpenDrawerScreen() {
   const router = useRouter();
@@ -23,6 +24,7 @@ export default function OpenDrawerScreen() {
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
 
+  const queryClient = useQueryClient();
   const { isLoading, execute: submitOpen } = useApi(openDrawer);
 
   const handleOpen = async () => {
@@ -36,6 +38,9 @@ export default function OpenDrawerScreen() {
         opening_balance: Number(amount),
         opened_by: 'Admin', // TODO: Get from auth context
         notes: notes,
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['cashFlowCurrentSession'],
       });
       router.back();
       Alert.alert('Success', 'Register opened successfully');

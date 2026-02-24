@@ -77,5 +77,9 @@ export async function recordCashFlow(
 export async function getCashFlows(
   params?: GetCashFlowsParams,
 ): Promise<PaginatedResponse<CashFlowEntry>> {
-  return apiCall<PaginatedResponse<CashFlowEntry>>('get', '/cashflow', params);
+  const response = await apiClient.get<PaginatedResponse<CashFlowEntry>>(
+    '/cashflow',
+    { params },
+  );
+  return response.data;
 }

@@ -28,7 +28,16 @@ export default function CashFlowHistoryScreen() {
 
   const loadData = async () => {
     const response = await fetchHistory();
-    if (response?.data) setEntries(response.data);
+    if (response) {
+      const rawData = response as any;
+      const entriesArray = Array.isArray(rawData?.data)
+        ? rawData.data
+        : Array.isArray(rawData)
+          ? rawData
+          : [];
+
+      setEntries(entriesArray);
+    }
   };
 
   useFocusEffect(

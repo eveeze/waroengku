@@ -76,7 +76,8 @@ export default function VarianceReportScreen() {
     >
       <View className="flex-1 pr-4">
         <Text
-          className={`font-heading font-bold text-foreground ${isTablet ? 'text-lg' : 'text-base'}`}
+          className={`font-heading font-bold text-foreground pr-2 ${isTablet ? 'text-lg' : 'text-base'}`}
+          numberOfLines={2}
         >
           {item.product_name}
         </Text>
@@ -86,7 +87,7 @@ export default function VarianceReportScreen() {
           System: {item.system_stock} | Physical: {item.physical_stock}
         </Text>
       </View>
-      <View className="items-end">
+      <View className="items-end flex-shrink-0">
         <Text
           className={`font-heading font-black ${isTablet ? 'text-2xl' : 'text-lg'} ${item.variance === 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
         >
@@ -135,6 +136,8 @@ export default function VarianceReportScreen() {
             </Text>
             <Text
               className={`font-heading font-black text-foreground ${isTablet ? 'text-4xl' : 'text-xl'}`}
+              numberOfLines={1}
+              adjustsFontSizeToFit
             >
               {report.total_variance}
             </Text>
@@ -149,6 +152,8 @@ export default function VarianceReportScreen() {
             </Text>
             <Text
               className={`font-heading font-black text-red-900 dark:text-red-300 ${isTablet ? 'text-3xl' : 'text-lg'}`}
+              numberOfLines={1}
+              adjustsFontSizeToFit
             >
               {new Intl.NumberFormat('id-ID', {
                 style: 'currency',
