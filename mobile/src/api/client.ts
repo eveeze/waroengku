@@ -45,16 +45,50 @@ const processQueue = (
   failedQueue = [];
 };
 
-// Request interceptor - attach auth token
+// Request interceptor - attach auth token + offline fallback
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const token = await tokenStorage.getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Offline fallback for GET requests
+    if (config.method === 'get') {
+      try {
+        const netState = await NetInfo.fetch();
+        if (!netState.isConnected) {
+          const cacheKey = apiCache.getKey(config.url || '', config.params);
+          const cached = await apiCache.get(cacheKey);
+          if (cached) {
+            // Throw a special error that the response interceptor will catch
+            const err = new axios.Cancel('offline') as any;
+            err.__offlineCache = cached;
+            err.__offlineCacheKey = cacheKey;
+            throw err;
+          }
+        }
+      } catch (e) {
+        // If it's our offline cache signal, re-throw it
+        if ((e as any).__offlineCache) throw e;
+        // Otherwise ignore NetInfo errors and let the request proceed
+      }
+    }
+
     return config;
   },
   (error) => {
+    // Check if this is our offline cache signal
+    if (error?.__offlineCache) {
+      // Return a fake successful response with cached data
+      return Promise.resolve({
+        data: error.__offlineCache,
+        status: 200,
+        statusText: 'OK (Offline Cache)',
+        headers: {},
+        config: error.config || {},
+      });
+    }
     return Promise.reject(error);
   },
 );

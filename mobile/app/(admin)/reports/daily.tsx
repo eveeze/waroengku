@@ -18,6 +18,7 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchWithCache } from '@/api/client';
 import { DailyReportDetailData, ApiResponse } from '@/api/types';
 import { Loading } from '@/components/ui';
+import { formatLocalDate } from '@/utils/date';
 
 export default function DailyReportScreen() {
   const insets = useSafeAreaInsets();
@@ -25,7 +26,7 @@ export default function DailyReportScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  const dateString = selectedDate.toISOString().split('T')[0];
+  const dateString = formatLocalDate(selectedDate);
 
   const {
     data: response,
@@ -80,7 +81,7 @@ export default function DailyReportScreen() {
     }
   };
 
-  const isToday = dateString === new Date().toISOString().split('T')[0];
+  const isToday = dateString === formatLocalDate(new Date());
 
   // Simple Chart Logic
   // Simple Chart Logic

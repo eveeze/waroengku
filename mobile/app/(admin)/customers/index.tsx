@@ -63,8 +63,6 @@ export default function CustomersScreen() {
       }
       return undefined;
     },
-    staleTime: 0,
-    gcTime: 0, // Disable cache retention completely when unmounted
     refetchOnMount: 'always',
   });
 

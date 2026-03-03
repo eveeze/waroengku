@@ -1,5 +1,10 @@
 import apiClient from '../client';
-import { UserInfo, UserListParams, PaginatedResponse } from '../types';
+import {
+  UserInfo,
+  UserListParams,
+  PaginatedResponse,
+  UpdateUserRequest,
+} from '../types';
 import { RegisterUserFormData } from '@/utils/validation';
 
 /**
@@ -46,7 +51,7 @@ export async function getUserById(id: string): Promise<UserInfo> {
  */
 export async function updateUser(
   id: string,
-  data: any, // Sesuai UpdateUserRequest di backend
+  data: UpdateUserRequest,
 ): Promise<UserInfo> {
   const response = await apiClient.put(`/users/${id}`, data);
   return response.data.data;

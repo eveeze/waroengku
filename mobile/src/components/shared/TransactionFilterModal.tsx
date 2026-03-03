@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Button } from '@/components/ui';
 import { Customer } from '@/api/types';
+import { formatLocalDate } from '@/utils/date';
 
 export interface FilterState {
   status: string | null;
@@ -65,20 +66,20 @@ export function TransactionFilterModal({
 
   const applyDatePreset = (preset: (typeof DATE_PRESETS)[0]) => {
     const today = new Date();
-    const to = today.toISOString().split('T')[0];
+    const to = formatLocalDate(today);
     let from = to;
 
     if (preset.label === 'YESTERDAY') {
       const y = new Date(today);
       y.setDate(y.getDate() - 1);
-      const yStr = y.toISOString().split('T')[0];
+      const yStr = formatLocalDate(y);
       setFilters((prev) => ({ ...prev, date_from: yStr, date_to: yStr }));
       return;
     }
 
     if (preset.label === 'THIS MONTH') {
       const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-      const fStr = firstDay.toISOString().split('T')[0];
+      const fStr = formatLocalDate(firstDay);
       setFilters((prev) => ({ ...prev, date_from: fStr, date_to: to }));
       return;
     }
@@ -86,7 +87,7 @@ export function TransactionFilterModal({
     if (preset.days > 0) {
       const past = new Date(today);
       past.setDate(past.getDate() - preset.days);
-      const pStr = past.toISOString().split('T')[0];
+      const pStr = formatLocalDate(past);
       setFilters((prev) => ({ ...prev, date_from: pStr, date_to: to }));
     } else {
       // Today

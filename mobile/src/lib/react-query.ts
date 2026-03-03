@@ -8,6 +8,7 @@ export const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 5, // 5 minutes (replaced cacheTime in v5)
       refetchOnWindowFocus: false, // React Native doesn't strictly have window focus
       refetchOnReconnect: true,
+      networkMode: 'offlineFirst', // Serve cached data when offline
     },
     mutations: {
       retry: 1,
