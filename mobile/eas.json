@@ -19,6 +19,12 @@
     "production": {
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api.warungmanto.store",
+        "EXPO_PUBLIC_API_VERSION": "/api/v1",
+        "EXPO_PUBLIC_APP_NAME": "Warungku Admin",
+        "EXPO_PUBLIC_ONESIGNAL_APP_ID": "090dea92-b9c1-4417-8a6c-221262071ce7"
       }
     }
   },
